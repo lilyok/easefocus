@@ -40,8 +40,6 @@ nonisolated struct LiveFoundationModelClient: FoundationModelGenerating {
                 to: prompt,
                 generating: GenerableDraftPlan.self
             ).content
-        } catch let error as FoundationModelClientError {
-            throw error
         } catch {
             throw FoundationModelClientError.generationFailed
         }
