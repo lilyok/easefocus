@@ -1,0 +1,96 @@
+import SwiftUI
+
+struct SettingsView: View {
+    @Environment(\.openURL) private var openURL
+    @Environment(\.foundationModelClient) private var foundationModelClient
+    @Environment(\.locale) private var locale
+
+    @State private var draft: DraftPlanBlueprint?
+    @State private var generationError: String?
+    @State private var isGenerating = false
+    @State private var sampleQuery = "beginner English pronunciation exercises"
+
+    private var availability: FoundationModelAvailability {
+        foundationModelClient.currentAvailability(locale: locale)
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("Apple Intelligence") {
+                    Text(FoundationModelAvailabilityCopy.title(for: availability))
+                        .font(FocusTypography.title)
+                        .foregroundStyle(Color.focusPrimary)
+                    Text(FoundationModelAvailabilityCopy.message(for: availability))
+                        .font(FocusTypography.body)
+                    Button("Generate a sample draft") {
+                        Task { await generateSampleDraft() }
+                    }
+                    .disabled(!availability.allowsGeneration || isGenerating)
+                    .accessibilityIdentifier("generateSampleDraft")
+
+                    if isGenerating {
+                        ProgressView("Generating…")
+                    }
+
+                    if let draft {
+                        Text(draft.title)
+                            .font(FocusTypography.body)
+                        Text(draft.summary)
+                            .font(FocusTypography.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if let generationError {
+                        Text(generationError)
+                            .font(FocusTypography.footnote)
+                            .foregroundStyle(Color.focusError)
+                    }
+                }
+
+                Section(ExternalSearchPrivacyCopy.title) {
+                    Text(ExternalSearchPrivacyCopy.body)
+                        .font(FocusTypography.footnote)
+
+                    TextField("Search query", text: $sampleQuery)
+                    Button("Search Google") {
+                        openSampleSearch()
+                    }
+                    .disabled(GoogleSearchURL.make(from: sampleQuery) == nil)
+                    .accessibilityIdentifier("searchGoogle")
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(Color.focusBackground)
+            .navigationTitle("Settings")
+        }
+    }
+
+    private func generateSampleDraft() async {
+        generationError = nil
+        isGenerating = true
+        defer { isGenerating = false }
+
+        do {
+            draft = try await foundationModelClient.generateDraftPlan(
+                prompt: "Create a 3-task beginner plan for clearer English pronunciation. No URLs.",
+                locale: locale
+            )
+        } catch {
+            draft = nil
+            generationError = "Generation failed. You can still create a plan manually."
+        }
+    }
+
+    private func openSampleSearch() {
+        guard let url = GoogleSearchURL.make(from: sampleQuery) else {
+            return
+        }
+        openURL(url)
+    }
+}
+
+#Preview {
+    SettingsView()
+        .environment(\.foundationModelClient, PreviewFoundationModelClient())
+}

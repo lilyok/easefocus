@@ -5,7 +5,7 @@ import SwiftUI
 struct EaseFocusApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
         }
         #if os(macOS)
         .defaultSize(width: 480, height: 640)

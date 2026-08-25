@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-struct ContentView: View {
+struct TodayView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \FocusItem.createdAt, order: .reverse) private var items: [FocusItem]
 
@@ -16,6 +16,7 @@ struct ContentView: View {
                     } actions: {
                         Button("Create a sample item", systemImage: "plus", action: addSampleItem)
                             .accessibilityIdentifier("createSampleItem")
+                            .frame(minWidth: FocusSpacing.minimumTapTarget, minHeight: FocusSpacing.minimumTapTarget)
                     }
                 } else {
                     List {
@@ -24,9 +25,11 @@ struct ContentView: View {
                         }
                         .onDelete(perform: deleteItems)
                     }
+                    .scrollContentBackground(.hidden)
                 }
             }
-            .navigationTitle("EaseFocus")
+            .background(Color.focusBackground)
+            .navigationTitle("Today")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button("Create a sample item", systemImage: "plus", action: addSampleItem)
@@ -47,6 +50,6 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    TodayView()
         .modelContainer(for: FocusItem.self, inMemory: true)
 }
