@@ -5,6 +5,15 @@ nonisolated enum EaseFocusStore {
     static let storeFileName = "easefocus.store"
     static let legacyCoreDataFileName = "pomodoro.sqlite"
 
+    /// One-time cutover from the Phase 0 `FocusItem` schema.
+    /// Do not keep this once `easefocus.store` holds real user plans.
+    /// Never deletes `pomodoro.sqlite`.
+    static let allowsDestructiveSchemaCutover = true
+
+    static var productStoreFileNames: [String] {
+        [storeFileName, storeFileName + "-wal", storeFileName + "-shm"]
+    }
+
     static var schema: Schema {
         Schema([GoalPlan.self, PlanTask.self, FocusSession.self])
     }
@@ -13,6 +22,9 @@ nonisolated enum EaseFocusStore {
         do {
             return try openContainer()
         } catch {
+            guard allowsDestructiveSchemaCutover else {
+                throw error
+            }
             try removeProductStoreFiles()
             return try openContainer()
         }
@@ -36,7 +48,7 @@ nonisolated enum EaseFocusStore {
     static func removeProductStoreFiles() throws {
         let directory = try applicationSupportDirectory()
         let fileManager = FileManager.default
-        for name in [storeFileName, storeFileName + "-wal", storeFileName + "-shm"] {
+        for name in productStoreFileNames {
             let url = directory.appending(path: name, directoryHint: .notDirectory)
             if fileManager.fileExists(atPath: url.path) {
                 try fileManager.removeItem(at: url)

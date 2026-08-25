@@ -4,6 +4,7 @@ import SwiftUI
 struct RootView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var timer = FocusTimerController()
+    @State private var isShowingTimer = false
 
     var body: some View {
         TabView {
@@ -24,8 +25,21 @@ struct RootView: View {
         .environment(timer)
         .safeAreaInset(edge: .bottom) {
             if timer.engine.isActive {
-                CompactTimerBar()
+                CompactTimerBar {
+                    isShowingTimer = true
+                }
             }
+        }
+        .sheet(isPresented: $isShowingTimer) {
+            NavigationStack {
+                TimerView()
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { isShowingTimer = false }
+                        }
+                    }
+            }
+            .environment(timer)
         }
         .onAppear {
             timer.attach(modelContext: modelContext)

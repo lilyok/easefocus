@@ -3,16 +3,23 @@ import SwiftUI
 struct CompactTimerBar: View {
     @Environment(FocusTimerController.self) private var timer
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    var onOpenTimer: () -> Void
 
     var body: some View {
         HStack(spacing: FocusSpacing.medium) {
-            Text(statusTitle)
-                .font(FocusTypography.footnote)
+            Button(action: onOpenTimer) {
+                Text(statusTitle)
+                    .font(FocusTypography.footnote)
+            }
+            .accessibilityIdentifier("openTimer")
             Spacer()
-            Text(FocusDurationFormat.clock(timer.engine.remainingSeconds(at: .now)))
-                .font(FocusTypography.timer)
-                .monospacedDigit()
-                .animation(reduceMotion ? nil : .linear(duration: 0.25), value: timer.engine.remainingSeconds)
+            Button(action: onOpenTimer) {
+                Text(FocusDurationFormat.clock(timer.engine.remainingSeconds(at: .now)))
+                    .font(FocusTypography.timer)
+                    .monospacedDigit()
+                    .animation(reduceMotion ? nil : .linear(duration: 0.25), value: timer.engine.remainingSeconds)
+            }
+            .buttonStyle(.plain)
             controls
         }
         .padding(.horizontal, FocusSpacing.medium)

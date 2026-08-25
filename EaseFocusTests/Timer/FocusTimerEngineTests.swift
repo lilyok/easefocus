@@ -57,10 +57,11 @@ struct FocusTimerEngineTests {
         var engine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 25 * 60))
         _ = engine.startFocus(taskID: nil, now: start)
         let jumped = start.addingTimeInterval(60 * 60)
-        let events = engine.tick(now: jumped)
+        #expect(engine.elapsedSeconds(at: jumped) == 25 * 60)
 
+        let events = engine.tick(now: jumped)
         #expect(engine.phase == .completed)
-        #expect(events.contains { if case .didCompleteFocus = $0 { true } else { false } })
+        #expect(events.contains(.didCompleteFocus(elapsedSeconds: 25 * 60, endedAt: jumped)))
     }
 
     @Test

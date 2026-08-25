@@ -8,7 +8,7 @@ struct PlanEditorView: View {
 
     @State private var title = ""
     @State private var details = ""
-    @State private var taskTitles: [String] = [""]
+    @State private var tasks: [DraftTask] = [DraftTask()]
 
     var body: some View {
         NavigationStack {
@@ -18,17 +18,23 @@ struct PlanEditorView: View {
                     TextField("Details", text: $details, axis: .vertical)
                 }
                 Section("Tasks") {
-                    ForEach(taskTitles.indices, id: \.self) { index in
-                        TextField("Task \(index + 1)", text: $taskTitles[index])
+                    ForEach($tasks) { $task in
+                        VStack(alignment: .leading, spacing: FocusSpacing.small) {
+                            TextField("Task title", text: $task.title)
+                            Stepper(value: $task.estimatedPomodoros, in: DraftPlanValidator.pomodoroRange) {
+                                Text("\(task.estimatedPomodoros) estimated sessions")
+                                    .font(FocusTypography.footnote)
+                            }
+                        }
                     }
                     .onDelete { offsets in
-                        taskTitles.remove(atOffsets: offsets)
-                        if taskTitles.isEmpty {
-                            taskTitles = [""]
+                        tasks.remove(atOffsets: offsets)
+                        if tasks.isEmpty {
+                            tasks = [DraftTask()]
                         }
                     }
                     Button("Add task") {
-                        taskTitles.append("")
+                        tasks.append(DraftTask())
                     }
                 }
             }
@@ -48,7 +54,7 @@ struct PlanEditorView: View {
 
     private var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && taskTitles.contains { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            && tasks.contains { !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
 
     private func save() {
@@ -61,16 +67,32 @@ struct PlanEditorView: View {
             source: .manual,
             preferredLocaleIdentifier: locale.identifier
         )
-        let cleaned = taskTitles
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        plan.tasks = cleaned.enumerated().map { index, taskTitle in
-            PlanTask(title: taskTitle, position: index, createdAt: now, updatedAt: now)
+        let cleaned = tasks.compactMap { task -> (String, Int)? in
+            let taskTitle = task.title.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !taskTitle.isEmpty else {
+                return nil
+            }
+            return (taskTitle, task.estimatedPomodoros)
+        }
+        plan.tasks = cleaned.enumerated().map { index, item in
+            PlanTask(
+                title: item.0,
+                position: index,
+                estimatedPomodoros: item.1,
+                createdAt: now,
+                updatedAt: now
+            )
         }
         modelContext.insert(plan)
         try? modelContext.save()
         dismiss()
     }
+}
+
+private struct DraftTask: Identifiable {
+    let id = UUID()
+    var title = ""
+    var estimatedPomodoros = 1
 }
 
 private extension String {

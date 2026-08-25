@@ -16,4 +16,11 @@ struct EaseFocusStoreTests {
         #expect(url.lastPathComponent == EaseFocusStore.storeFileName)
         #expect(url.lastPathComponent != EaseFocusStore.legacyCoreDataFileName)
     }
+
+    @Test
+    func destructiveCutoverOnlyTouchesTheProductStore() {
+        #expect(EaseFocusStore.allowsDestructiveSchemaCutover)
+        #expect(EaseFocusStore.productStoreFileNames.contains(EaseFocusStore.storeFileName))
+        #expect(!EaseFocusStore.productStoreFileNames.contains(EaseFocusStore.legacyCoreDataFileName))
+    }
 }

@@ -64,6 +64,9 @@ nonisolated struct FocusTimerEngine: Equatable, Codable, Sendable {
         if let runStartedAt {
             total += max(0, Int(now.timeIntervalSince(runStartedAt).rounded(.down)))
         }
+        if plannedDurationSeconds > 0 {
+            return min(total, plannedDurationSeconds)
+        }
         return total
     }
 

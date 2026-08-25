@@ -6,6 +6,7 @@ struct PlanDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(FocusTimerController.self) private var timer
     @State private var newTaskTitle = ""
+    @State private var newTaskEstimate = 1
 
     var body: some View {
         List {
@@ -18,7 +19,7 @@ struct PlanDetailView: View {
             }
             Section("Tasks") {
                 ForEach(plan.orderedTasks) { task in
-                    TaskRowView(task: task) {
+                    EditableTaskRow(task: task) {
                         timer.startFocus(task: task)
                     }
                     .swipeActions(edge: .trailing) {
@@ -32,12 +33,18 @@ struct PlanDetailView: View {
                     }
                 }
                 .onMove(perform: moveTasks)
-                HStack {
-                    TextField("New task", text: $newTaskTitle)
-                    Button("Add") {
-                        addTask()
+                VStack(alignment: .leading, spacing: FocusSpacing.small) {
+                    HStack {
+                        TextField("New task", text: $newTaskTitle)
+                        Button("Add") {
+                            addTask()
+                        }
+                        .disabled(newTaskTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
-                    .disabled(newTaskTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Stepper(value: $newTaskEstimate, in: DraftPlanValidator.pomodoroRange) {
+                        Text("\(newTaskEstimate) estimated sessions")
+                            .font(FocusTypography.footnote)
+                    }
                 }
             }
         }
@@ -68,11 +75,16 @@ struct PlanDetailView: View {
         guard !title.isEmpty else {
             return
         }
-        let task = PlanTask(title: title, position: plan.tasks.count)
+        let task = PlanTask(
+            title: title,
+            position: plan.tasks.count,
+            estimatedPomodoros: newTaskEstimate
+        )
         task.plan = plan
         plan.tasks.append(task)
         plan.updatedAt = .now
         newTaskTitle = ""
+        newTaskEstimate = 1
         try? modelContext.save()
     }
 
@@ -84,6 +96,23 @@ struct PlanDetailView: View {
             task.updatedAt = .now
         }
         plan.updatedAt = .now
+    }
+}
+
+private struct EditableTaskRow: View {
+    @Bindable var task: PlanTask
+    var onStart: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: FocusSpacing.small) {
+            TaskRowView(task: task, onStart: onStart)
+            if task.status != .completed {
+                Stepper(value: $task.estimatedPomodoros, in: DraftPlanValidator.pomodoroRange) {
+                    Text("\(task.estimatedPomodoros) estimated sessions")
+                        .font(FocusTypography.footnote)
+                }
+            }
+        }
     }
 }
 

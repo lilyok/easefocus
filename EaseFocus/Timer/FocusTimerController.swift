@@ -20,8 +20,8 @@ final class FocusTimerController {
         self.defaults = defaults
         if let data = defaults.data(forKey: stateKey),
            let saved = try? JSONDecoder().decode(FocusTimerEngine.self, from: data) {
+            // Keep saved durations and phase. Initializer defaults are first-launch only.
             engine = saved
-            engine.settings = settings
         } else {
             engine = FocusTimerEngine(settings: settings)
         }
