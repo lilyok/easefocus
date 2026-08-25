@@ -3,27 +3,71 @@ import SwiftUI
 
 struct TodayView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \FocusItem.createdAt, order: .reverse) private var items: [FocusItem]
+    @Environment(\.locale) private var locale
+    @Environment(\.foundationModelClient) private var foundationModelClient
+    @Environment(FocusTimerController.self) private var timer
+    @Query(sort: \GoalPlan.updatedAt, order: .reverse)
+    private var allPlans: [GoalPlan]
+
+    @State private var isCreatingPlan = false
+
+    private var plans: [GoalPlan] {
+        allPlans.filter { $0.status == .active }
+    }
+
+    private var upcomingTasks: [PlanTask] {
+        plans.flatMap(\.pendingTasks)
+    }
+
+    private var nextTask: PlanTask? {
+        upcomingTasks.first
+    }
+
+    private var availability: FoundationModelAvailability {
+        foundationModelClient.currentAvailability(locale: locale)
+    }
 
     var body: some View {
         NavigationStack {
             Group {
-                if items.isEmpty {
+                if plans.isEmpty {
                     ContentUnavailableView {
                         Label("Ready to focus", systemImage: "timer")
                     } description: {
-                        Text("EaseFocus is ready for your first goal.")
+                        Text("Create a plan to start a focus session. Apple Intelligence is optional.")
                     } actions: {
-                        Button("Create a sample item", systemImage: "plus", action: addSampleItem)
-                            .accessibilityIdentifier("createSampleItem")
-                            .frame(minWidth: FocusSpacing.minimumTapTarget, minHeight: FocusSpacing.minimumTapTarget)
+                        Button("Create a plan", systemImage: "plus") {
+                            isCreatingPlan = true
+                        }
+                        .accessibilityIdentifier("createPlan")
+                        .frame(minWidth: FocusSpacing.minimumTapTarget, minHeight: FocusSpacing.minimumTapTarget)
                     }
                 } else {
                     List {
-                        ForEach(items) { item in
-                            Text(item.createdAt, format: .dateTime.month(.abbreviated).day().hour().minute())
+                        if !availability.allowsGeneration {
+                            Section {
+                                AvailabilityNotice(availability: availability)
+                            }
                         }
-                        .onDelete(perform: deleteItems)
+
+                        if let nextTask {
+                            Section("Up next") {
+                                TaskRowView(task: nextTask)
+                                Button("Start focus") {
+                                    timer.startFocus(task: nextTask)
+                                }
+                                .accessibilityIdentifier("startFocus")
+                                .disabled(timer.engine.phase == .runningFocus || timer.engine.phase == .pausedFocus)
+                            }
+                        }
+
+                        if upcomingTasks.count > 1 {
+                            Section("Later") {
+                                ForEach(upcomingTasks.dropFirst()) { task in
+                                    TaskRowView(task: task)
+                                }
+                            }
+                        }
                     }
                     .scrollContentBackground(.hidden)
                 }
@@ -32,24 +76,23 @@ struct TodayView: View {
             .navigationTitle("Today")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Create a sample item", systemImage: "plus", action: addSampleItem)
+                    Button("Create a plan", systemImage: "plus") {
+                        isCreatingPlan = true
+                    }
                 }
             }
-        }
-    }
-
-    private func addSampleItem() {
-        modelContext.insert(FocusItem())
-    }
-
-    private func deleteItems(at offsets: IndexSet) {
-        for index in offsets {
-            modelContext.delete(items[index])
+            .sheet(isPresented: $isCreatingPlan) {
+                PlanEditorView()
+            }
+            .navigationDestination(for: GoalPlan.self) { plan in
+                PlanDetailView(plan: plan)
+            }
         }
     }
 }
 
 #Preview {
     TodayView()
-        .modelContainer(for: FocusItem.self, inMemory: true)
+        .environment(FocusTimerController())
+        .modelContainer(try! EaseFocusStore.inMemoryContainer())
 }
