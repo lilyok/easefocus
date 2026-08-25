@@ -52,3 +52,16 @@ nonisolated enum FoundationModelAvailabilityCopy {
         }
     }
 }
+
+nonisolated enum FoundationModelClientErrorCopy {
+    static func message(for error: FoundationModelClientError) -> String {
+        switch error {
+        case .unavailable(let availability):
+            return FoundationModelAvailabilityCopy.message(for: availability)
+        case .validation:
+            return "The generated draft was not usable. You can still create a plan manually."
+        case .generationFailed:
+            return "Generation failed. You can still create a plan manually."
+        }
+    }
+}

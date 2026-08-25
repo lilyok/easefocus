@@ -8,7 +8,8 @@ import SwiftData
 ///
 /// EaseFocus keeps the old App Store bundle ID (`lil.pomodoro`) so it can
 /// update the existing listing. Runtime Core Data migration from the old
-/// Pomodoro store is intentionally omitted for the first release.
+/// Pomodoro store is intentionally omitted for the first release. The new
+/// SwiftData file is `easefocus.store`; `pomodoro.sqlite` is left untouched.
 @Model
 final class FocusItem {
     var createdAt: Date

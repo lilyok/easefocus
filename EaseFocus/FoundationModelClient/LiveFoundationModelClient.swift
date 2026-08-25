@@ -31,19 +31,20 @@ nonisolated struct LiveFoundationModelClient: FoundationModelGenerating {
         }
 
         let session = LanguageModelSession {
-            """
-            You create short, concrete focus plans.
-            Output in the user's language.
-            Do not include URLs, domain names, or citations.
-            Do not claim you searched the web.
-            Tasks must be achievable and specific.
-            """
+            DraftPlanPrompt.instructions(locale: locale)
         }
 
-        let generated = try await session.respond(
-            to: prompt,
-            generating: GenerableDraftPlan.self
-        ).content
+        let generated: GenerableDraftPlan
+        do {
+            generated = try await session.respond(
+                to: prompt,
+                generating: GenerableDraftPlan.self
+            ).content
+        } catch let error as FoundationModelClientError {
+            throw error
+        } catch {
+            throw FoundationModelClientError.generationFailed
+        }
 
         let blueprint = DraftPlanBlueprint(
             title: generated.title,

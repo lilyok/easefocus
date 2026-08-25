@@ -18,6 +18,8 @@ jobs:
       - name: Show Xcode
         run: xcodebuild -version
 
+      # iOS is build-only. Unit tests run on macOS; UI tests are skipped.
+      # Add iOS Simulator tests once a named destination is stable in CI.
       - name: Build iOS
         run: |
           xcodebuild \

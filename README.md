@@ -22,7 +22,7 @@ macOS is included as a second destination on the same app target so the project 
 
 EaseFocus updates the existing Pomodoro App Store listing. The bundle identifier stays `lil.pomodoro`.
 
-The first release does **not** import the old Core Data store. Existing users who update will not see historical goals or Pomodoro counts until a later, explicit migration if we decide to add one.
+The first release does **not** import the old Core Data store. Existing users who update will not see historical goals or Pomodoro counts until a later, explicit migration if we decide to add one. The new SwiftData file is `easefocus.store`; the legacy `pomodoro.sqlite` file is left untouched.
 
 ## Privacy
 

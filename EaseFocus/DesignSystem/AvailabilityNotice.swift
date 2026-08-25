@@ -1,22 +1,22 @@
 import SwiftUI
 
 struct AvailabilityNotice: View {
-    let title: String
-    let message: String
+    let availability: FoundationModelAvailability
 
     var body: some View {
-        ContentUnavailableView {
-            Label(title, systemImage: "sparkles")
-        } description: {
-            Text(message)
+        VStack(alignment: .leading, spacing: FocusSpacing.small) {
+            Text(FoundationModelAvailabilityCopy.title(for: availability))
+                .font(FocusTypography.title)
+                .foregroundStyle(Color.focusPrimary)
+            Text(FoundationModelAvailabilityCopy.message(for: availability))
+                .font(FocusTypography.body)
         }
-        .foregroundStyle(Color.focusPrimary)
+        .frame(minHeight: FocusSpacing.minimumTapTarget, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
 }
 
 #Preview {
-    AvailabilityNotice(
-        title: "Apple Intelligence unavailable",
-        message: "You can still create a plan manually."
-    )
+    AvailabilityNotice(availability: .unavailable(.deviceNotEligible))
+        .padding()
 }

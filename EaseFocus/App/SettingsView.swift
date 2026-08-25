@@ -18,11 +18,7 @@ struct SettingsView: View {
         NavigationStack {
             List {
                 Section("Apple Intelligence") {
-                    Text(FoundationModelAvailabilityCopy.title(for: availability))
-                        .font(FocusTypography.title)
-                        .foregroundStyle(Color.focusPrimary)
-                    Text(FoundationModelAvailabilityCopy.message(for: availability))
-                        .font(FocusTypography.body)
+                    AvailabilityNotice(availability: availability)
                     Button("Generate a sample draft") {
                         Task { await generateSampleDraft() }
                     }
@@ -76,9 +72,12 @@ struct SettingsView: View {
                 prompt: "Create a 3-task beginner plan for clearer English pronunciation. No URLs.",
                 locale: locale
             )
+        } catch let error as FoundationModelClientError {
+            draft = nil
+            generationError = FoundationModelClientErrorCopy.message(for: error)
         } catch {
             draft = nil
-            generationError = "Generation failed. You can still create a plan manually."
+            generationError = FoundationModelClientErrorCopy.message(for: .generationFailed)
         }
     }
 

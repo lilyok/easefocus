@@ -20,4 +20,24 @@ struct FoundationModelAvailabilityCopyTests {
         #expect(draft.tasks.count == 3)
         #expect(client.currentAvailability(locale: Locale(identifier: "en")) == .available)
     }
+
+    @Test
+    func mapsClientErrorsOntoExistingAvailabilityCopy() {
+        let unavailable = FoundationModelClientError.unavailable(.unavailable(.deviceNotEligible))
+
+        #expect(
+            FoundationModelClientErrorCopy.message(for: unavailable)
+                == FoundationModelAvailabilityCopy.message(for: .unavailable(.deviceNotEligible))
+        )
+        #expect(FoundationModelClientErrorCopy.message(for: .validation(.emptyTitle)).contains("not usable"))
+        #expect(FoundationModelClientErrorCopy.message(for: .generationFailed).contains("Generation failed"))
+    }
+
+    @Test
+    func namesTheOutputLanguageInGenerationInstructions() {
+        let instructions = DraftPlanPrompt.instructions(locale: Locale(identifier: "es-ES"))
+
+        #expect(instructions.contains("es-ES"))
+        #expect(!instructions.contains("the user's language"))
+    }
 }
