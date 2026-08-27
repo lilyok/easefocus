@@ -4,6 +4,7 @@ struct SettingsView: View {
     @Environment(\.openURL) private var openURL
     @Environment(\.foundationModelClient) private var foundationModelClient
     @Environment(\.locale) private var locale
+    @Environment(FocusTimerController.self) private var timer
 
     @State private var draft: DraftPlanBlueprint?
     @State private var generationError: String?
@@ -17,6 +18,13 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("Timer") {
+                    durationStepper("Focus minutes", seconds: focusSecondsBinding)
+                    durationStepper("Short break", seconds: shortBreakBinding)
+                    durationStepper("Long break", seconds: longBreakBinding)
+                    Toggle("Start breaks automatically", isOn: autoBreakBinding)
+                }
+
                 Section("Apple Intelligence") {
                     AvailabilityNotice(availability: availability)
                     Button("Generate a sample draft") {
@@ -62,6 +70,43 @@ struct SettingsView: View {
         }
     }
 
+    private var focusSecondsBinding: Binding<Int> {
+        Binding(
+            get: { timer.settings.focusSeconds },
+            set: { timer.settings.focusSeconds = $0 }
+        )
+    }
+
+    private var shortBreakBinding: Binding<Int> {
+        Binding(
+            get: { timer.settings.shortBreakSeconds },
+            set: { timer.settings.shortBreakSeconds = $0 }
+        )
+    }
+
+    private var longBreakBinding: Binding<Int> {
+        Binding(
+            get: { timer.settings.longBreakSeconds },
+            set: { timer.settings.longBreakSeconds = $0 }
+        )
+    }
+
+    private var autoBreakBinding: Binding<Bool> {
+        Binding(
+            get: { timer.settings.startBreaksAutomatically },
+            set: { timer.settings.startBreaksAutomatically = $0 }
+        )
+    }
+
+    private func durationStepper(_ title: String, seconds: Binding<Int>) -> some View {
+        Stepper(value: Binding(
+            get: { seconds.wrappedValue / 60 },
+            set: { seconds.wrappedValue = max(60, $0 * 60) }
+        ), in: 1...60) {
+            Text("\(title): \(seconds.wrappedValue / 60)")
+        }
+    }
+
     private func generateSampleDraft() async {
         generationError = nil
         isGenerating = true
@@ -91,5 +136,6 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
+        .environment(FocusTimerController())
         .environment(\.foundationModelClient, PreviewFoundationModelClient())
 }

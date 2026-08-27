@@ -6,7 +6,7 @@ The app uses Apple’s Foundation Models framework to create personalized plans 
 
 ## Status
 
-Phase 0 foundation: multiplatform Xcode project, module folders, design tokens, CI, a Foundation Models availability prototype, and Google-search privacy copy.
+Phase 1: manual plans, task editing, a testable focus timer with notifications, and session history. Apple Intelligence remains optional.
 
 ## Platform
 

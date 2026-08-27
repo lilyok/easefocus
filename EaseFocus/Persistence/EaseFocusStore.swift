@@ -1,25 +1,67 @@
 import Foundation
 import SwiftData
 
-/// Owns the SwiftData store location for EaseFocus.
-///
-/// The old Pomodoro app keeps `pomodoro.sqlite` in Application Support via
-/// `NSPersistentCloudKitContainer(name: "pomodoro")`. This store uses a
-/// different filename and never opens, moves, or deletes that file.
 nonisolated enum EaseFocusStore {
     static let storeFileName = "easefocus.store"
     static let legacyCoreDataFileName = "pomodoro.sqlite"
 
+    /// One-time cutover from the Phase 0 `FocusItem` schema.
+    /// Do not keep this once `easefocus.store` holds real user plans.
+    /// Never deletes `pomodoro.sqlite`.
+    static let allowsDestructiveSchemaCutover = true
+
+    static var productStoreFileNames: [String] {
+        [storeFileName, storeFileName + "-wal", storeFileName + "-shm"]
+    }
+
+    static var schema: Schema {
+        Schema([GoalPlan.self, PlanTask.self, FocusSession.self])
+    }
+
     static func makeContainer() throws -> ModelContainer {
-        let schema = Schema([FocusItem.self])
-        let directory = try FileManager.default.url(
+        do {
+            return try openContainer()
+        } catch {
+            guard allowsDestructiveSchemaCutover else {
+                throw error
+            }
+            try removeProductStoreFiles()
+            return try openContainer()
+        }
+    }
+
+    static func inMemoryContainer() throws -> ModelContainer {
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        return try ModelContainer(for: schema, configurations: [configuration])
+    }
+
+    private static func openContainer() throws -> ModelContainer {
+        let storeURL = try productStoreURL()
+        let configuration = ModelConfiguration(schema: schema, url: storeURL)
+        return try ModelContainer(for: schema, configurations: [configuration])
+    }
+
+    static func productStoreURL() throws -> URL {
+        try applicationSupportDirectory().appending(path: storeFileName, directoryHint: .notDirectory)
+    }
+
+    static func removeProductStoreFiles() throws {
+        let directory = try applicationSupportDirectory()
+        let fileManager = FileManager.default
+        for name in productStoreFileNames {
+            let url = directory.appending(path: name, directoryHint: .notDirectory)
+            if fileManager.fileExists(atPath: url.path) {
+                try fileManager.removeItem(at: url)
+            }
+        }
+    }
+
+    private static func applicationSupportDirectory() throws -> URL {
+        try FileManager.default.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,
             appropriateFor: nil,
             create: true
         )
-        let storeURL = directory.appending(path: storeFileName, directoryHint: .notDirectory)
-        let configuration = ModelConfiguration(schema: schema, url: storeURL)
-        return try ModelContainer(for: schema, configurations: [configuration])
     }
 }
