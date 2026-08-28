@@ -38,16 +38,15 @@ final class FocusTimerController {
     func attach(modelContext: ModelContext, now: Date = .now) {
         self.modelContext = modelContext
         closeDanglingSessions(now: now)
-        apply(engine.tick(now: now), now: now)
+        var events = engine.tick(now: now)
+        if events.isEmpty, engine.isRunning, let periodEndsAt = engine.periodEndsAt {
+            events.append(.shouldScheduleNotification(periodEndsAt))
+        }
+        apply(events, now: now)
     }
 
     func startFocus(task: PlanTask?, now: Date = .now) {
         apply(engine.startFocus(taskID: task?.id, now: now), now: now)
-        if let task {
-            task.status = .active
-            task.updatedAt = now
-        }
-        save()
     }
 
     func pause(now: Date = .now) {
@@ -85,6 +84,8 @@ final class FocusTimerController {
                 let session = FocusSession(startedAt: startedAt, plannedDurationSeconds: planned)
                 if let taskID, let task = task(withID: taskID) {
                     session.task = task
+                    task.status = .active
+                    task.updatedAt = startedAt
                 }
                 modelContext?.insert(session)
                 openSession = session
@@ -92,9 +93,11 @@ final class FocusTimerController {
                 openSession?.finish(outcome: .completed, at: endedAt, elapsedSeconds: elapsed)
                 openSession = nil
             case .didCancelFocus(let elapsed, let endedAt):
+                revertActiveTask(at: endedAt)
                 openSession?.finish(outcome: .cancelled, at: endedAt, elapsedSeconds: elapsed)
                 openSession = nil
             case .didInterruptFocus(let elapsed, let endedAt):
+                revertActiveTask(at: endedAt)
                 openSession?.finish(outcome: .interrupted, at: endedAt, elapsedSeconds: elapsed)
                 openSession = nil
             case .didStartBreak, .didCompleteBreak:
@@ -121,16 +124,29 @@ final class FocusTimerController {
                 openSession = session
             } else {
                 session.finish(outcome: .interrupted, at: now, elapsedSeconds: session.elapsedSeconds)
+                revertTask(session.task, at: now)
             }
         }
+    }
+
+    private func revertActiveTask(at date: Date) {
+        revertTask(openSession?.task, at: date)
+    }
+
+    private func revertTask(_ task: PlanTask?, at date: Date) {
+        guard let task, task.status == .active else {
+            return
+        }
+        task.status = .pending
+        task.updatedAt = date
     }
 
     private func task(withID id: UUID) -> PlanTask? {
         guard let modelContext else {
             return nil
         }
-        let descriptor = FetchDescriptor<PlanTask>(predicate: #Predicate { $0.id == id })
-        return try? modelContext.fetch(descriptor).first
+        let descriptor = FetchDescriptor<PlanTask>()
+        return (try? modelContext.fetch(descriptor))?.first { $0.id == id }
     }
 
     private func persistEngine() {

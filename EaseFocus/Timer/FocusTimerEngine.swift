@@ -52,6 +52,10 @@ nonisolated struct FocusTimerEngine: Equatable, Codable, Sendable {
         phase == .runningFocus || phase == .pausedFocus || phase == .completed
     }
 
+    var canStartFocus: Bool {
+        phase == .idle || phase == .completed
+    }
+
     func remainingSeconds(at now: Date) -> Int {
         if let periodEndsAt, isRunning {
             return max(0, Int(periodEndsAt.timeIntervalSince(now).rounded(.down)))

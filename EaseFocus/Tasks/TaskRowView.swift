@@ -3,6 +3,7 @@ import SwiftUI
 struct TaskRowView: View {
     let task: PlanTask
     var onStart: (() -> Void)?
+    var isStartEnabled: Bool = true
 
     var body: some View {
         HStack(alignment: .center, spacing: FocusSpacing.medium) {
@@ -20,6 +21,7 @@ struct TaskRowView: View {
             Spacer()
             if let onStart, task.status != .completed {
                 Button("Start", action: onStart)
+                    .disabled(!isStartEnabled)
             }
         }
         .frame(minHeight: FocusSpacing.minimumTapTarget)
