@@ -57,7 +57,7 @@ struct TodayView: View {
                                     timer.startFocus(task: nextTask)
                                 }
                                 .accessibilityIdentifier("startFocus")
-                                .disabled(timer.engine.phase == .runningFocus || timer.engine.phase == .pausedFocus)
+                                .disabled(!timer.engine.canStartFocus)
                             }
                         }
 

@@ -19,7 +19,10 @@ struct PlanDetailView: View {
             }
             Section("Tasks") {
                 ForEach(plan.orderedTasks) { task in
-                    EditableTaskRow(task: task) {
+                    EditableTaskRow(
+                        task: task,
+                        isStartEnabled: timer.engine.canStartFocus
+                    ) {
                         timer.startFocus(task: task)
                     }
                     .swipeActions(edge: .trailing) {
@@ -101,11 +104,12 @@ struct PlanDetailView: View {
 
 private struct EditableTaskRow: View {
     @Bindable var task: PlanTask
+    var isStartEnabled: Bool
     var onStart: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: FocusSpacing.small) {
-            TaskRowView(task: task, onStart: onStart)
+            TaskRowView(task: task, onStart: onStart, isStartEnabled: isStartEnabled)
             if task.status != .completed {
                 Stepper(value: $task.estimatedPomodoros, in: DraftPlanValidator.pomodoroRange) {
                     Text("\(task.estimatedPomodoros) estimated sessions")
