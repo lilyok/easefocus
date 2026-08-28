@@ -46,7 +46,7 @@ final class FocusTimerController {
     }
 
     func startFocus(task: PlanTask?, now: Date = .now) {
-        apply(engine.startFocus(taskID: task?.id, now: now), now: now)
+        apply(engine.startFocus(taskID: task?.id, now: now), now: now, startedTask: task)
     }
 
     func pause(now: Date = .now) {
@@ -77,12 +77,12 @@ final class FocusTimerController {
         _ = await notifications.requestAuthorization()
     }
 
-    private func apply(_ events: [FocusTimerEvent], now: Date) {
+    private func apply(_ events: [FocusTimerEvent], now: Date, startedTask: PlanTask? = nil) {
         for event in events {
             switch event {
             case .didStartFocus(let taskID, let planned, let startedAt):
                 let session = FocusSession(startedAt: startedAt, plannedDurationSeconds: planned)
-                if let taskID, let task = task(withID: taskID) {
+                if let task = startedTask ?? taskID.flatMap(task(withID:)) {
                     session.task = task
                     task.status = .active
                     task.updatedAt = startedAt
@@ -90,6 +90,7 @@ final class FocusTimerController {
                 modelContext?.insert(session)
                 openSession = session
             case .didCompleteFocus(let elapsed, let endedAt):
+                revertActiveTask(at: endedAt)
                 openSession?.finish(outcome: .completed, at: endedAt, elapsedSeconds: elapsed)
                 openSession = nil
             case .didCancelFocus(let elapsed, let endedAt):
@@ -145,8 +146,11 @@ final class FocusTimerController {
         guard let modelContext else {
             return nil
         }
-        let descriptor = FetchDescriptor<PlanTask>()
-        return (try? modelContext.fetch(descriptor))?.first { $0.id == id }
+        let matchID = id
+        let descriptor = FetchDescriptor<PlanTask>(
+            predicate: #Predicate<PlanTask> { $0.id == matchID }
+        )
+        return try? modelContext.fetch(descriptor).first
     }
 
     private func persistEngine() {

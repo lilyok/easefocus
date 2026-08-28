@@ -30,8 +30,7 @@ struct FocusTimerControllerTests {
     @Test
     @MainActor
     func restoresSavedSettingsOnRelaunch() {
-        let suiteName = "easefocus.tests.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
+        let (defaults, suiteName) = uniqueDefaults()
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
         let first = FocusTimerController(
@@ -64,9 +63,11 @@ struct FocusTimerControllerTests {
         context.insert(GoalPlan(title: "Plan", tasks: [first, second]))
         try context.save()
 
+        let (defaults, suiteName) = uniqueDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
         let controller = FocusTimerController(
             notifications: SilentNotifications(),
-            defaults: UserDefaults(suiteName: "easefocus.tests.\(UUID().uuidString)")!
+            defaults: defaults
         )
         controller.attach(modelContext: context)
 
@@ -89,9 +90,11 @@ struct FocusTimerControllerTests {
         context.insert(GoalPlan(title: "Plan", tasks: [first]))
         try context.save()
 
+        let (defaults, suiteName) = uniqueDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
         let controller = FocusTimerController(
             notifications: SilentNotifications(),
-            defaults: UserDefaults(suiteName: "easefocus.tests.\(UUID().uuidString)")!
+            defaults: defaults
         )
         controller.attach(modelContext: context)
         controller.startFocus(task: first)
@@ -103,9 +106,34 @@ struct FocusTimerControllerTests {
 
     @Test
     @MainActor
+    func revertsTheTaskWhenFocusCompletes() throws {
+        let container = try EaseFocusStore.inMemoryContainer()
+        let context = container.mainContext
+        let first = PlanTask(title: "One", position: 0)
+        context.insert(GoalPlan(title: "Plan", tasks: [first]))
+        try context.save()
+
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let (defaults, suiteName) = uniqueDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let controller = FocusTimerController(
+            settings: FocusTimerSettings(focusSeconds: 60),
+            notifications: SilentNotifications(),
+            defaults: defaults
+        )
+        controller.attach(modelContext: context, now: start)
+        controller.startFocus(task: first, now: start)
+        #expect(first.status == .active)
+
+        controller.tick(now: start.addingTimeInterval(60))
+        #expect(first.status == .pending)
+        #expect(controller.engine.phase == .completed)
+    }
+
+    @Test
+    @MainActor
     func reschedulesNotificationWhenRestoringARunningTimer() async throws {
-        let suiteName = "easefocus.tests.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
+        let (defaults, suiteName) = uniqueDefaults()
         defer { defaults.removePersistentDomain(forName: suiteName) }
         let start = Date(timeIntervalSince1970: 1_700_000_000)
         let focusSeconds = 25 * 60
@@ -133,6 +161,11 @@ struct FocusTimerControllerTests {
         let scheduled = try await waitForScheduledDate(in: recorder)
         #expect(relaunched.engine.phase == .runningFocus)
         #expect(scheduled == start.addingTimeInterval(TimeInterval(focusSeconds)))
+    }
+
+    private func uniqueDefaults() -> (UserDefaults, String) {
+        let suiteName = "easefocus.tests.\(UUID().uuidString)"
+        return (UserDefaults(suiteName: suiteName)!, suiteName)
     }
 
     private func waitForScheduledDate(
