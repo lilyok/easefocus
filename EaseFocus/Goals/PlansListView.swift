@@ -2,6 +2,8 @@ import SwiftData
 import SwiftUI
 
 struct PlansListView: View {
+    @Environment(\.locale) private var locale
+    @Environment(\.foundationModelClient) private var foundationModelClient
     @Query(sort: \GoalPlan.updatedAt, order: .reverse) private var plans: [GoalPlan]
     @State private var isCreatingPlan = false
 
@@ -64,7 +66,7 @@ struct PlansListView: View {
                 }
             }
             .sheet(isPresented: $isCreatingPlan) {
-                PlanEditorView()
+                CreatePlanView(allowsGeneration: foundationModelClient.currentAvailability(locale: locale).allowsGeneration)
             }
         }
     }
@@ -87,5 +89,6 @@ private struct PlanRowView: View {
 
 #Preview {
     PlansListView()
+        .environment(\.foundationModelClient, PreviewFoundationModelClient())
         .modelContainer(try! EaseFocusStore.inMemoryContainer())
 }

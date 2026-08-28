@@ -58,10 +58,27 @@ nonisolated enum FoundationModelClientErrorCopy {
         switch error {
         case .unavailable(let availability):
             return FoundationModelAvailabilityCopy.message(for: availability)
-        case .validation:
-            return "The generated draft was not usable. You can still create a plan manually."
+        case .validation(let reason):
+            return validationMessage(for: reason)
         case .generationFailed:
             return "Generation failed. You can still create a plan manually."
+        case .cancelled:
+            return ""
+        }
+    }
+
+    static func validationMessage(for error: DraftPlanValidationError) -> String {
+        switch error {
+        case .emptyTitle, .emptyTaskTitle, .noTasks:
+            return "The generated draft was missing required titles. You can generate again or create a plan manually."
+        case .tooManyTasks:
+            return "The generated draft had too many tasks. You can generate again or create a plan manually."
+        case .duplicateTask:
+            return "The generated draft repeated a task. You can generate again or create a plan manually."
+        case .invalidPomodoroEstimate:
+            return "The generated draft had an invalid session estimate. You can generate again or create a plan manually."
+        case .urlLikeContent:
+            return "The generated draft included a URL. You can generate again or create a plan manually."
         }
     }
 }

@@ -82,7 +82,7 @@ struct TodayView: View {
                 }
             }
             .sheet(isPresented: $isCreatingPlan) {
-                PlanEditorView()
+                CreatePlanView(allowsGeneration: availability.allowsGeneration)
             }
             .navigationDestination(for: GoalPlan.self) { plan in
                 PlanDetailView(plan: plan)
@@ -94,5 +94,6 @@ struct TodayView: View {
 #Preview {
     TodayView()
         .environment(FocusTimerController())
+        .environment(\.foundationModelClient, PreviewFoundationModelClient())
         .modelContainer(try! EaseFocusStore.inMemoryContainer())
 }

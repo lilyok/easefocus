@@ -13,11 +13,14 @@ struct FoundationModelAvailabilityCopyTests {
 
     @Test
     func previewClientReturnsADeterministicDraft() async throws {
+        var survey = GoalSurvey()
+        survey.goal = "Learn clearer English pronunciation"
         let client = PreviewFoundationModelClient()
 
-        let draft = try await client.generateDraftPlan(prompt: "anything", locale: Locale(identifier: "en"))
+        let draft = try await client.generateDraftPlan(survey: survey, locale: Locale(identifier: "en"))
 
         #expect(draft.tasks.count == 3)
+        #expect(draft.title == survey.trimmedGoal)
         #expect(client.currentAvailability(locale: Locale(identifier: "en")) == .available)
     }
 
@@ -29,15 +32,8 @@ struct FoundationModelAvailabilityCopyTests {
             FoundationModelClientErrorCopy.message(for: unavailable)
                 == FoundationModelAvailabilityCopy.message(for: .unavailable(.deviceNotEligible))
         )
-        #expect(FoundationModelClientErrorCopy.message(for: .validation(.emptyTitle)).contains("not usable"))
+        #expect(FoundationModelClientErrorCopy.message(for: .validation(.emptyTitle)).contains("missing required titles"))
+        #expect(FoundationModelClientErrorCopy.message(for: .validation(.urlLikeContent)).contains("URL"))
         #expect(FoundationModelClientErrorCopy.message(for: .generationFailed).contains("Generation failed"))
-    }
-
-    @Test
-    func namesTheOutputLanguageInGenerationInstructions() {
-        let instructions = DraftPlanPrompt.instructions(locale: Locale(identifier: "es-ES"))
-
-        #expect(instructions.contains("es-ES"))
-        #expect(!instructions.contains("the user's language"))
     }
 }

@@ -13,6 +13,7 @@ final class PlanTask {
     var updatedAt: Date
     var completedAt: Date?
     var plan: GoalPlan?
+    var searchQuery: String?
 
     @Relationship(deleteRule: .cascade, inverse: \FocusSession.task)
     var sessions: [FocusSession]
@@ -27,7 +28,8 @@ final class PlanTask {
         createdAt: Date = .now,
         updatedAt: Date = .now,
         completedAt: Date? = nil,
-        sessions: [FocusSession] = []
+        sessions: [FocusSession] = [],
+        searchQuery: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -39,6 +41,7 @@ final class PlanTask {
         self.updatedAt = updatedAt
         self.completedAt = completedAt
         self.sessions = sessions
+        self.searchQuery = searchQuery
     }
 
     var completedSessionCount: Int {
