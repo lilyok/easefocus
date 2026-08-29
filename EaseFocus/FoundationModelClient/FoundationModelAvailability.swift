@@ -15,6 +15,24 @@ nonisolated enum FoundationModelAvailability: Equatable, Sendable {
     var allowsGeneration: Bool {
         self == .available
     }
+
+    var showsPlanSurvey: Bool {
+        switch self {
+        case .unavailable(.deviceNotEligible):
+            false
+        default:
+            true
+        }
+    }
+
+    var canOpenAppleIntelligenceSettings: Bool {
+        switch self {
+        case .unavailable(.appleIntelligenceNotEnabled), .unavailable(.modelNotReady):
+            true
+        default:
+            false
+        }
+    }
 }
 
 nonisolated enum FoundationModelAvailabilityCopy {
@@ -42,9 +60,13 @@ nonisolated enum FoundationModelAvailabilityCopy {
         case .unavailable(.deviceNotEligible):
             return "You can still create goals and tasks manually, and run the focus timer."
         case .unavailable(.appleIntelligenceNotEnabled):
-            return "Turn on Apple Intelligence in Settings if you want generated plans. Manual planning still works."
+            #if os(macOS)
+            return "Turn it on in System Settings → Apple Intelligence & Siri if you want a generated plan from a short survey. Manual planning still works."
+            #else
+            return "Turn it on in Settings → Apple Intelligence & Siri if you want a generated plan from a short survey. Manual planning still works."
+            #endif
         case .unavailable(.modelNotReady):
-            return "Wait for the model to finish downloading, or create a plan manually."
+            return "Wait for the model to finish downloading in Apple Intelligence & Siri, or create a plan manually."
         case .unavailable(.unknown):
             return "You can still create a plan manually and use the timer."
         case .localeUnsupported:
@@ -58,10 +80,27 @@ nonisolated enum FoundationModelClientErrorCopy {
         switch error {
         case .unavailable(let availability):
             return FoundationModelAvailabilityCopy.message(for: availability)
-        case .validation:
-            return "The generated draft was not usable. You can still create a plan manually."
+        case .validation(let reason):
+            return validationMessage(for: reason)
         case .generationFailed:
             return "Generation failed. You can still create a plan manually."
+        case .cancelled:
+            return ""
+        }
+    }
+
+    static func validationMessage(for error: DraftPlanValidationError) -> String {
+        switch error {
+        case .emptyTitle, .emptyTaskTitle, .noTasks:
+            return "The generated draft was missing required titles. You can generate again or create a plan manually."
+        case .tooManyTasks:
+            return "The generated draft had too many tasks. You can generate again or create a plan manually."
+        case .duplicateTask:
+            return "The generated draft repeated a task. You can generate again or create a plan manually."
+        case .invalidPomodoroEstimate:
+            return "The generated draft had an invalid session estimate. You can generate again or create a plan manually."
+        case .urlLikeContent:
+            return "The generated draft included a URL. You can generate again or create a plan manually."
         }
     }
 }

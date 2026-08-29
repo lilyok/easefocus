@@ -4,5 +4,11 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<key>com.apple.security.temporary-exception.files.home-relative.path.read-only</key>
+	<array>
+		<string>Library/Application Support/easefocus.store</string>
+		<string>Library/Application Support/easefocus.store-wal</string>
+		<string>Library/Application Support/easefocus.store-shm</string>
+	</array>
 </dict>
 </plist>

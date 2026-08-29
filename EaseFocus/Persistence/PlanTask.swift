@@ -13,6 +13,7 @@ final class PlanTask {
     var updatedAt: Date
     var completedAt: Date?
     var plan: GoalPlan?
+    var searchQuery: String?
 
     @Relationship(deleteRule: .cascade, inverse: \FocusSession.task)
     var sessions: [FocusSession]
@@ -27,7 +28,8 @@ final class PlanTask {
         createdAt: Date = .now,
         updatedAt: Date = .now,
         completedAt: Date? = nil,
-        sessions: [FocusSession] = []
+        sessions: [FocusSession] = [],
+        searchQuery: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -39,15 +41,34 @@ final class PlanTask {
         self.updatedAt = updatedAt
         self.completedAt = completedAt
         self.sessions = sessions
+        self.searchQuery = searchQuery
     }
 
     var completedSessionCount: Int {
         sessions.filter { $0.outcome == .completed }.count
     }
 
+    var brokenSessionCount: Int {
+        sessions.filter { $0.outcome?.isBroken == true }.count
+    }
+
     func markCompleted(at date: Date = .now) {
         status = .completed
         completedAt = date
         updatedAt = date
+    }
+
+    func markPending(at date: Date = .now) {
+        status = .pending
+        completedAt = nil
+        updatedAt = date
+    }
+
+    func toggleCompletion(at date: Date = .now) {
+        if status == .completed {
+            markPending(at: date)
+        } else {
+            markCompleted(at: date)
+        }
     }
 }

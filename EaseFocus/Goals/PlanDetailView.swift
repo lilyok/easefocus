@@ -7,6 +7,7 @@ struct PlanDetailView: View {
     @Environment(FocusTimerController.self) private var timer
     @State private var newTaskTitle = ""
     @State private var newTaskEstimate = 1
+    @State private var taskPendingRemoval: PlanTask?
 
     var body: some View {
         List {
@@ -21,19 +22,25 @@ struct PlanDetailView: View {
                 ForEach(plan.orderedTasks) { task in
                     EditableTaskRow(
                         task: task,
-                        isStartEnabled: timer.engine.canStartFocus
-                    ) {
-                        timer.startFocus(task: task)
-                    }
-                    .swipeActions(edge: .trailing) {
-                        if task.status != .completed {
-                            Button("Complete") {
-                                task.markCompleted()
-                                plan.updatedAt = .now
-                            }
-                            .tint(Color.focusSuccess)
+                        isStartEnabled: timer.engine.canStartFocus,
+                        onMarkCompleted: {
+                            task.toggleCompletion()
+                            plan.updatedAt = .now
+                            try? modelContext.save()
+                        },
+                        onStart: {
+                            plan.moveTaskToFront(task)
+                            timer.startFocus(task: task)
                         }
-                    }
+                    )
+                    .taskRowActions(
+                        canStart: timer.engine.canStartFocus && task.status != .completed,
+                        onStart: {
+                            plan.moveTaskToFront(task)
+                            timer.startFocus(task: task)
+                        },
+                        onRemove: { taskPendingRemoval = task }
+                    )
                 }
                 .onMove(perform: moveTasks)
                 VStack(alignment: .leading, spacing: FocusSpacing.small) {
@@ -71,6 +78,25 @@ struct PlanDetailView: View {
         .onChange(of: plan.title) {
             plan.updatedAt = .now
         }
+        .confirmationDialog(
+            "Remove this task?",
+            isPresented: Binding(
+                get: { taskPendingRemoval != nil },
+                set: { if !$0 { taskPendingRemoval = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: taskPendingRemoval
+        ) { task in
+            Button("Remove", role: .destructive) {
+                modelContext.delete(task)
+                plan.updatedAt = .now
+                try? modelContext.save()
+                taskPendingRemoval = nil
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { task in
+            Text("“\(task.title)” will be deleted from the plan.")
+        }
     }
 
     private func addTask() {
@@ -105,11 +131,17 @@ struct PlanDetailView: View {
 private struct EditableTaskRow: View {
     @Bindable var task: PlanTask
     var isStartEnabled: Bool
+    var onMarkCompleted: () -> Void
     var onStart: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: FocusSpacing.small) {
-            TaskRowView(task: task, onStart: onStart, isStartEnabled: isStartEnabled)
+            TaskRowView(
+                task: task,
+                onMarkCompleted: onMarkCompleted,
+                onStart: onStart,
+                isStartEnabled: isStartEnabled
+            )
             if task.status != .completed {
                 Stepper(value: $task.estimatedPomodoros, in: DraftPlanValidator.pomodoroRange) {
                     Text("\(task.estimatedPomodoros) estimated sessions")

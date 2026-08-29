@@ -2,6 +2,9 @@ import SwiftData
 import SwiftUI
 
 struct PlansListView: View {
+    @Environment(\.locale) private var locale
+    @Environment(\.foundationModelClient) private var foundationModelClient
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \GoalPlan.updatedAt, order: .reverse) private var plans: [GoalPlan]
     @State private var isCreatingPlan = false
 
@@ -13,19 +16,29 @@ struct PlansListView: View {
         plans.filter { $0.status == .completed || $0.status == .archived }
     }
 
+    private var availability: FoundationModelAvailability {
+        foundationModelClient.currentAvailability(locale: locale)
+    }
+
     var body: some View {
         NavigationStack {
             Group {
                 if plans.isEmpty {
-                    ContentUnavailableView {
-                        Label("No plans yet", systemImage: "list.bullet.rectangle")
-                    } description: {
-                        Text("Create a manual plan. Generated plans can wait until Apple Intelligence is available.")
-                    } actions: {
-                        Button("Create a plan", systemImage: "plus") {
-                            isCreatingPlan = true
+                    VStack(spacing: FocusSpacing.large) {
+                        if !availability.allowsGeneration {
+                            AvailabilityNotice(availability: availability)
+                                .padding(.horizontal)
                         }
-                        .accessibilityIdentifier("createPlanFromPlans")
+                        ContentUnavailableView {
+                            Label("No plans yet", systemImage: "list.bullet.rectangle")
+                        } description: {
+                            Text("Create a manual plan. Generated plans can wait until Apple Intelligence is available.")
+                        } actions: {
+                            Button("Create a plan", systemImage: "plus") {
+                                isCreatingPlan = true
+                            }
+                            .accessibilityIdentifier("createPlanFromPlans")
+                        }
                     }
                 } else {
                     List {
@@ -64,7 +77,8 @@ struct PlansListView: View {
                 }
             }
             .sheet(isPresented: $isCreatingPlan) {
-                PlanEditorView()
+                CreatePlanView(availability: availability)
+                    .environment(\.modelContext, modelContext)
             }
         }
     }
@@ -87,5 +101,6 @@ private struct PlanRowView: View {
 
 #Preview {
     PlansListView()
+        .environment(\.foundationModelClient, PreviewFoundationModelClient())
         .modelContainer(try! EaseFocusStore.inMemoryContainer())
 }

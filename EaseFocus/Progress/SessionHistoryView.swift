@@ -11,6 +11,13 @@ struct SessionHistoryView: View {
         }
     }
 
+    private var brokenToday: [FocusSession] {
+        let startOfDay = Calendar.current.startOfDay(for: .now)
+        return sessions.filter { session in
+            session.outcome?.isBroken == true && session.startedAt >= startOfDay
+        }
+    }
+
     private var todayFocusSeconds: Int {
         completedToday.reduce(0) { $0 + $1.elapsedSeconds }
     }
@@ -22,12 +29,12 @@ struct SessionHistoryView: View {
                     ContentUnavailableView {
                         Label("No sessions yet", systemImage: "chart.line.uptrend.xyaxis")
                     } description: {
-                        Text("Completed focus sessions will show up here.")
+                        Text("Completed and broken focus sessions will show up here.")
                     }
                 } else {
                     List {
                         Section("Today") {
-                            Text("\(completedToday.count) completed · \(FocusDurationFormat.clock(todayFocusSeconds)) focused")
+                            Text("\(completedToday.count) completed · \(brokenToday.count) broken · \(FocusDurationFormat.clock(todayFocusSeconds)) focused")
                                 .font(FocusTypography.body)
                         }
                         Section("History") {
@@ -51,7 +58,7 @@ struct SessionHistoryView: View {
     }
 
     private func sessionDetail(_ session: FocusSession) -> String {
-        let outcome = session.outcome?.rawValue ?? "open"
+        let outcome = session.outcome?.progressTitle ?? "open"
         return "\(outcome) · \(FocusDurationFormat.clock(session.elapsedSeconds)) · \(session.startedAt.formatted(date: .abbreviated, time: .shortened))"
     }
 }

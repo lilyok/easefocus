@@ -8,8 +8,7 @@ nonisolated struct PreviewFoundationModelClient: FoundationModelGenerating {
         return availability
     }
 
-    func generateDraftPlan(prompt: String, locale: Locale) async throws -> DraftPlanBlueprint {
-        _ = prompt
+    func generateDraftPlan(survey: GoalSurvey, locale: Locale) async throws -> DraftPlanBlueprint {
         _ = locale
 
         let availability = currentAvailability(locale: .current)
@@ -17,8 +16,14 @@ nonisolated struct PreviewFoundationModelClient: FoundationModelGenerating {
             throw FoundationModelClientError.unavailable(availability)
         }
 
+        guard !Task.isCancelled else {
+            throw FoundationModelClientError.cancelled
+        }
+
+        let goal = survey.trimmedGoal
+        let title = goal.isEmpty ? "Learn clearer English pronunciation" : goal
         return DraftPlanBlueprint(
-            title: "Learn clearer English pronunciation",
+            title: title,
             summary: "A short practice plan you can run in focused sessions.",
             tasks: [
                 DraftTaskBlueprint(title: "Record yourself reading a short paragraph", estimatedPomodoros: 1, searchQuery: "beginner English pronunciation exercises"),

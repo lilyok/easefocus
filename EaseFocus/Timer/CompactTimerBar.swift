@@ -35,8 +35,10 @@ struct CompactTimerBar: View {
         switch timer.engine.phase {
         case .runningFocus, .runningBreak:
             Button("Pause") { timer.pause() }
+            Button("Cancel", role: .destructive) { timer.cancel() }
         case .pausedFocus, .pausedBreak:
             Button("Resume") { timer.resume() }
+            Button("Cancel", role: .destructive) { timer.cancel() }
         case .completed:
             Button("Break") { timer.startBreak() }
             Button("Skip") { timer.skipBreak() }

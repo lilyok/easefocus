@@ -404,9 +404,13 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EaseFocus-Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = EaseFocus;
 				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "EaseFocus notifies you when a focus session or break ends.";
+				INFOPLIST_KEY_NSUserNotificationAlertStyle = banner;
+				INFOPLIST_KEY_LSMultipleInstancesProhibited = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=macosx*]" = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -453,9 +457,13 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EaseFocus-Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = EaseFocus;
 				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "EaseFocus notifies you when a focus session or break ends.";
+				INFOPLIST_KEY_NSUserNotificationAlertStyle = banner;
+				INFOPLIST_KEY_LSMultipleInstancesProhibited = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=macosx*]" = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";

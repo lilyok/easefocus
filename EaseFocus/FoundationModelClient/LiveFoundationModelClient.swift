@@ -24,7 +24,11 @@ nonisolated struct LiveFoundationModelClient: FoundationModelGenerating {
         }
     }
 
-    func generateDraftPlan(prompt: String, locale: Locale) async throws -> DraftPlanBlueprint {
+    func generateDraftPlan(survey: GoalSurvey, locale: Locale) async throws -> DraftPlanBlueprint {
+        guard !Task.isCancelled else {
+            throw FoundationModelClientError.cancelled
+        }
+
         let availability = currentAvailability(locale: locale)
         guard availability.allowsGeneration else {
             throw FoundationModelClientError.unavailable(availability)
@@ -37,11 +41,20 @@ nonisolated struct LiveFoundationModelClient: FoundationModelGenerating {
         let generated: GenerableDraftPlan
         do {
             generated = try await session.respond(
-                to: prompt,
+                to: DraftPlanPrompt.userMessage(for: survey),
                 generating: GenerableDraftPlan.self
             ).content
+        } catch is CancellationError {
+            throw FoundationModelClientError.cancelled
         } catch {
+            if Task.isCancelled {
+                throw FoundationModelClientError.cancelled
+            }
             throw FoundationModelClientError.generationFailed
+        }
+
+        guard !Task.isCancelled else {
+            throw FoundationModelClientError.cancelled
         }
 
         let blueprint = DraftPlanBlueprint(

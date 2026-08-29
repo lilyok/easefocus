@@ -6,7 +6,7 @@ The app uses Apple’s Foundation Models framework to create personalized plans 
 
 ## Status
 
-Phase 1: manual plans, task editing, a testable focus timer with notifications, and session history. Apple Intelligence remains optional.
+Phase 2: survey, on-device generated drafts with review before save, plus the Phase 1 manual planner and timer. Apple Intelligence remains optional.
 
 ## Platform
 
