@@ -18,7 +18,7 @@ struct PlanDetailView: View {
                     set: { plan.details = $0.nilIfEmpty }
                 ), axis: .vertical)
             }
-            Section("Tasks") {
+            Section {
                 ForEach(plan.orderedTasks) { task in
                     let index = plan.orderedTasks.firstIndex(where: { $0.id == task.id }) ?? 0
                     EditableTaskRow(
@@ -61,6 +61,10 @@ struct PlanDetailView: View {
                             .font(FocusTypography.footnote)
                     }
                 }
+            } header: {
+                Text("Tasks")
+            } footer: {
+                Text("Use the arrow buttons to reorder saved tasks. Search queries are saved for external search in a future update.")
             }
         }
         .scrollContentBackground(.hidden)
@@ -164,6 +168,9 @@ private struct EditableTaskRow: View {
                 }
             }
             HStack {
+                Text("Order")
+                    .font(FocusTypography.footnote)
+                    .foregroundStyle(.secondary)
                 Spacer()
                 TaskReorderControls(
                     canMoveUp: canMoveUp,

@@ -9,25 +9,13 @@ nonisolated enum NotificationAccess: Equatable, Sendable {
     case denied
     case allowed
 
-    /// macOS can leave `authorizationStatus` as authorized after the user turns the app
-    /// off in Notifications settings. Delivery flags are the source of truth in that case.
-    static func from(
-        authorizationStatus: UNAuthorizationStatus,
-        alertSetting: UNNotificationSetting,
-        soundSetting: UNNotificationSetting,
-        notificationCenterSetting: UNNotificationSetting
-    ) -> NotificationAccess {
+    static func from(authorizationStatus: UNAuthorizationStatus) -> NotificationAccess {
         switch authorizationStatus {
         case .notDetermined:
             return .notDetermined
         case .denied:
             return .denied
         case .authorized, .provisional, .ephemeral:
-            let delivery = [alertSetting, soundSetting, notificationCenterSetting]
-            let supported = delivery.filter { $0 != .notSupported }
-            if !supported.isEmpty, supported.allSatisfy({ $0 == .disabled }) {
-                return .denied
-            }
             return .allowed
         @unknown default:
             return .denied
@@ -56,7 +44,7 @@ nonisolated enum NotificationAccessCopy {
             return "Turn on EaseFocus notifications in Settings to get an alert when a timer ends."
             #endif
         case .allowed:
-            return "EaseFocus will banner and sound when a focus session or break ends."
+            return "EaseFocus notifications are allowed. Alert style and sound follow your system settings."
         }
     }
 }
