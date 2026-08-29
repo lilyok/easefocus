@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GoalSurveyView: View {
     @Binding var survey: GoalSurvey
+    var availability: FoundationModelAvailability
     var errorMessage: String?
     var isGenerating: Bool
     var onGenerate: () -> Void
@@ -10,6 +11,12 @@ struct GoalSurveyView: View {
 
     var body: some View {
         Form {
+            if !availability.allowsGeneration {
+                Section {
+                    AvailabilityNotice(availability: availability)
+                }
+            }
+
             Section {
                 TextField("What do you want to achieve?", text: $survey.goal, axis: .vertical)
                 Text("This becomes the plan’s focus.")
@@ -86,7 +93,7 @@ struct GoalSurveyView: View {
                     ProgressView()
                 } else {
                     Button("Generate", action: onGenerate)
-                        .disabled(!survey.isReadyToGenerate)
+                        .disabled(!survey.isReadyToGenerate || !availability.allowsGeneration)
                         .accessibilityIdentifier("generatePlan")
                 }
             }
@@ -105,6 +112,7 @@ struct GoalSurveyView: View {
     NavigationStack {
         GoalSurveyView(
             survey: .constant(GoalSurvey()),
+            availability: .available,
             errorMessage: nil,
             isGenerating: false,
             onGenerate: {},

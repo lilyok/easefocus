@@ -3,8 +3,11 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var timer = FocusTimerController()
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(FocusTimerController.self) private var timer
     @State private var isShowingTimer = false
+    @AppStorage(FirstRunOnboarding.completedKey) private var didCompleteOnboarding = false
+    @State private var isShowingOnboarding = false
 
     var body: some View {
         TabView {
@@ -41,19 +44,35 @@ struct RootView: View {
             }
             .environment(timer)
         }
+        .sheet(isPresented: $isShowingOnboarding) {
+            FirstRunOnboardingView {
+                didCompleteOnboarding = true
+                isShowingOnboarding = false
+            }
+            .environment(timer)
+            .interactiveDismissDisabled()
+        }
         .onAppear {
             timer.attach(modelContext: modelContext)
+            Task { await timer.refreshNotificationAccess() }
+            if !didCompleteOnboarding {
+                isShowingOnboarding = true
+            }
         }
-        .task {
-            await timer.requestNotificationPermission()
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                Task { await timer.refreshNotificationAccess() }
+            }
         }
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
             timer.tick(now: date)
+            Task { await timer.refreshNotificationAccess() }
         }
     }
 }
 
 #Preview {
     RootView()
+        .environment(FocusTimerController())
         .modelContainer(try! EaseFocusStore.inMemoryContainer())
 }

@@ -19,8 +19,9 @@ struct FocusTimerEngineTests {
 
         let end = start.addingTimeInterval(60)
         let endEvents = engine.tick(now: end)
-        #expect(engine.phase == .completed)
+        #expect(engine.phase == .runningBreak)
         #expect(endEvents.contains(.didCompleteFocus(elapsedSeconds: 60, endedAt: end)))
+        #expect(endEvents.contains(.didStartBreak(isLong: false, plannedDurationSeconds: 5 * 60)))
     }
 
     @Test
@@ -60,18 +61,31 @@ struct FocusTimerEngineTests {
         #expect(engine.elapsedSeconds(at: jumped) == 25 * 60)
 
         let events = engine.tick(now: jumped)
-        #expect(engine.phase == .completed)
+        #expect(engine.phase == .runningBreak)
         #expect(events.contains(.didCompleteFocus(elapsedSeconds: 25 * 60, endedAt: jumped)))
     }
 
     @Test
     func automaticBreakStartsAfterFocus() {
-        var settings = FocusTimerSettings(focusSeconds: 10, shortBreakSeconds: 5, startBreaksAutomatically: true)
-        var engine = FocusTimerEngine(settings: settings)
+        var engine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 10, shortBreakSeconds: 5))
         _ = engine.startFocus(taskID: nil, now: start)
         let events = engine.tick(now: start.addingTimeInterval(10))
 
         #expect(engine.phase == .runningBreak)
         #expect(events.contains(.didStartBreak(isLong: false, plannedDurationSeconds: 5)))
+        #expect(!events.contains(where: { if case .didStartFocus = $0 { return true }; return false }))
+    }
+
+    @Test
+    func cancelingFocusRecordsABrokenTomatoAndDoesNotStartBreakOrNextFocus() {
+        var engine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 60, shortBreakSeconds: 5))
+        _ = engine.startFocus(taskID: UUID(), now: start)
+        let events = engine.cancel(now: start.addingTimeInterval(10))
+
+        #expect(engine.phase == .idle)
+        #expect(engine.completedFocusCount == 0)
+        #expect(events.contains(.didCancelFocus(elapsedSeconds: 10, endedAt: start.addingTimeInterval(10))))
+        #expect(!events.contains(where: { if case .didStartBreak = $0 { return true }; return false }))
+        #expect(!events.contains(where: { if case .didStartFocus = $0 { return true }; return false }))
     }
 }

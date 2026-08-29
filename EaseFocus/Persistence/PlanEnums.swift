@@ -24,4 +24,17 @@ nonisolated enum SessionOutcome: String, Codable, CaseIterable, Sendable {
     case completed
     case cancelled
     case interrupted
+
+    var isBroken: Bool {
+        self == .cancelled || self == .interrupted
+    }
+
+    var progressTitle: String {
+        switch self {
+        case .completed:
+            return "completed"
+        case .cancelled, .interrupted:
+            return "broken"
+        }
+    }
 }

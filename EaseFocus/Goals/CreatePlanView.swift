@@ -12,8 +12,11 @@ struct CreatePlanView: View {
     @State private var errorMessage: String?
     @State private var generateTask: Task<Void, Never>?
 
-    init(allowsGeneration: Bool) {
-        _mode = State(initialValue: allowsGeneration ? .survey : .manual)
+    private let availability: FoundationModelAvailability
+
+    init(availability: FoundationModelAvailability) {
+        self.availability = availability
+        _mode = State(initialValue: availability.showsPlanSurvey ? .survey : .manual)
     }
 
     var body: some View {
@@ -22,6 +25,7 @@ struct CreatePlanView: View {
             NavigationStack {
                 GoalSurveyView(
                     survey: $survey,
+                    availability: availability,
                     errorMessage: errorMessage,
                     isGenerating: isGenerating,
                     onGenerate: generate,
@@ -105,12 +109,12 @@ private enum Mode {
 }
 
 #Preview("Generated") {
-    CreatePlanView(allowsGeneration: true)
+    CreatePlanView(availability: .available)
         .environment(\.foundationModelClient, PreviewFoundationModelClient())
         .modelContainer(try! EaseFocusStore.inMemoryContainer())
 }
 
 #Preview("Manual") {
-    CreatePlanView(allowsGeneration: false)
+    CreatePlanView(availability: .unavailable(.deviceNotEligible))
         .modelContainer(try! EaseFocusStore.inMemoryContainer())
 }

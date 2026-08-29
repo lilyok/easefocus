@@ -47,4 +47,23 @@ final class GoalPlan {
     var pendingTasks: [PlanTask] {
         orderedTasks.filter { $0.status == .pending || $0.status == .active }
     }
+
+    var completedTasks: [PlanTask] {
+        orderedTasks.filter { $0.status == .completed }
+    }
+
+    func moveTaskToFront(_ task: PlanTask) {
+        var ordered = orderedTasks
+        guard let from = ordered.firstIndex(where: { $0.id == task.id }) else {
+            return
+        }
+        if from != 0 {
+            ordered.move(fromOffsets: IndexSet(integer: from), toOffset: 0)
+            for (index, item) in ordered.enumerated() {
+                item.position = index
+                item.updatedAt = .now
+            }
+        }
+        updatedAt = .now
+    }
 }

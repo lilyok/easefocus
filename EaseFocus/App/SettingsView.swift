@@ -19,7 +19,10 @@ struct SettingsView: View {
                     durationStepper("Focus minutes", seconds: focusSecondsBinding)
                     durationStepper("Short break", seconds: shortBreakBinding)
                     durationStepper("Long break", seconds: longBreakBinding)
-                    Toggle("Start breaks automatically", isOn: autoBreakBinding)
+                }
+
+                Section("Notifications") {
+                    NotificationAccessNotice(access: timer.notificationAccess)
                 }
 
                 Section("Apple Intelligence") {
@@ -44,6 +47,9 @@ struct SettingsView: View {
             .scrollContentBackground(.hidden)
             .background(Color.focusBackground)
             .navigationTitle("Settings")
+            .task {
+                await timer.refreshNotificationAccess()
+            }
         }
     }
 
@@ -65,13 +71,6 @@ struct SettingsView: View {
         Binding(
             get: { timer.settings.longBreakSeconds },
             set: { timer.settings.longBreakSeconds = $0 }
-        )
-    }
-
-    private var autoBreakBinding: Binding<Bool> {
-        Binding(
-            get: { timer.settings.startBreaksAutomatically },
-            set: { timer.settings.startBreaksAutomatically = $0 }
         )
     }
 

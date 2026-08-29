@@ -5,6 +5,7 @@ import SwiftData
 @Observable
 final class FocusTimerController {
     private(set) var engine: FocusTimerEngine
+    private(set) var notificationAccess: NotificationAccess = .notDetermined
     private var openSession: FocusSession?
     private var modelContext: ModelContext?
     private let notifications: any NotificationScheduling
@@ -47,6 +48,7 @@ final class FocusTimerController {
 
     func startFocus(task: PlanTask?, now: Date = .now) {
         apply(engine.startFocus(taskID: task?.id, now: now), now: now, startedTask: task)
+        Task { await requestAccessAndRescheduleIfRunning() }
     }
 
     func pause(now: Date = .now) {
@@ -55,6 +57,7 @@ final class FocusTimerController {
 
     func resume(now: Date = .now) {
         apply(engine.resume(now: now), now: now)
+        Task { await requestAccessAndRescheduleIfRunning() }
     }
 
     func cancel(now: Date = .now) {
@@ -63,6 +66,7 @@ final class FocusTimerController {
 
     func startBreak(now: Date = .now) {
         apply(engine.startBreak(now: now), now: now)
+        Task { await requestAccessAndRescheduleIfRunning() }
     }
 
     func skipBreak() {
@@ -73,8 +77,27 @@ final class FocusTimerController {
         apply(engine.tick(now: now), now: now)
     }
 
-    func requestNotificationPermission() async {
-        _ = await notifications.requestAuthorization()
+    func requestNotificationPermission() async -> Bool {
+        await notifications.requestAuthorization()
+    }
+
+    func refreshNotificationAccess() async {
+        let access = await notifications.currentAccess()
+        if access != notificationAccess {
+            notificationAccess = access
+        }
+    }
+
+    private func requestAccessAndRescheduleIfRunning() async {
+        await refreshNotificationAccess()
+        if notificationAccess == .notDetermined {
+            _ = await notifications.requestAuthorization()
+            await refreshNotificationAccess()
+        }
+        guard engine.isRunning, let periodEndsAt = engine.periodEndsAt else {
+            return
+        }
+        await notifications.scheduleTimerFinished(at: periodEndsAt)
     }
 
     private func apply(_ events: [FocusTimerEvent], now: Date, startedTask: PlanTask? = nil) {
@@ -93,6 +116,7 @@ final class FocusTimerController {
                 revertActiveTask(at: endedAt)
                 openSession?.finish(outcome: .completed, at: endedAt, elapsedSeconds: elapsed)
                 openSession = nil
+                notifications.announcePeriodFinished(isBreak: false)
             case .didCancelFocus(let elapsed, let endedAt):
                 revertActiveTask(at: endedAt)
                 openSession?.finish(outcome: .cancelled, at: endedAt, elapsedSeconds: elapsed)
@@ -101,8 +125,10 @@ final class FocusTimerController {
                 revertActiveTask(at: endedAt)
                 openSession?.finish(outcome: .interrupted, at: endedAt, elapsedSeconds: elapsed)
                 openSession = nil
-            case .didStartBreak, .didCompleteBreak:
+            case .didStartBreak:
                 break
+            case .didCompleteBreak:
+                notifications.announcePeriodFinished(isBreak: true)
             case .shouldScheduleNotification(let date):
                 Task { await notifications.scheduleTimerFinished(at: date) }
             case .shouldCancelNotification:

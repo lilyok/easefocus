@@ -4,19 +4,27 @@ import Testing
 @testable import EaseFocus
 
 private struct SilentNotifications: NotificationScheduling {
+    func currentAccess() async -> NotificationAccess { .denied }
     func requestAuthorization() async -> Bool { false }
     func scheduleTimerFinished(at date: Date) async {}
     func cancelTimerFinished() {}
+    func announcePeriodFinished(isBreak: Bool) {}
 }
 
 private final class RecordingNotifications: NotificationScheduling, @unchecked Sendable {
     private let lock = NSLock()
     private var scheduled: [Date] = []
+    private var announcements: [Bool] = []
 
     var scheduledDates: [Date] {
         lock.withLock { scheduled }
     }
 
+    var announcementIsBreaks: [Bool] {
+        lock.withLock { announcements }
+    }
+
+    func currentAccess() async -> NotificationAccess { .allowed }
     func requestAuthorization() async -> Bool { false }
 
     func scheduleTimerFinished(at date: Date) async {
@@ -24,6 +32,10 @@ private final class RecordingNotifications: NotificationScheduling, @unchecked S
     }
 
     func cancelTimerFinished() {}
+
+    func announcePeriodFinished(isBreak: Bool) {
+        lock.withLock { announcements.append(isBreak) }
+    }
 }
 
 struct FocusTimerControllerTests {
@@ -106,6 +118,33 @@ struct FocusTimerControllerTests {
 
     @Test
     @MainActor
+    func cancelRecordsABrokenTomatoWithoutStartingTheNextFocus() throws {
+        let container = try EaseFocusStore.inMemoryContainer()
+        let context = container.mainContext
+        let first = PlanTask(title: "One", position: 0)
+        context.insert(GoalPlan(title: "Plan", tasks: [first]))
+        try context.save()
+
+        let (defaults, suiteName) = uniqueDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let controller = FocusTimerController(
+            notifications: SilentNotifications(),
+            defaults: defaults
+        )
+        controller.attach(modelContext: context)
+        controller.startFocus(task: first)
+        controller.cancel()
+
+        let sessions = try context.fetch(FetchDescriptor<FocusSession>())
+        #expect(sessions.contains { $0.outcome == .cancelled })
+        #expect(first.brokenSessionCount == 1)
+        #expect(first.completedSessionCount == 0)
+        #expect(controller.engine.phase == .idle)
+        #expect(controller.engine.canStartFocus)
+    }
+
+    @Test
+    @MainActor
     func revertsTheTaskWhenFocusCompletes() throws {
         let container = try EaseFocusStore.inMemoryContainer()
         let context = container.mainContext
@@ -127,7 +166,27 @@ struct FocusTimerControllerTests {
 
         controller.tick(now: start.addingTimeInterval(60))
         #expect(first.status == .pending)
-        #expect(controller.engine.phase == .completed)
+        #expect(controller.engine.phase == .runningBreak)
+    }
+
+    @Test
+    @MainActor
+    func announcesWhenFocusCompletes() throws {
+        let container = try EaseFocusStore.inMemoryContainer()
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let (defaults, suiteName) = uniqueDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let recorder = RecordingNotifications()
+        let controller = FocusTimerController(
+            settings: FocusTimerSettings(focusSeconds: 60),
+            notifications: recorder,
+            defaults: defaults
+        )
+        controller.attach(modelContext: container.mainContext, now: start)
+        controller.startFocus(task: nil, now: start)
+        controller.tick(now: start.addingTimeInterval(60))
+
+        #expect(recorder.announcementIsBreaks == [false])
     }
 
     @Test

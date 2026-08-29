@@ -48,9 +48,27 @@ final class PlanTask {
         sessions.filter { $0.outcome == .completed }.count
     }
 
+    var brokenSessionCount: Int {
+        sessions.filter { $0.outcome?.isBroken == true }.count
+    }
+
     func markCompleted(at date: Date = .now) {
         status = .completed
         completedAt = date
         updatedAt = date
+    }
+
+    func markPending(at date: Date = .now) {
+        status = .pending
+        completedAt = nil
+        updatedAt = date
+    }
+
+    func toggleCompletion(at date: Date = .now) {
+        if status == .completed {
+            markPending(at: date)
+        } else {
+            markCompleted(at: date)
+        }
     }
 }

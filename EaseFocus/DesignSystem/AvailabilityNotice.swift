@@ -10,13 +10,23 @@ struct AvailabilityNotice: View {
                 .foregroundStyle(Color.focusPrimary)
             Text(FoundationModelAvailabilityCopy.message(for: availability))
                 .font(FocusTypography.body)
+            if availability.canOpenAppleIntelligenceSettings, let url = AppleIntelligenceSettingsURL.make() {
+                Link("Open Apple Intelligence & Siri", destination: url)
+                    .font(FocusTypography.body)
+                    .accessibilityIdentifier("openAppleIntelligenceSettings")
+            }
         }
         .frame(minHeight: FocusSpacing.minimumTapTarget, alignment: .leading)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: availability.canOpenAppleIntelligenceSettings ? .contain : .combine)
     }
 }
 
-#Preview {
+#Preview("Turned off") {
+    AvailabilityNotice(availability: .unavailable(.appleIntelligenceNotEnabled))
+        .padding()
+}
+
+#Preview("Ineligible") {
     AvailabilityNotice(availability: .unavailable(.deviceNotEligible))
         .padding()
 }

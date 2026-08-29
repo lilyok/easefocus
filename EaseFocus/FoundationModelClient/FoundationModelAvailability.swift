@@ -15,6 +15,24 @@ nonisolated enum FoundationModelAvailability: Equatable, Sendable {
     var allowsGeneration: Bool {
         self == .available
     }
+
+    var showsPlanSurvey: Bool {
+        switch self {
+        case .unavailable(.deviceNotEligible):
+            false
+        default:
+            true
+        }
+    }
+
+    var canOpenAppleIntelligenceSettings: Bool {
+        switch self {
+        case .unavailable(.appleIntelligenceNotEnabled), .unavailable(.modelNotReady):
+            true
+        default:
+            false
+        }
+    }
 }
 
 nonisolated enum FoundationModelAvailabilityCopy {
@@ -42,9 +60,13 @@ nonisolated enum FoundationModelAvailabilityCopy {
         case .unavailable(.deviceNotEligible):
             return "You can still create goals and tasks manually, and run the focus timer."
         case .unavailable(.appleIntelligenceNotEnabled):
-            return "Turn on Apple Intelligence in Settings if you want generated plans. Manual planning still works."
+            #if os(macOS)
+            return "Turn it on in System Settings → Apple Intelligence & Siri if you want a generated plan from a short survey. Manual planning still works."
+            #else
+            return "Turn it on in Settings → Apple Intelligence & Siri if you want a generated plan from a short survey. Manual planning still works."
+            #endif
         case .unavailable(.modelNotReady):
-            return "Wait for the model to finish downloading, or create a plan manually."
+            return "Wait for the model to finish downloading in Apple Intelligence & Siri, or create a plan manually."
         case .unavailable(.unknown):
             return "You can still create a plan manually and use the timer."
         case .localeUnsupported:

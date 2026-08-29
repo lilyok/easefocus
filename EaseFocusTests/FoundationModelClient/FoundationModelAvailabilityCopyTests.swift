@@ -4,6 +4,15 @@ import Testing
 
 struct FoundationModelAvailabilityCopyTests {
     @Test
+    func tellsTheUserWhereToEnableAppleIntelligence() {
+        let availability = FoundationModelAvailability.unavailable(.appleIntelligenceNotEnabled)
+
+        #expect(FoundationModelAvailabilityCopy.title(for: availability).contains("turned off"))
+        #expect(FoundationModelAvailabilityCopy.message(for: availability).contains("Apple Intelligence & Siri"))
+        #expect(FoundationModelAvailabilityCopy.message(for: availability).contains("survey"))
+    }
+
+    @Test
     func explainsManualFallbackWhenTheDeviceIsIneligible() {
         let availability = FoundationModelAvailability.unavailable(.deviceNotEligible)
 
