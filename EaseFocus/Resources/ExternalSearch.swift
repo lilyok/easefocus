@@ -25,6 +25,28 @@ nonisolated enum SearchQueryValidator {
 
         return .success(trimmed)
     }
+
+    static func validateOptional(
+        _ query: String
+    ) -> Result<String?, SearchQueryValidationError> {
+        if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return .success(nil)
+        }
+        return validate(query).map(Optional.some)
+    }
+}
+
+nonisolated enum SearchQueryValidationCopy {
+    static func message(for error: SearchQueryValidationError) -> String {
+        switch error {
+        case .empty:
+            return "Leave this field blank to remove the search query."
+        case .tooLong:
+            return "Keep the search query to \(SearchQueryValidator.maximumLength) characters or fewer."
+        case .urlLikeContent:
+            return "Enter search terms, not a URL or website address."
+        }
+    }
 }
 
 nonisolated enum GoogleSearchURL {

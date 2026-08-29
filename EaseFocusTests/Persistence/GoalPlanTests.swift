@@ -49,4 +49,26 @@ struct GoalPlanTests {
         #expect(plan.orderedTasks.map(\.title) == ["Review phrases", "Practice hola", "Record a greeting"])
         #expect(plan.pendingTasks.first?.title == "Review phrases")
     }
+
+    @Test
+    @MainActor
+    func movesTasksWithVisibleReorderActionsAndUpdatesPositions() throws {
+        let container = try EaseFocusStore.inMemoryContainer()
+        let context = container.mainContext
+        let first = PlanTask(title: "First", position: 0)
+        let second = PlanTask(title: "Second", position: 1)
+        let third = PlanTask(title: "Third", position: 2)
+        let plan = GoalPlan(title: "Plan", tasks: [first, second, third])
+        context.insert(plan)
+
+        plan.moveTask(second, direction: .down)
+
+        #expect(plan.orderedTasks.map(\.title) == ["First", "Third", "Second"])
+        #expect(plan.orderedTasks.map(\.position) == [0, 1, 2])
+
+        plan.moveTask(second, direction: .up)
+
+        #expect(plan.orderedTasks.map(\.title) == ["First", "Second", "Third"])
+        #expect(plan.orderedTasks.map(\.position) == [0, 1, 2])
+    }
 }

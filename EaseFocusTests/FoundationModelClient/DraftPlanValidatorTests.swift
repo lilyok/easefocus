@@ -39,6 +39,49 @@ struct DraftPlanValidatorTests {
     }
 
     @Test
+    func rejectsURLLikeGeneratedSearchQuery() {
+        let plan = DraftPlanBlueprint(
+            title: "Practice",
+            summary: "A safe plan.",
+            tasks: [
+                DraftTaskBlueprint(
+                    title: "Find a lesson",
+                    estimatedPomodoros: 1,
+                    searchQuery: "https://example.com/lesson"
+                )
+            ]
+        )
+
+        #expect(
+            DraftPlanValidator.validate(plan)
+                == .failure(.invalidSearchQuery(.urlLikeContent))
+        )
+    }
+
+    @Test
+    func rejectsOverlongGeneratedSearchQuery() {
+        let plan = DraftPlanBlueprint(
+            title: "Practice",
+            summary: "A safe plan.",
+            tasks: [
+                DraftTaskBlueprint(
+                    title: "Find a lesson",
+                    estimatedPomodoros: 1,
+                    searchQuery: String(
+                        repeating: "a",
+                        count: SearchQueryValidator.maximumLength + 1
+                    )
+                )
+            ]
+        )
+
+        #expect(
+            DraftPlanValidator.validate(plan)
+                == .failure(.invalidSearchQuery(.tooLong))
+        )
+    }
+
+    @Test
     func rejectsDuplicateTasks() {
         let plan = DraftPlanBlueprint(
             title: "Practice",

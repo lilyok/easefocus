@@ -27,3 +27,18 @@ The first release does **not** import the old Core Data store. Existing users wh
 ## Privacy
 
 Plan generation runs on device when Apple Intelligence is available. Optional Google search sends only the search query, and only after an explicit tap on Search Google. Generated plans and survey answers stay local.
+
+## Live Foundation Models evaluations
+
+Normal CI uses deterministic clients and does not invoke the on-device model. To run the opt-in live evaluation suite, close any running EaseFocus app, enable Apple Intelligence, and use a supported system language:
+
+```sh
+EASEFOCUS_RUN_LIVE_MODEL_EVALS=1 xcodebuild \
+  -project EaseFocus.xcodeproj \
+  -scheme EaseFocus \
+  -destination 'platform=macOS,arch=arm64' \
+  -only-testing:EaseFocusTests/LiveDraftPlanGenerationEvaluationTests \
+  test
+```
+
+The suite is disabled unless the environment variable is set. Individual locale cases return cleanly when the installed Foundation Model does not support that locale.

@@ -8,6 +8,7 @@ nonisolated enum DraftPlanValidationError: Equatable, Error {
     case duplicateTask
     case invalidPomodoroEstimate
     case urlLikeContent
+    case invalidSearchQuery(SearchQueryValidationError)
 }
 
 nonisolated enum DraftPlanValidator {
@@ -41,8 +42,15 @@ nonisolated enum DraftPlanValidator {
             guard !taskTitle.isEmpty else {
                 return .failure(.emptyTaskTitle)
             }
-            guard !containsURLLikeContent(taskTitle) && !containsURLLikeContent(task.searchQuery) else {
+            guard !containsURLLikeContent(taskTitle) else {
                 return .failure(.urlLikeContent)
+            }
+            let searchQuery: String
+            switch SearchQueryValidator.validateOptional(task.searchQuery) {
+            case .success(let validated):
+                searchQuery = validated ?? ""
+            case .failure(let error):
+                return .failure(.invalidSearchQuery(error))
             }
             let normalizedTitle = taskTitle.lowercased()
             guard seenTitles.insert(normalizedTitle).inserted else {
@@ -56,7 +64,7 @@ nonisolated enum DraftPlanValidator {
                 DraftTaskBlueprint(
                     title: taskTitle,
                     estimatedPomodoros: task.estimatedPomodoros,
-                    searchQuery: task.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+                    searchQuery: searchQuery
                 )
             )
         }

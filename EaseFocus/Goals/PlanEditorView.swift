@@ -43,13 +43,33 @@ struct PlanEditorView: View {
                     TextField("Title", text: $title)
                     TextField("Details", text: $details, axis: .vertical)
                 }
-                Section("Tasks") {
+                Section {
                     ForEach($tasks) { $task in
                         VStack(alignment: .leading, spacing: FocusSpacing.small) {
                             TextField("Task title", text: $task.title)
                             Stepper(value: $task.estimatedPomodoros, in: DraftPlanValidator.pomodoroRange) {
                                 Text("\(task.estimatedPomodoros) estimated sessions")
                                     .font(FocusTypography.footnote)
+                            }
+                            if source == .generated {
+                                TextField("Optional search query", text: $task.searchQuery)
+                                    .accessibilityIdentifier("searchQuery-\(task.id)")
+                                if let error = searchQueryError(for: task.searchQuery) {
+                                    Text(SearchQueryValidationCopy.message(for: error))
+                                        .font(FocusTypography.footnote)
+                                        .foregroundStyle(Color.focusError)
+                                        .accessibilityIdentifier("searchQueryError-\(task.id)")
+                                }
+                            }
+                            HStack {
+                                Spacer()
+                                let index = tasks.firstIndex(where: { $0.id == task.id }) ?? 0
+                                TaskReorderControls(
+                                    canMoveUp: index > 0,
+                                    canMoveDown: index < tasks.count - 1,
+                                    onMoveUp: { moveTask(task.id, direction: .up) },
+                                    onMoveDown: { moveTask(task.id, direction: .down) }
+                                )
                             }
                         }
                     }
@@ -64,6 +84,14 @@ struct PlanEditorView: View {
                     }
                     Button("Add task") {
                         tasks.append(DraftTask())
+                    }
+                } header: {
+                    Text("Tasks")
+                } footer: {
+                    if source == .generated {
+                        Text("Optional search queries can be edited or removed. A query will leave EaseFocus only when you later choose to search externally; reviewing and saving do not send it.")
+                    } else {
+                        Text("Use the arrow buttons to set the task order.")
                     }
                 }
             }
@@ -90,27 +118,51 @@ struct PlanEditorView: View {
     private var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && tasks.contains { !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            && tasks.allSatisfy { searchQueryError(for: $0.searchQuery) == nil }
     }
 
     private func save() {
-        let cleaned = tasks.compactMap { task -> (title: String, estimatedPomodoros: Int, searchQuery: String)? in
+        let cleaned = tasks.compactMap { task -> (title: String, estimatedPomodoros: Int, searchQuery: String?)? in
             let taskTitle = task.title.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !taskTitle.isEmpty else {
                 return nil
             }
-            return (taskTitle, task.estimatedPomodoros, task.searchQuery)
+            guard case .success(let searchQuery) = SearchQueryValidator.validateOptional(task.searchQuery) else {
+                return nil
+            }
+            return (taskTitle, task.estimatedPomodoros, searchQuery)
         }
-        let plan = GoalPlanFactory.make(
-            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
-            details: details.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
-            tasks: cleaned,
-            source: source,
-            survey: survey,
-            locale: locale
-        )
-        modelContext.insert(plan)
-        try? modelContext.save()
-        dismiss()
+        guard cleaned.count == tasks.filter({
+            !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }).count else {
+            return
+        }
+        do {
+            let plan = try GoalPlanFactory.make(
+                title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                details: details.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+                tasks: cleaned,
+                source: source,
+                survey: survey,
+                locale: locale
+            )
+            modelContext.insert(plan)
+            try modelContext.save()
+            dismiss()
+        } catch {
+            return
+        }
+    }
+
+    private func moveTask(_ id: UUID, direction: TaskMoveDirection) {
+        tasks = TaskOrdering.reordered(tasks, moving: id, direction: direction)
+    }
+
+    private func searchQueryError(for query: String) -> SearchQueryValidationError? {
+        guard case .failure(let error) = SearchQueryValidator.validateOptional(query) else {
+            return nil
+        }
+        return error
     }
 }
 

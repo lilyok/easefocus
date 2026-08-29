@@ -82,6 +82,14 @@ nonisolated enum FoundationModelClientErrorCopy {
             return FoundationModelAvailabilityCopy.message(for: availability)
         case .validation(let reason):
             return validationMessage(for: reason)
+        case .refusal:
+            return "Apple Intelligence declined this request. Rephrase the goal or create the plan manually."
+        case .guardrailViolation:
+            return "Apple Intelligence blocked this request for safety. Adjust the goal or create the plan manually."
+        case .unsupportedLanguageOrLocale:
+            return "Apple Intelligence cannot generate a plan in this language. Choose a supported language or create the plan manually."
+        case .contextLimitExceeded:
+            return "The request is too long for Apple Intelligence. Shorten the goal or constraints, then try again—or create the plan manually."
         case .generationFailed:
             return "Generation failed. You can still create a plan manually."
         case .cancelled:
@@ -101,6 +109,8 @@ nonisolated enum FoundationModelClientErrorCopy {
             return "The generated draft had an invalid session estimate. You can generate again or create a plan manually."
         case .urlLikeContent:
             return "The generated draft included a URL. You can generate again or create a plan manually."
+        case .invalidSearchQuery(let error):
+            return "\(SearchQueryValidationCopy.message(for: error)) You can edit the generated draft or create a plan manually."
         }
     }
 }

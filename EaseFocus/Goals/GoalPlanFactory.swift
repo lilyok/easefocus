@@ -1,15 +1,32 @@
 import Foundation
 
+enum GoalPlanFactoryError: Equatable, Error {
+    case invalidSearchQuery(index: Int, reason: SearchQueryValidationError)
+}
+
 enum GoalPlanFactory {
     static func make(
         title: String,
         details: String?,
-        tasks: [(title: String, estimatedPomodoros: Int, searchQuery: String)],
+        tasks: [(title: String, estimatedPomodoros: Int, searchQuery: String?)],
         source: PlanSource,
         survey: GoalSurvey?,
         locale: Locale,
         now: Date = .now
-    ) -> GoalPlan {
+    ) throws -> GoalPlan {
+        let validatedTasks = try tasks.enumerated().map { index, item in
+            let result = SearchQueryValidator.validateOptional(item.searchQuery ?? "")
+            switch result {
+            case .success(let query):
+                return (
+                    title: item.title,
+                    estimatedPomodoros: item.estimatedPomodoros,
+                    searchQuery: query
+                )
+            case .failure(let error):
+                throw GoalPlanFactoryError.invalidSearchQuery(index: index, reason: error)
+            }
+        }
         let plan = GoalPlan(
             title: title,
             details: details,
@@ -19,22 +36,16 @@ enum GoalPlanFactory {
             preferredLocaleIdentifier: locale.identifier,
             surveySnapshot: survey?.encoded()
         )
-        plan.tasks = tasks.enumerated().map { index, item in
+        plan.tasks = validatedTasks.enumerated().map { index, item in
             PlanTask(
                 title: item.title,
                 position: index,
                 estimatedPomodoros: item.estimatedPomodoros,
                 createdAt: now,
                 updatedAt: now,
-                searchQuery: item.searchQuery.nilIfEmpty
+                searchQuery: item.searchQuery
             )
         }
         return plan
-    }
-}
-
-private extension String {
-    var nilIfEmpty: String? {
-        isEmpty ? nil : self
     }
 }

@@ -66,4 +66,17 @@ final class GoalPlan {
         }
         updatedAt = .now
     }
+
+    func moveTask(_ task: PlanTask, direction: TaskMoveDirection, at date: Date = .now) {
+        let reordered = TaskOrdering.reordered(
+            orderedTasks,
+            moving: task.id,
+            direction: direction
+        )
+        for (index, item) in reordered.enumerated() {
+            item.position = index
+            item.updatedAt = date
+        }
+        updatedAt = date
+    }
 }

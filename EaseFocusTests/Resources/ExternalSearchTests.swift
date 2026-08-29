@@ -17,6 +17,7 @@ struct ExternalSearchTests {
     @Test
     func rejectsEmptyQueries() {
         #expect(SearchQueryValidator.validate("   ") == .failure(.empty))
+        #expect(SearchQueryValidator.validateOptional("   ") == .success(nil))
         #expect(GoogleSearchURL.make(from: "   ") == nil)
     }
 
@@ -25,6 +26,22 @@ struct ExternalSearchTests {
         #expect(SearchQueryValidator.validate("https://example.com") == .failure(.urlLikeContent))
         #expect(SearchQueryValidator.validate("www.example.com drills") == .failure(.urlLikeContent))
         #expect(GoogleSearchURL.make(from: "http://evil.example") == nil)
+    }
+
+    @Test
+    func acceptsAndTrimsAnOptionalQuery() {
+        #expect(
+            SearchQueryValidator.validateOptional("  Spanish pronunciation  ")
+                == .success("Spanish pronunciation")
+        )
+    }
+
+    @Test
+    func rejectsOverlongQueries() {
+        let query = String(repeating: "a", count: SearchQueryValidator.maximumLength + 1)
+
+        #expect(SearchQueryValidator.validate(query) == .failure(.tooLong))
+        #expect(SearchQueryValidator.validateOptional(query) == .failure(.tooLong))
     }
 
     @Test
