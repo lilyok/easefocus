@@ -31,8 +31,11 @@ enum PlanRefinementApplier {
         }
 
         do {
-            try PlanRevisionFactory.preserveCompletedWork(from: preview.before, to: validatedAfter)
-            try PlanRefinementValidator.preserveProtectedWork(from: preview.before, to: validatedAfter)
+            try PlanRefinementValidator.validateAssembledPreview(
+                before: preview.before,
+                after: validatedAfter,
+                changeSummary: preview.changeSummary
+            )
         } catch {
             throw PlanRefinementApplierError.malformedPreview
         }

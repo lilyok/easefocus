@@ -16,6 +16,9 @@ nonisolated enum PlanRefinementPrompt {
         Identify new tasks with local IDs such as new-1. Never invent a UUID for a new task.
         Include every surviving pending task UUID and every addition local ID exactly once in pendingTaskOrder.
         Leave a pending task out of updates to keep it unchanged, but still list it in pendingTaskOrder.
+        The combined number of additions, updates, and archives must be at most \(PlanRefinementLimits.maximumOperationCount).
+        When updating a pending task, repeat its existing details unless you are changing them. Leave details empty to keep the current details.
+        Do not copy a task title into searchQuery.
         \(DraftPlanPrompt.resourceSearchInstructions(includesResourceSuggestions: includesResourceSuggestions))
         """
     }
@@ -79,15 +82,21 @@ nonisolated enum PlanRefinementPrompt {
 
     static func planListing(_ snapshot: PlanSnapshot) -> String {
         let tasks = snapshot.tasks.sorted { $0.position < $1.position }.map { task in
-            let query = task.searchQuery ?? ""
+            let query = collapsed(task.searchQuery)
+            let details = collapsed(task.details)
             return """
-            - id=\(task.id.uuidString) title=\(task.title) status=\(task.status.rawValue) estimate=\(task.estimatedPomodoros) query=\(query)
+            - id=\(task.id.uuidString) title=\(task.title) details=\(details) status=\(task.status.rawValue) estimate=\(task.estimatedPomodoros) query=\(query)
             """
         }
         return """
         title=\(snapshot.title)
+        details=\(collapsed(snapshot.details))
         status=\(snapshot.status.rawValue)
         \(tasks.joined(separator: "\n"))
         """
+    }
+
+    private static func collapsed(_ value: String?) -> String {
+        (value ?? "").replacingOccurrences(of: "\n", with: " ")
     }
 }

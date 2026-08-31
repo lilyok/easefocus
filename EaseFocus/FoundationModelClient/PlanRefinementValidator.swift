@@ -33,10 +33,16 @@ nonisolated enum PlanRefinementPreviewFactory {
             includesResourceSuggestions: includesResourceSuggestions,
             makeID: makeID
         )
+        let changeSummary = try PlanRefinementValidator.validatedChangeSummary(proposal.changeSummary)
+        try PlanRefinementValidator.validateAssembledPreview(
+            before: before,
+            after: after,
+            changeSummary: changeSummary
+        )
 
         return PlanRefinementPreview(
             request: trimmedRequest,
-            changeSummary: try PlanRefinementValidator.validatedChangeSummary(proposal.changeSummary),
+            changeSummary: changeSummary,
             before: before,
             after: after
         )
@@ -114,6 +120,8 @@ nonisolated enum PlanRefinementValidator {
 
         try PlanRevisionFactory.preserveCompletedWork(from: before, to: validatedAfter)
         try preserveProtectedWork(from: before, to: validatedAfter)
+        try validateStatusTransitions(from: before, to: validatedAfter)
+        try validateMutableTaskContent(from: before, to: validatedAfter)
 
         let beforeNonArchived = before.tasks.filter { $0.status != .archived }.count
         let afterNonArchived = validatedAfter.tasks.filter { $0.status != .archived }.count
@@ -127,6 +135,49 @@ nonisolated enum PlanRefinementValidator {
         }
 
         return validatedAfter
+    }
+
+    static func validateAssembledPreview(
+        before: PlanSnapshot,
+        after: PlanSnapshot,
+        changeSummary: String
+    ) throws {
+        let validatedBefore: PlanSnapshot
+        let validatedAfter: PlanSnapshot
+        do {
+            validatedBefore = try before.validated()
+            validatedAfter = try after.validated()
+        } catch {
+            throw PlanRefinementValidationError.malformedSnapshot
+        }
+
+        _ = try validatedChangeSummary(changeSummary)
+
+        guard validatedAfter.id == validatedBefore.id,
+              validatedAfter.title == validatedBefore.title,
+              validatedAfter.details == validatedBefore.details,
+              validatedAfter.status == validatedBefore.status
+        else {
+            throw PlanRefinementValidationError.malformedSnapshot
+        }
+
+        let beforeIDs = Set(validatedBefore.tasks.map(\.id))
+        let afterIDs = Set(validatedAfter.tasks.map(\.id))
+        guard beforeIDs.isSubset(of: afterIDs) else {
+            throw PlanRefinementValidationError.malformedSnapshot
+        }
+
+        try PlanRevisionFactory.preserveCompletedWork(from: validatedBefore, to: validatedAfter)
+        try preserveProtectedWork(from: validatedBefore, to: validatedAfter)
+        try validateStatusTransitions(from: validatedBefore, to: validatedAfter)
+        try validateMutableTaskContent(from: validatedBefore, to: validatedAfter)
+
+        let beforeNonArchived = validatedBefore.tasks.filter { $0.status != .archived }.count
+        let afterNonArchived = validatedAfter.tasks.filter { $0.status != .archived }.count
+        let taskCap = max(PlanRefinementLimits.maximumTaskCount, beforeNonArchived)
+        guard afterNonArchived <= taskCap else {
+            throw PlanRefinementValidationError.tooManyTasks
+        }
     }
 
     static func validatedChangeSummary(_ summary: String) throws -> String {
@@ -168,6 +219,39 @@ nonisolated enum PlanRefinementValidator {
         }
     }
 
+    static func validateStatusTransitions(from before: PlanSnapshot, to after: PlanSnapshot) throws {
+        let beforeByID = Dictionary(uniqueKeysWithValues: before.tasks.map { ($0.id, $0) })
+        for task in after.tasks {
+            if let original = beforeByID[task.id] {
+                if original.status == .pending {
+                    guard task.status == .pending || task.status == .archived else {
+                        throw PlanRefinementValidationError.protectedTaskReferenced
+                    }
+                }
+            } else if task.status != .pending {
+                throw PlanRefinementValidationError.malformedSnapshot
+            }
+        }
+    }
+
+    static func validateMutableTaskContent(from before: PlanSnapshot, to after: PlanSnapshot) throws {
+        let beforeByID = Dictionary(uniqueKeysWithValues: before.tasks.map { ($0.id, $0) })
+        for task in after.tasks where task.status == .pending {
+            _ = try validatedTitle(task.title)
+            if let details = task.details {
+                _ = try validatedDetails(details)
+            }
+            guard PlanRefinementLimits.pomodoroRange.contains(task.estimatedPomodoros) else {
+                throw PlanRefinementValidationError.invalidPomodoroEstimate
+            }
+            try validateStoredSearchQuery(
+                task.searchQuery,
+                title: task.title,
+                original: beforeByID[task.id]?.searchQuery
+            )
+        }
+    }
+
     private static func validatedAdditions(
         _ additions: [PlanRefinementAddition],
         existingIDs: Set<UUID>,
@@ -189,6 +273,7 @@ nonisolated enum PlanRefinementValidator {
             let query = try resolvedSearchQuery(
                 proposed: addition.searchQuery,
                 original: nil,
+                title: title,
                 includesResourceSuggestions: includesResourceSuggestions
             )
             let id = makeID()
@@ -257,6 +342,7 @@ nonisolated enum PlanRefinementValidator {
             _ = try resolvedSearchQuery(
                 proposed: update.searchQuery,
                 original: task.searchQuery,
+                title: try validatedTitle(update.title),
                 includesResourceSuggestions: includesResourceSuggestions
             )
             result[id] = update
@@ -305,17 +391,25 @@ nonisolated enum PlanRefinementValidator {
             }
 
             if let update = updatesByID[id] {
+                let title = try validatedTitle(update.title)
+                let details: String?
+                if update.details.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    details = task.details
+                } else {
+                    details = try validatedDetails(update.details)
+                }
                 ordered.append(
                     TaskSnapshot(
                         id: task.id,
-                        title: try validatedTitle(update.title),
-                        details: try validatedDetails(update.details),
+                        title: title,
+                        details: details,
                         position: 0,
                         estimatedPomodoros: update.estimatedPomodoros,
                         status: .pending,
                         searchQuery: try resolvedSearchQuery(
                             proposed: update.searchQuery,
                             original: task.searchQuery,
+                            title: title,
                             includesResourceSuggestions: includesResourceSuggestions
                         )
                     )
@@ -423,6 +517,7 @@ nonisolated enum PlanRefinementValidator {
     private static func resolvedSearchQuery(
         proposed: String,
         original: String?,
+        title: String,
         includesResourceSuggestions: Bool
     ) throws -> String? {
         let trimmed = proposed.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -433,12 +528,52 @@ nonisolated enum PlanRefinementValidator {
             return original
         }
 
+        if let original, queriesMatch(trimmed, original) {
+            return original
+        }
+
         switch SearchQueryValidator.validateOptional(proposed) {
         case .success(let query):
+            if let query, copiesTitle(query, title: title) {
+                throw PlanRefinementValidationError.searchQueryCopiesTitle
+            }
             return query
         case .failure(let error):
             throw PlanRefinementValidationError.invalidSearchQuery(error)
         }
+    }
+
+    private static func validateStoredSearchQuery(
+        _ query: String?,
+        title: String,
+        original: String?
+    ) throws {
+        guard let query else {
+            return
+        }
+        switch SearchQueryValidator.validate(query) {
+        case .failure(let error):
+            throw PlanRefinementValidationError.invalidSearchQuery(error)
+        case .success(let validated):
+            if copiesTitle(validated, title: title), !queriesMatch(validated, original) {
+                throw PlanRefinementValidationError.searchQueryCopiesTitle
+            }
+        }
+    }
+
+    private static func copiesTitle(_ query: String, title: String) -> Bool {
+        query.compare(
+            title.trimmingCharacters(in: .whitespacesAndNewlines),
+            options: [.caseInsensitive, .diacriticInsensitive]
+        ) == .orderedSame
+    }
+
+    private static func queriesMatch(_ lhs: String, _ rhs: String?) -> Bool {
+        guard let rhs else {
+            return lhs.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        return lhs.trimmingCharacters(in: .whitespacesAndNewlines)
+            .compare(rhs, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
     }
 
     private static func containsURLLikeContent(_ text: String) -> Bool {

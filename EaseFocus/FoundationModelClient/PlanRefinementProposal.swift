@@ -16,6 +16,7 @@ nonisolated enum PlanRefinementValidationError: Equatable, Error {
     case duplicateInOrdering
     case invalidPomodoroEstimate
     case invalidSearchQuery(SearchQueryValidationError)
+    case searchQueryCopiesTitle
     case resourceQueryWhenDisabled
     case tooManyTasks
     case tooManyOperations
@@ -31,6 +32,7 @@ nonisolated enum PlanRefinementLimits {
     static let maximumLocalIDLength = 32
     static let maximumOperationCount = 8
     static let maximumTaskCount = DraftPlanValidator.maximumTaskCount
+    static let maximumPendingOrderCount = 16
     static let pomodoroRange = DraftPlanValidator.pomodoroRange
 }
 

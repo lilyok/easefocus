@@ -17,7 +17,7 @@ struct PlanRefinementPromptTests {
                 TaskSnapshot(
                     id: pendingID,
                     title: "Practice hola",
-                    details: nil,
+                    details: "Say hello clearly",
                     position: 0,
                     estimatedPomodoros: 1,
                     status: .pending,
@@ -65,6 +65,8 @@ struct PlanRefinementPromptTests {
         #expect(summary.contains("1 of 3 tasks completed"))
         #expect(summary.contains("Record a greeting"))
         #expect(summary.contains("Live conversation"))
+        #expect(listing.contains("details=A short speaking plan."))
+        #expect(listing.contains("details=Say hello clearly"))
         #expect(listing.contains(pendingID.uuidString))
         #expect(listing.contains(completedID.uuidString))
         #expect(listing.contains(activeID.uuidString))
@@ -80,6 +82,9 @@ struct PlanRefinementPromptTests {
         #expect(instructions.contains("Never modify, archive, delete, or reorder completed or currently active tasks"))
         #expect(instructions.contains("Never mention or alter focus sessions"))
         #expect(instructions.contains("Never invent a UUID"))
+        #expect(instructions.contains("combined number of additions, updates, and archives must be at most 8"))
+        #expect(instructions.contains("Leave details empty to keep the current details"))
+        #expect(instructions.contains("Do not copy a task title into searchQuery"))
         #expect(!message.lowercased().contains("elapsed"))
         #expect(!message.lowercased().contains("interruption"))
         #expect(!message.lowercased().contains("plannedduration"))

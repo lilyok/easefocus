@@ -219,4 +219,159 @@ struct PlanRefinementApplierTests {
         #expect(second.sessions.isEmpty)
         #expect(try PlanSnapshot.capturing(plan).validated() == preview.after)
     }
+
+    @Test
+    @MainActor
+    func rejectsAPendingTaskPromotedToCompletedOrActive() throws {
+        let container = try EaseFocusStore.inMemoryContainer()
+        let context = container.mainContext
+        let pending = PlanTask(title: "Practice hola", details: "Say hello clearly", position: 0)
+        let plan = GoalPlan(title: "Spanish greetings", tasks: [pending])
+        context.insert(plan)
+        try context.save()
+
+        let preview = try PlanRefinementPreviewFactory.make(
+            snapshot: PlanSnapshot.capturing(plan),
+            request: "Rename the drill",
+            proposal: PlanRefinementProposal(
+                changeSummary: "Rename a pending task.",
+                additions: [],
+                updates: [
+                    PlanRefinementUpdate(
+                        taskID: pending.id.uuidString,
+                        title: "Practice hola and adios",
+                        details: "Say hello clearly",
+                        estimatedPomodoros: 1,
+                        searchQuery: ""
+                    )
+                ],
+                archivedTaskIDs: [],
+                pendingTaskOrder: [pending.id.uuidString]
+            ),
+            includesResourceSuggestions: false
+        )
+
+        var completed = preview
+        completed.after.tasks[0].status = .completed
+        #expect(throws: PlanRefinementApplierError.malformedPreview) {
+            try PlanRefinementApplier.apply(completed, to: plan, in: context)
+        }
+
+        var active = preview
+        active.after.tasks[0].status = .active
+        #expect(throws: PlanRefinementApplierError.malformedPreview) {
+            try PlanRefinementApplier.apply(active, to: plan, in: context)
+        }
+
+        #expect(plan.orderedTasks.map(\.status) == [.pending])
+        #expect(plan.orderedTasks.first?.title == "Practice hola")
+        #expect(plan.revisions.isEmpty)
+    }
+
+    @Test
+    @MainActor
+    func rejectsANewTaskThatIsNotPending() throws {
+        let container = try EaseFocusStore.inMemoryContainer()
+        let context = container.mainContext
+        let pending = PlanTask(title: "Practice hola", position: 0)
+        let plan = GoalPlan(title: "Spanish greetings", tasks: [pending])
+        context.insert(plan)
+        try context.save()
+
+        let preview = try PlanRefinementPreviewFactory.make(
+            snapshot: PlanSnapshot.capturing(plan),
+            request: "Add speaking exercises",
+            proposal: PlanRefinementProposal(
+                changeSummary: "Add a speaking drill.",
+                additions: [
+                    PlanRefinementAddition(
+                        localID: "new-1",
+                        title: "Shadow a dialogue",
+                        details: "",
+                        estimatedPomodoros: 1,
+                        searchQuery: ""
+                    )
+                ],
+                updates: [],
+                archivedTaskIDs: [],
+                pendingTaskOrder: [pending.id.uuidString, "new-1"]
+            ),
+            includesResourceSuggestions: false,
+            makeID: { newID }
+        )
+
+        var tampered = preview
+        tampered.after.tasks[tampered.after.tasks.count - 1].status = .completed
+        #expect(throws: PlanRefinementApplierError.malformedPreview) {
+            try PlanRefinementApplier.apply(tampered, to: plan, in: context)
+        }
+        #expect(plan.orderedTasks.map(\.title) == ["Practice hola"])
+        #expect(plan.revisions.isEmpty)
+    }
+
+    @Test
+    @MainActor
+    func rejectsATamperedAfterSnapshotWithMalformedPendingContent() throws {
+        let container = try EaseFocusStore.inMemoryContainer()
+        let context = container.mainContext
+        let pending = PlanTask(title: "Practice hola", details: "Say hello clearly", position: 0)
+        let plan = GoalPlan(title: "Spanish greetings", tasks: [pending])
+        context.insert(plan)
+        try context.save()
+
+        let preview = try PlanRefinementPreviewFactory.make(
+            snapshot: PlanSnapshot.capturing(plan),
+            request: "Rename the drill",
+            proposal: PlanRefinementProposal(
+                changeSummary: "Rename a pending task.",
+                additions: [],
+                updates: [
+                    PlanRefinementUpdate(
+                        taskID: pending.id.uuidString,
+                        title: "Practice hola and adios",
+                        details: "Say hello clearly",
+                        estimatedPomodoros: 1,
+                        searchQuery: ""
+                    )
+                ],
+                archivedTaskIDs: [],
+                pendingTaskOrder: [pending.id.uuidString]
+            ),
+            includesResourceSuggestions: false
+        )
+
+        var emptyTitle = preview
+        emptyTitle.after.tasks[0].title = ""
+        #expect(throws: PlanRefinementApplierError.malformedPreview) {
+            try PlanRefinementApplier.apply(emptyTitle, to: plan, in: context)
+        }
+
+        var urlTitle = preview
+        urlTitle.after.tasks[0].title = "See https://example.com"
+        #expect(throws: PlanRefinementApplierError.malformedPreview) {
+            try PlanRefinementApplier.apply(urlTitle, to: plan, in: context)
+        }
+
+        var badEstimate = preview
+        badEstimate.after.tasks[0].estimatedPomodoros = 0
+        #expect(throws: PlanRefinementApplierError.malformedPreview) {
+            try PlanRefinementApplier.apply(badEstimate, to: plan, in: context)
+        }
+
+        var badQuery = preview
+        badQuery.after.tasks[0].searchQuery = "https://example.com"
+        #expect(throws: PlanRefinementApplierError.malformedPreview) {
+            try PlanRefinementApplier.apply(badQuery, to: plan, in: context)
+        }
+
+        var emptySummary = preview
+        emptySummary.changeSummary = "   "
+        #expect(throws: PlanRefinementApplierError.malformedPreview) {
+            try PlanRefinementApplier.apply(emptySummary, to: plan, in: context)
+        }
+
+        #expect(plan.orderedTasks.first?.title == "Practice hola")
+        #expect(plan.orderedTasks.first?.details == "Say hello clearly")
+        #expect(plan.revisions.isEmpty)
+    }
 }

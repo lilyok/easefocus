@@ -436,6 +436,124 @@ struct PlanRefinementValidatorTests {
         )
         #expect(preserved.after.tasks[0].searchQuery == "Spanish greetings audio")
         #expect(preserved.after.tasks[0].title == "Practice hola and adios")
+        #expect(preserved.after.tasks[0].details == "Say hello clearly")
+    }
+
+    @Test
+    func preservesExistingDetailsWhenAnUnrelatedRefinementOnlyChangesTitle() throws {
+        let before = pendingSnapshot()
+        let preview = try makePreview(
+            snapshot: before,
+            proposal: proposal(
+                updates: [
+                    PlanRefinementUpdate(
+                        taskID: pendingA.uuidString,
+                        title: "Practice hola and adios",
+                        details: "",
+                        estimatedPomodoros: 1,
+                        searchQuery: ""
+                    )
+                ],
+                order: [pendingA.uuidString, pendingB.uuidString]
+            )
+        )
+
+        #expect(preview.after.tasks[0].title == "Practice hola and adios")
+        #expect(preview.after.tasks[0].details == "Say hello clearly")
+        #expect(preview.after.tasks[1].details == nil)
+    }
+
+    @Test
+    func preservesExistingDetailsWhenAddingATask() throws {
+        let before = pendingSnapshot()
+        let preview = try makePreview(
+            snapshot: before,
+            proposal: proposal(
+                additions: [addition(title: "Shadow a dialogue")],
+                order: [pendingA.uuidString, pendingB.uuidString, "new-1"]
+            )
+        )
+
+        #expect(preview.after.tasks[0].details == "Say hello clearly")
+        #expect(preview.after.tasks.last?.title == "Shadow a dialogue")
+        #expect(preview.after.tasks.last?.details == nil)
+    }
+
+    @Test
+    func rejectsSearchQueriesThatCopyTheTaskTitle() {
+        let before = pendingSnapshot()
+
+        #expect(throws: PlanRefinementValidationError.searchQueryCopiesTitle) {
+            _ = try makePreview(
+                snapshot: before,
+                includesResourceSuggestions: true,
+                proposal: proposal(
+                    additions: [
+                        addition(title: "Shadow a dialogue", searchQuery: "Shadow a dialogue")
+                    ],
+                    order: [pendingA.uuidString, pendingB.uuidString, "new-1"]
+                )
+            )
+        }
+        #expect(throws: PlanRefinementValidationError.searchQueryCopiesTitle) {
+            _ = try makePreview(
+                snapshot: before,
+                includesResourceSuggestions: true,
+                proposal: proposal(
+                    updates: [
+                        PlanRefinementUpdate(
+                            taskID: pendingA.uuidString,
+                            title: "Practice hola",
+                            details: "Say hello clearly",
+                            estimatedPomodoros: 1,
+                            searchQuery: "Practice hola"
+                        )
+                    ],
+                    order: [pendingA.uuidString, pendingB.uuidString]
+                )
+            )
+        }
+    }
+
+    @Test
+    func allowsAnUnchangedLegacyQueryThatCopiesTheTitle() throws {
+        let before = PlanSnapshot(
+            id: planID,
+            title: "Spanish greetings",
+            details: "A short speaking plan.",
+            status: .active,
+            tasks: [
+                TaskSnapshot(
+                    id: pendingA,
+                    title: "Practice hola",
+                    details: "Say hello clearly",
+                    position: 0,
+                    estimatedPomodoros: 1,
+                    status: .pending,
+                    searchQuery: "Practice hola"
+                )
+            ]
+        )
+        let preview = try makePreview(
+            snapshot: before,
+            includesResourceSuggestions: true,
+            proposal: proposal(
+                updates: [
+                    PlanRefinementUpdate(
+                        taskID: pendingA.uuidString,
+                        title: "Practice hola and adios",
+                        details: "Say hello clearly",
+                        estimatedPomodoros: 2,
+                        searchQuery: "Practice hola"
+                    )
+                ],
+                order: [pendingA.uuidString]
+            )
+        )
+
+        #expect(preview.after.tasks[0].searchQuery == "Practice hola")
+        #expect(preview.after.tasks[0].title == "Practice hola and adios")
+        #expect(preview.after.tasks[0].details == "Say hello clearly")
     }
 
     @Test
@@ -555,7 +673,7 @@ struct PlanRefinementValidatorTests {
                 TaskSnapshot(
                     id: pendingA,
                     title: "Practice hola",
-                    details: nil,
+                    details: "Say hello clearly",
                     position: 0,
                     estimatedPomodoros: 1,
                     status: .pending,

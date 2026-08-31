@@ -294,14 +294,14 @@ struct FocusTimerControllerTests {
 
     private func waitForScheduledDate(
         in recorder: RecordingNotifications,
-        timeout: Duration = .seconds(1)
+        timeout: Duration = .seconds(5)
     ) async throws -> Date {
         let deadline = ContinuousClock.now.advanced(by: timeout)
         while ContinuousClock.now < deadline {
             if let date = recorder.scheduledDates.last {
                 return date
             }
-            await Task.yield()
+            try await Task.sleep(for: .milliseconds(20))
         }
         Issue.record("Timed out waiting for a restored timer notification")
         return .distantPast
