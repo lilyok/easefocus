@@ -1,4 +1,10 @@
 import Foundation
+#if canImport(AppKit)
+import AppKit
+#endif
+#if canImport(UIKit)
+import UIKit
+#endif
 
 nonisolated enum SearchQueryValidationError: Equatable, Error {
     case empty
@@ -65,6 +71,9 @@ nonisolated enum GoogleSearchURL {
 
 nonisolated enum ExternalSearchPrivacyCopy {
     static let title = "Search happens in your browser"
+    static let confirmationTitle = "Search Google?"
+    static let confirmAction = "Search Google"
+    static let cancelAction = "Cancel"
 
     static let body = """
     EaseFocus can suggest a search query for a task. Nothing is sent until you tap Search Google.
@@ -73,4 +82,55 @@ nonisolated enum ExternalSearchPrivacyCopy {
 
     EaseFocus does not inspect, save, or endorse the results. For health, legal, financial, or safety-sensitive goals, treat results as starting points only.
     """
+
+    static func confirmationMessage(for query: String) -> String {
+        """
+        Search Google for “\(query)”.
+
+        \(body)
+        """
+    }
+}
+
+nonisolated protocol ExternalURLOpening: Sendable {
+    @MainActor
+    func open(_ url: URL)
+}
+
+struct SystemExternalURLOpener: ExternalURLOpening {
+    @MainActor
+    func open(_ url: URL) {
+        #if os(iOS)
+        UIApplication.shared.open(url)
+        #elseif os(macOS)
+        NSWorkspace.shared.open(url)
+        #endif
+    }
+}
+
+struct ExternalSearchRequest: Identifiable, Hashable, Sendable {
+    let query: String
+    var id: String { query }
+}
+
+nonisolated enum ExternalSearchOpening {
+    static func request(from query: String) -> ExternalSearchRequest? {
+        guard case .success(let validated) = SearchQueryValidator.validate(query) else {
+            return nil
+        }
+        return ExternalSearchRequest(query: validated)
+    }
+
+    @MainActor
+    @discardableResult
+    static func confirm(
+        query: String,
+        opener: any ExternalURLOpening
+    ) -> URL? {
+        guard let url = GoogleSearchURL.make(from: query) else {
+            return nil
+        }
+        opener.open(url)
+        return url
+    }
 }

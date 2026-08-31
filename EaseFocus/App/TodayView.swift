@@ -15,6 +15,7 @@ struct TodayView: View {
     @State private var saveErrorMessage: String?
     @State private var isSaveAlertPresented = false
     @State private var pendingSaveRetry: (() -> Void)?
+    @State private var pendingSearch: ExternalSearchRequest?
 
     private var plans: [GoalPlan] {
         allPlans.filter { $0.status == .active }
@@ -168,12 +169,22 @@ struct TodayView: View {
                 onRetry: { pendingSaveRetry?() },
                 onDiscard: discardFailedSave
             )
+            .externalSearchConfirmation($pendingSearch)
         }
     }
 
     private func todayTaskRow(_ task: PlanTask, canStart: Bool? = nil) -> some View {
-        TaskRowView(task: task) {
-            toggleCompletion(task)
+        VStack(alignment: .leading, spacing: FocusSpacing.small) {
+            TaskRowView(task: task) {
+                toggleCompletion(task)
+            }
+            if let query = task.searchQuery,
+               case .success(let validated) = SearchQueryValidator.validate(query) {
+                Button("Search Google") {
+                    pendingSearch = ExternalSearchOpening.request(from: validated)
+                }
+                .accessibilityIdentifier("searchGoogle-\(task.id)")
+            }
         }
         .taskRowActions(
             canStart: (canStart ?? timer.engine.canStartFocus) && task.status != .completed,

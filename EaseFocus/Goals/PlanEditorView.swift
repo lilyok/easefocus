@@ -13,6 +13,11 @@ struct PlanEditorView: View {
     @State private var title: String
     @State private var details: String
     @State private var tasks: [DraftTask]
+    @State private var insertedPlan: GoalPlan?
+    @State private var saveErrorMessage: String?
+    @State private var isSaveAlertPresented = false
+    @State private var pendingSaveRetry: (() -> Void)?
+    @State private var pendingSearch: ExternalSearchRequest?
 
     init(
         draft: DraftPlanBlueprint? = nil,
@@ -51,16 +56,13 @@ struct PlanEditorView: View {
                                 Text("\(task.estimatedPomodoros) estimated sessions")
                                     .font(FocusTypography.footnote)
                             }
-                            if source == .generated {
-                                TextField("Optional search query", text: $task.searchQuery)
-                                    .accessibilityIdentifier("searchQuery-\(task.id)")
-                                if let error = searchQueryError(for: task.searchQuery) {
-                                    Text(SearchQueryValidationCopy.message(for: error))
-                                        .font(FocusTypography.footnote)
-                                        .foregroundStyle(Color.focusError)
-                                        .accessibilityIdentifier("searchQueryError-\(task.id)")
+                            TaskSearchQueryFields(
+                                taskID: task.id,
+                                query: $task.searchQuery,
+                                onSearch: { query in
+                                    pendingSearch = ExternalSearchOpening.request(from: query)
                                 }
-                            }
+                            )
                             HStack {
                                 Spacer()
                                 let index = tasks.firstIndex(where: { $0.id == task.id }) ?? 0
@@ -88,17 +90,13 @@ struct PlanEditorView: View {
                 } header: {
                     Text("Tasks")
                 } footer: {
-                    if source == .generated {
-                        Text("Optional search queries can be edited or removed. A query will leave EaseFocus only when you later choose to search externally; reviewing and saving do not send it.")
-                    } else {
-                        Text("Use the arrow buttons to set the task order.")
-                    }
+                    Text("Optional search queries can be edited or removed. A query leaves EaseFocus only when you confirm Search Google.")
                 }
             }
             .navigationTitle(source == .generated ? "Review draft" : "New plan")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel", action: cancel)
                 }
                 if let onRegenerate {
                     ToolbarItem(placement: .primaryAction) {
@@ -112,6 +110,13 @@ struct PlanEditorView: View {
                         .accessibilityIdentifier("savePlan")
                 }
             }
+            .persistenceSaveAlert(
+                isPresented: $isSaveAlertPresented,
+                message: saveErrorMessage,
+                onRetry: { pendingSaveRetry?() },
+                onDiscard: discardFailedSave
+            )
+            .externalSearchConfirmation($pendingSearch)
         }
     }
 
@@ -137,21 +142,53 @@ struct PlanEditorView: View {
         }).count else {
             return
         }
-        do {
-            let plan = try GoalPlanFactory.make(
-                title: title.trimmingCharacters(in: .whitespacesAndNewlines),
-                details: details.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
-                tasks: cleaned,
-                source: source,
-                survey: survey,
-                locale: locale
-            )
-            modelContext.insert(plan)
-            try modelContext.save()
-            dismiss()
-        } catch {
-            return
+        if insertedPlan == nil {
+            do {
+                let plan = try GoalPlanFactory.make(
+                    title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                    details: details.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+                    tasks: cleaned,
+                    source: source,
+                    survey: survey,
+                    locale: locale
+                )
+                modelContext.insert(plan)
+                insertedPlan = plan
+            } catch {
+                return
+            }
         }
+        savePendingChanges()
+    }
+
+    private func savePendingChanges() {
+        switch PersistenceSaving.result(of: { try modelContext.save() }) {
+        case .saved:
+            saveErrorMessage = nil
+            isSaveAlertPresented = false
+            pendingSaveRetry = nil
+            dismiss()
+        case .failed(let message):
+            saveErrorMessage = message
+            isSaveAlertPresented = true
+            pendingSaveRetry = savePendingChanges
+        }
+    }
+
+    private func discardFailedSave() {
+        modelContext.rollback()
+        insertedPlan = nil
+        saveErrorMessage = nil
+        isSaveAlertPresented = false
+        pendingSaveRetry = nil
+    }
+
+    private func cancel() {
+        if insertedPlan != nil {
+            modelContext.rollback()
+            insertedPlan = nil
+        }
+        dismiss()
     }
 
     private func moveTask(_ id: UUID, direction: TaskMoveDirection) {

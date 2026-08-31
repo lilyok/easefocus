@@ -11,6 +11,7 @@ struct PlanDetailView: View {
     @State private var saveErrorMessage: String?
     @State private var isSaveAlertPresented = false
     @State private var pendingSaveRetry: (() -> Void)?
+    @State private var pendingSearch: ExternalSearchRequest?
 
     var body: some View {
         List {
@@ -36,8 +37,15 @@ struct PlanDetailView: View {
                             startFocus(on: task)
                         },
                         onMoveUp: { moveTask(task, direction: .up) },
-                        onMoveDown: { moveTask(task, direction: .down) }
+                        onMoveDown: { moveTask(task, direction: .down) },
+                        onPersistQuery: { query in
+                            persistSearchQuery(query, on: task)
+                        },
+                        onSearch: { query in
+                            pendingSearch = ExternalSearchOpening.request(from: query)
+                        }
                     )
+                    .id(task.id)
                     .taskRowActions(
                         canStart: timer.engine.canStartFocus && task.status != .completed,
                         onStart: {
@@ -63,7 +71,7 @@ struct PlanDetailView: View {
             } header: {
                 Text("Tasks")
             } footer: {
-                Text("Use the arrow buttons to reorder saved tasks. Search queries are saved for external search in a future update.")
+                Text("Optional search queries can be edited or removed. Search Google opens in your browser after you confirm.")
             }
         }
         .scrollContentBackground(.hidden)
@@ -109,6 +117,7 @@ struct PlanDetailView: View {
             onRetry: { pendingSaveRetry?() },
             onDiscard: discardFailedSave
         )
+        .externalSearchConfirmation($pendingSearch)
     }
 
     private func addTask() {
@@ -139,6 +148,16 @@ struct PlanDetailView: View {
         commit(
             apply: {
                 task.toggleCompletion()
+                plan.updatedAt = .now
+            }
+        )
+    }
+
+    private func persistSearchQuery(_ query: String?, on task: PlanTask) {
+        commit(
+            apply: {
+                task.searchQuery = query
+                task.updatedAt = .now
                 plan.updatedAt = .now
             }
         )
@@ -229,6 +248,35 @@ private struct EditableTaskRow: View {
     var onStart: () -> Void
     var onMoveUp: () -> Void
     var onMoveDown: () -> Void
+    var onPersistQuery: (String?) -> Void
+    var onSearch: (String) -> Void
+
+    @State private var queryDraft: String
+
+    init(
+        task: PlanTask,
+        isStartEnabled: Bool,
+        canMoveUp: Bool,
+        canMoveDown: Bool,
+        onMarkCompleted: @escaping () -> Void,
+        onStart: @escaping () -> Void,
+        onMoveUp: @escaping () -> Void,
+        onMoveDown: @escaping () -> Void,
+        onPersistQuery: @escaping (String?) -> Void,
+        onSearch: @escaping (String) -> Void
+    ) {
+        self.task = task
+        self.isStartEnabled = isStartEnabled
+        self.canMoveUp = canMoveUp
+        self.canMoveDown = canMoveDown
+        self.onMarkCompleted = onMarkCompleted
+        self.onStart = onStart
+        self.onMoveUp = onMoveUp
+        self.onMoveDown = onMoveDown
+        self.onPersistQuery = onPersistQuery
+        self.onSearch = onSearch
+        _queryDraft = State(initialValue: task.searchQuery ?? "")
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: FocusSpacing.small) {
@@ -244,6 +292,22 @@ private struct EditableTaskRow: View {
                         .font(FocusTypography.footnote)
                 }
             }
+            TaskSearchQueryFields(
+                taskID: task.id,
+                query: $queryDraft,
+                onSearch: onSearch
+            )
+            .onChange(of: queryDraft) { _, newValue in
+                persistIfValid(newValue)
+            }
+            .onChange(of: task.searchQuery) { _, newValue in
+                guard case .success(let draftValue) = SearchQueryValidator.validateOptional(queryDraft) else {
+                    return
+                }
+                if draftValue != newValue {
+                    queryDraft = newValue ?? ""
+                }
+            }
             HStack {
                 Text("Order")
                     .font(FocusTypography.footnote)
@@ -256,6 +320,17 @@ private struct EditableTaskRow: View {
                     onMoveDown: onMoveDown
                 )
             }
+        }
+    }
+
+    private func persistIfValid(_ raw: String) {
+        switch SearchQueryValidator.validateOptional(raw) {
+        case .success(let query):
+            if query != task.searchQuery {
+                onPersistQuery(query)
+            }
+        case .failure:
+            break
         }
     }
 }

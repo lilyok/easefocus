@@ -53,4 +53,71 @@ struct PersistenceSaveTests {
         #expect(value == 1)
         #expect(mutationCount == 1)
     }
+
+    @Test
+    func planEditorRetrySavesOnlyAndDiscardRollsBackWithoutDismissing() {
+        var insertedPlan: String?
+        var insertCount = 0
+        var saveCount = 0
+        var rolledBack = false
+        var dismissed = false
+        var shouldFailSave = true
+        var title = "Spanish greetings"
+        var searchQuery = "Spanish greetings audio"
+
+        func savePendingChanges() -> PersistenceMutationResult {
+            let result = PersistenceSaving.result {
+                saveCount += 1
+                if shouldFailSave {
+                    throw SampleError.diskFull
+                }
+            }
+            if result == .saved {
+                dismissed = true
+            }
+            return result
+        }
+
+        func save() -> PersistenceMutationResult {
+            if insertedPlan == nil {
+                insertCount += 1
+                insertedPlan = "\(title)|\(searchQuery)"
+            }
+            return savePendingChanges()
+        }
+
+        func discard() {
+            rolledBack = true
+            insertedPlan = nil
+            dismissed = false
+        }
+
+        #expect(save() != .saved)
+        #expect(insertCount == 1)
+        #expect(saveCount == 1)
+        #expect(insertedPlan == "Spanish greetings|Spanish greetings audio")
+        #expect(!dismissed)
+
+        title = "Edited title"
+        searchQuery = "beginner Spanish"
+        #expect(savePendingChanges() != .saved)
+        #expect(insertCount == 1)
+        #expect(saveCount == 2)
+        #expect(insertedPlan == "Spanish greetings|Spanish greetings audio")
+        #expect(title == "Edited title")
+        #expect(searchQuery == "beginner Spanish")
+        #expect(!dismissed)
+
+        discard()
+        #expect(rolledBack)
+        #expect(insertedPlan == nil)
+        #expect(!dismissed)
+        #expect(title == "Edited title")
+        #expect(searchQuery == "beginner Spanish")
+
+        shouldFailSave = false
+        #expect(save() == .saved)
+        #expect(insertCount == 2)
+        #expect(dismissed)
+    }
 }
