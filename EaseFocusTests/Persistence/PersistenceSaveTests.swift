@@ -34,29 +34,23 @@ struct PersistenceSaveTests {
     }
 
     @Test
-    func rollsBackAFailedMutationSoRetryCanReapplyIt() {
+    func failedSaveRetainsMutationAndRetryDoesNotReapplyIt() {
         var value = 0
-        var rolledBack = false
+        var mutationCount = 0
 
-        let result = PersistenceSaving.commit(
-            apply: { value = 1 },
-            save: { throw SampleError.diskFull },
-            rollback: {
-                value = 0
-                rolledBack = true
-            }
-        )
+        value = 1
+        mutationCount += 1
+        let result = PersistenceSaving.result {
+            throw SampleError.diskFull
+        }
 
         #expect(result != .saved)
-        #expect(value == 0)
-        #expect(rolledBack)
+        #expect(value == 1)
+        #expect(mutationCount == 1)
 
-        let retried = PersistenceSaving.commit(
-            apply: { value = 1 },
-            save: {},
-            rollback: { value = 0 }
-        )
+        let retried = PersistenceSaving.result {}
         #expect(retried == .saved)
         #expect(value == 1)
+        #expect(mutationCount == 1)
     }
 }

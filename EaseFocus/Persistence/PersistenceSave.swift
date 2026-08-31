@@ -28,21 +28,6 @@ nonisolated enum PersistenceSaving {
             return .failed(PersistenceSaveCopy.message(for: error))
         }
     }
-
-    static func commit(
-        apply: () -> Void,
-        save: () throws -> Void,
-        rollback: () -> Void
-    ) -> PersistenceMutationResult {
-        apply()
-        switch result(of: save) {
-        case .saved:
-            return .saved
-        case .failed(let message):
-            rollback()
-            return .failed(message)
-        }
-    }
 }
 
 extension View {

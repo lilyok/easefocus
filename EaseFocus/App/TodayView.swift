@@ -187,8 +187,7 @@ struct TodayView: View {
             apply: {
                 task.toggleCompletion()
                 task.plan?.updatedAt = .now
-            },
-            retry: { toggleCompletion(task) }
+            }
         )
     }
 
@@ -197,7 +196,6 @@ struct TodayView: View {
             apply: {
                 task.plan?.moveTaskToFront(task)
             },
-            retry: { startFocus(on: task) },
             onSuccess: {
                 timer.startFocus(task: task)
             }
@@ -209,22 +207,23 @@ struct TodayView: View {
             apply: {
                 task.plan?.updatedAt = .now
                 modelContext.delete(task)
-            },
-            retry: { remove(task) }
+            }
         )
         taskPendingRemoval = nil
     }
 
     private func commit(
         apply: () -> Void,
-        retry: @escaping () -> Void,
-        onSuccess: () -> Void = {}
+        onSuccess: @escaping () -> Void = {}
     ) {
-        switch PersistenceSaving.commit(
-            apply: apply,
-            save: { try modelContext.save() },
-            rollback: { modelContext.rollback() }
-        ) {
+        apply()
+        savePendingChanges(onSuccess: onSuccess)
+    }
+
+    private func savePendingChanges(
+        onSuccess: @escaping () -> Void
+    ) {
+        switch PersistenceSaving.result(of: { try modelContext.save() }) {
         case .saved:
             saveErrorMessage = nil
             isSaveAlertPresented = false
@@ -233,11 +232,14 @@ struct TodayView: View {
         case .failed(let message):
             saveErrorMessage = message
             isSaveAlertPresented = true
-            pendingSaveRetry = retry
+            pendingSaveRetry = {
+                savePendingChanges(onSuccess: onSuccess)
+            }
         }
     }
 
     private func discardFailedSave() {
+        modelContext.rollback()
         saveErrorMessage = nil
         isSaveAlertPresented = false
         pendingSaveRetry = nil
