@@ -19,6 +19,7 @@ struct SettingsView: View {
                     durationStepper("Focus minutes", seconds: focusSecondsBinding)
                     durationStepper("Short break", seconds: shortBreakBinding)
                     durationStepper("Long break", seconds: longBreakBinding)
+                    Toggle("Start breaks automatically", isOn: automaticBreakBinding)
                 }
 
                 Section("Notifications") {
@@ -71,6 +72,13 @@ struct SettingsView: View {
         Binding(
             get: { timer.settings.longBreakSeconds },
             set: { timer.settings.longBreakSeconds = $0 }
+        )
+    }
+
+    private var automaticBreakBinding: Binding<Bool> {
+        Binding(
+            get: { timer.settings.startBreaksAutomatically },
+            set: { timer.settings.startBreaksAutomatically = $0 }
         )
     }
 

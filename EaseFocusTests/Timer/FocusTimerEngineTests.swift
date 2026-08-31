@@ -19,9 +19,26 @@ struct FocusTimerEngineTests {
 
         let end = start.addingTimeInterval(60)
         let endEvents = engine.tick(now: end)
-        #expect(engine.phase == .runningBreak)
+        #expect(engine.phase == .completed)
         #expect(endEvents.contains(.didCompleteFocus(elapsedSeconds: 60, endedAt: end)))
-        #expect(endEvents.contains(.didStartBreak(isLong: false, plannedDurationSeconds: 5 * 60)))
+        #expect(!endEvents.contains(where: { if case .didStartBreak = $0 { return true }; return false }))
+    }
+
+    @Test
+    func onlySessionLifecycleEventsRequireASwiftDataSave() {
+        #expect(
+            !FocusTimerEvent.requiresStoreSave([
+                .shouldScheduleNotification(start),
+                .shouldCancelNotification,
+                .didStartBreak(isLong: false, plannedDurationSeconds: 5),
+            ])
+        )
+        #expect(
+            FocusTimerEvent.requiresStoreSave([
+                .didCompleteFocus(elapsedSeconds: 60, endedAt: start),
+                .shouldCancelNotification,
+            ])
+        )
     }
 
     @Test
@@ -61,19 +78,65 @@ struct FocusTimerEngineTests {
         #expect(engine.elapsedSeconds(at: jumped) == 25 * 60)
 
         let events = engine.tick(now: jumped)
-        #expect(engine.phase == .runningBreak)
+        #expect(engine.phase == .completed)
         #expect(events.contains(.didCompleteFocus(elapsedSeconds: 25 * 60, endedAt: jumped)))
     }
 
     @Test
     func automaticBreakStartsAfterFocus() {
-        var engine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 10, shortBreakSeconds: 5))
+        var settings = FocusTimerSettings(focusSeconds: 10, shortBreakSeconds: 5)
+        settings.startBreaksAutomatically = true
+        var engine = FocusTimerEngine(settings: settings)
         _ = engine.startFocus(taskID: nil, now: start)
         let events = engine.tick(now: start.addingTimeInterval(10))
 
         #expect(engine.phase == .runningBreak)
         #expect(events.contains(.didStartBreak(isLong: false, plannedDurationSeconds: 5)))
         #expect(!events.contains(where: { if case .didStartFocus = $0 { return true }; return false }))
+    }
+
+    @Test
+    func manualBreakCanStartOrBeSkippedAfterFocus() {
+        var engine = FocusTimerEngine(
+            settings: FocusTimerSettings(focusSeconds: 10, shortBreakSeconds: 5)
+        )
+        _ = engine.startFocus(taskID: nil, now: start)
+        let focusEvents = engine.tick(now: start.addingTimeInterval(10))
+
+        #expect(engine.phase == .completed)
+        #expect(!focusEvents.contains(where: { if case .didStartBreak = $0 { return true }; return false }))
+
+        let breakEvents = engine.startBreak(now: start.addingTimeInterval(10))
+        #expect(engine.phase == .runningBreak)
+        #expect(breakEvents.contains(.didStartBreak(isLong: false, plannedDurationSeconds: 5)))
+
+        var skippedEngine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 10))
+        _ = skippedEngine.startFocus(taskID: nil, now: start)
+        _ = skippedEngine.tick(now: start.addingTimeInterval(10))
+        _ = skippedEngine.skipBreak()
+        #expect(skippedEngine.phase == .idle)
+    }
+
+    @Test
+    func automaticModeStartsLongBreakAtConfiguredInterval() {
+        var settings = FocusTimerSettings(
+            focusSeconds: 10,
+            shortBreakSeconds: 5,
+            longBreakSeconds: 20,
+            sessionsBeforeLongBreak: 2
+        )
+        settings.startBreaksAutomatically = true
+        var engine = FocusTimerEngine(settings: settings)
+
+        _ = engine.startFocus(taskID: nil, now: start)
+        _ = engine.tick(now: start.addingTimeInterval(10))
+        _ = engine.tick(now: start.addingTimeInterval(15))
+        _ = engine.startFocus(taskID: nil, now: start.addingTimeInterval(15))
+        let events = engine.tick(now: start.addingTimeInterval(25))
+
+        #expect(engine.phase == .runningBreak)
+        #expect(engine.isLongBreak)
+        #expect(events.contains(.didStartBreak(isLong: true, plannedDurationSeconds: 20)))
     }
 
     @Test

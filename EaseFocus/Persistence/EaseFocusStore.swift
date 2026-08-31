@@ -4,10 +4,6 @@ import SwiftData
 
 nonisolated enum EaseFocusStore {
     static let storeFileName = "easefocus.store"
-    static let legacyCoreDataFileName = "pomodoro.sqlite"
-
-    /// Lightweight migration only. Never deletes `pomodoro.sqlite`.
-    static let allowsDestructiveSchemaCutover = false
 
     static var productStoreFileNames: [String] {
         [storeFileName, storeFileName + "-wal", storeFileName + "-shm"]
@@ -18,14 +14,13 @@ nonisolated enum EaseFocusStore {
     }
 
     static func makeContainer() throws -> ModelContainer {
-        importUnsandboxedStoreIfNeeded()
-        do {
-            return try openContainer()
-        } catch {
-            try? removeProductStoreFiles()
-            importUnsandboxedStoreIfNeeded()
-            return try openContainer()
-        }
+        #if DEBUG
+        // Development builds may import a pre-sandbox store once, but never replace
+        // any existing sandboxed store file. Release builds do not perform this import.
+        try importUnsandboxedStoreIfNeeded()
+        #endif
+        let storeURL = try productStoreURL()
+        return try makeContainer(at: storeURL)
     }
 
     static func inMemoryContainer() throws -> ModelContainer {
@@ -33,10 +28,20 @@ nonisolated enum EaseFocusStore {
         return try ModelContainer(for: schema, configurations: [configuration])
     }
 
-    private static func openContainer() throws -> ModelContainer {
-        let storeURL = try productStoreURL()
+    private static func openContainer(at storeURL: URL) throws -> ModelContainer {
         let configuration = ModelConfiguration(schema: schema, url: storeURL)
         return try ModelContainer(for: schema, configurations: [configuration])
+    }
+
+    static func makeContainer(at storeURL: URL) throws -> ModelContainer {
+        try makeContainer(at: storeURL, opener: openContainer(at:))
+    }
+
+    static func makeContainer(
+        at storeURL: URL,
+        opener: (URL) throws -> ModelContainer
+    ) throws -> ModelContainer {
+        try opener(storeURL)
     }
 
     static func productStoreURL() throws -> URL {
@@ -61,37 +66,47 @@ nonisolated enum EaseFocusStore {
         return (try? fileManager.attributesOfItem(atPath: url.path)[.size] as? NSNumber)?.intValue ?? 0
     }
 
-    static func importUnsandboxedStoreIfNeeded() {
-        do {
-            try copyUnsandboxedStoreIfNeeded()
-        } catch {
-            return
-        }
-    }
-
-    private static func copyUnsandboxedStoreIfNeeded() throws {
+    static func importUnsandboxedStoreIfNeeded() throws {
         let destination = try productStoreURL()
         guard let source = unsandboxedStoreURL() else {
             return
         }
+        try copyUnsandboxedStoreIfNeeded(source: source, destination: destination)
+    }
+
+    static func copyUnsandboxedStoreIfNeeded(source: URL, destination: URL) throws {
         let fileManager = FileManager.default
         guard source.standardizedFileURL != destination.standardizedFileURL,
               fileManager.fileExists(atPath: source.path) else {
             return
         }
 
-        let sourceSize = fileSize(at: source)
-        let destinationSize = fileSize(at: destination)
-        guard sourceSize > 0, sourceSize > destinationSize else {
+        let sourceDirectory = source.deletingLastPathComponent()
+        let destinationDirectory = destination.deletingLastPathComponent()
+        let destinationAlreadyExists = productStoreFileNames.contains { name in
+            fileManager.fileExists(
+                atPath: destinationDirectory
+                    .appending(path: name, directoryHint: .notDirectory)
+                    .path
+            )
+        }
+        guard fileSize(at: source) > 0, !destinationAlreadyExists else {
             return
         }
 
-        let sourceDirectory = source.deletingLastPathComponent()
-        let destinationDirectory = destination.deletingLastPathComponent()
-        let tempDirectory = destinationDirectory.appending(path: ".easefocus-import", directoryHint: .isDirectory)
-        try? fileManager.removeItem(at: tempDirectory)
+        try fileManager.createDirectory(at: destinationDirectory, withIntermediateDirectories: true)
+        let tempDirectory = destinationDirectory.appending(
+            path: ".easefocus-import-\(UUID().uuidString)",
+            directoryHint: .isDirectory
+        )
         try fileManager.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
-        defer { try? fileManager.removeItem(at: tempDirectory) }
+        defer {
+            do {
+                try fileManager.removeItem(at: tempDirectory)
+            } catch {
+                assertionFailure("Could not remove temporary store import: \(error)")
+            }
+        }
 
         for name in productStoreFileNames {
             let from = sourceDirectory.appending(path: name, directoryHint: .notDirectory)
@@ -110,24 +125,12 @@ nonisolated enum EaseFocusStore {
         }
 
         for name in productStoreFileNames {
-            let to = destinationDirectory.appending(path: name, directoryHint: .notDirectory)
-            if fileManager.fileExists(atPath: to.path) {
-                try fileManager.removeItem(at: to)
-            }
             let staged = tempDirectory.appending(path: name, directoryHint: .notDirectory)
             if fileManager.fileExists(atPath: staged.path) {
-                try fileManager.copyItem(at: staged, to: to)
-            }
-        }
-    }
-
-    static func removeProductStoreFiles() throws {
-        let directory = try applicationSupportDirectory()
-        let fileManager = FileManager.default
-        for name in productStoreFileNames {
-            let url = directory.appending(path: name, directoryHint: .notDirectory)
-            if fileManager.fileExists(atPath: url.path) {
-                try fileManager.removeItem(at: url)
+                try fileManager.copyItem(
+                    at: staged,
+                    to: destinationDirectory.appending(path: name, directoryHint: .notDirectory)
+                )
             }
         }
     }

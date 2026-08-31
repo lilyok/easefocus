@@ -8,6 +8,9 @@ struct PlanDetailView: View {
     @State private var newTaskTitle = ""
     @State private var newTaskEstimate = 1
     @State private var taskPendingRemoval: PlanTask?
+    @State private var saveErrorMessage: String?
+    @State private var isSaveAlertPresented = false
+    @State private var pendingSaveRetry: (() -> Void)?
 
     var body: some View {
         List {
@@ -27,13 +30,10 @@ struct PlanDetailView: View {
                         canMoveUp: index > 0,
                         canMoveDown: index < plan.orderedTasks.count - 1,
                         onMarkCompleted: {
-                            task.toggleCompletion()
-                            plan.updatedAt = .now
-                            try? modelContext.save()
+                            toggleCompletion(task)
                         },
                         onStart: {
-                            plan.moveTaskToFront(task)
-                            timer.startFocus(task: task)
+                            startFocus(on: task)
                         },
                         onMoveUp: { moveTask(task, direction: .up) },
                         onMoveDown: { moveTask(task, direction: .down) }
@@ -41,8 +41,7 @@ struct PlanDetailView: View {
                     .taskRowActions(
                         canStart: timer.engine.canStartFocus && task.status != .completed,
                         onStart: {
-                            plan.moveTaskToFront(task)
-                            timer.startFocus(task: task)
+                            startFocus(on: task)
                         },
                         onRemove: { taskPendingRemoval = task }
                     )
@@ -97,15 +96,19 @@ struct PlanDetailView: View {
             presenting: taskPendingRemoval
         ) { task in
             Button("Remove", role: .destructive) {
-                modelContext.delete(task)
-                plan.updatedAt = .now
-                try? modelContext.save()
+                remove(task)
                 taskPendingRemoval = nil
             }
             Button("Cancel", role: .cancel) {}
         } message: { task in
             Text("“\(task.title)” will be deleted from the plan.")
         }
+        .persistenceSaveAlert(
+            isPresented: $isSaveAlertPresented,
+            message: saveErrorMessage,
+            onRetry: { pendingSaveRetry?() },
+            onDiscard: discardFailedSave
+        )
     }
 
     private func addTask() {
@@ -113,33 +116,107 @@ struct PlanDetailView: View {
         guard !title.isEmpty else {
             return
         }
-        let task = PlanTask(
-            title: title,
-            position: plan.tasks.count,
-            estimatedPomodoros: newTaskEstimate
+        let estimate = newTaskEstimate
+        commit(
+            apply: {
+                let task = PlanTask(
+                    title: title,
+                    position: plan.tasks.count,
+                    estimatedPomodoros: estimate
+                )
+                task.plan = plan
+                plan.tasks.append(task)
+                plan.updatedAt = .now
+            },
+            onSuccess: {
+                newTaskTitle = ""
+                newTaskEstimate = 1
+            }
         )
-        task.plan = plan
-        plan.tasks.append(task)
-        plan.updatedAt = .now
-        newTaskTitle = ""
-        newTaskEstimate = 1
-        try? modelContext.save()
+    }
+
+    private func toggleCompletion(_ task: PlanTask) {
+        commit(
+            apply: {
+                task.toggleCompletion()
+                plan.updatedAt = .now
+            }
+        )
+    }
+
+    private func startFocus(on task: PlanTask) {
+        commit(
+            apply: {
+                plan.moveTaskToFront(task)
+            },
+            onSuccess: {
+                timer.startFocus(task: task)
+            }
+        )
+    }
+
+    private func remove(_ task: PlanTask) {
+        commit(
+            apply: {
+                plan.updatedAt = .now
+                modelContext.delete(task)
+            }
+        )
     }
 
     private func moveTasks(from offsets: IndexSet, to destination: Int) {
-        var ordered = plan.orderedTasks
-        ordered.move(fromOffsets: offsets, toOffset: destination)
-        for (index, task) in ordered.enumerated() {
-            task.position = index
-            task.updatedAt = .now
-        }
-        plan.updatedAt = .now
-        try? modelContext.save()
+        commit(
+            apply: {
+                var ordered = plan.orderedTasks
+                ordered.move(fromOffsets: offsets, toOffset: destination)
+                for (index, task) in ordered.enumerated() {
+                    task.position = index
+                    task.updatedAt = .now
+                }
+                plan.updatedAt = .now
+            }
+        )
     }
 
     private func moveTask(_ task: PlanTask, direction: TaskMoveDirection) {
-        plan.moveTask(task, direction: direction)
-        try? modelContext.save()
+        commit(
+            apply: {
+                plan.moveTask(task, direction: direction)
+            }
+        )
+    }
+
+    private func commit(
+        apply: () -> Void,
+        onSuccess: @escaping () -> Void = {}
+    ) {
+        apply()
+        savePendingChanges(onSuccess: onSuccess)
+    }
+
+    private func savePendingChanges(
+        onSuccess: @escaping () -> Void
+    ) {
+        switch PersistenceSaving.result(of: { try modelContext.save() }) {
+        case .saved:
+            saveErrorMessage = nil
+            isSaveAlertPresented = false
+            pendingSaveRetry = nil
+            onSuccess()
+        case .failed(let message):
+            saveErrorMessage = message
+            isSaveAlertPresented = true
+            pendingSaveRetry = {
+                savePendingChanges(onSuccess: onSuccess)
+            }
+        }
+    }
+
+    private func discardFailedSave() {
+        modelContext.rollback()
+        saveErrorMessage = nil
+        isSaveAlertPresented = false
+        pendingSaveRetry = nil
     }
 }
 

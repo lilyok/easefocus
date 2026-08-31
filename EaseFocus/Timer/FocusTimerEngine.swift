@@ -26,6 +26,19 @@ nonisolated enum FocusTimerEvent: Equatable, Sendable {
     case didCompleteBreak
     case shouldScheduleNotification(Date)
     case shouldCancelNotification
+
+    var mutatesPersistentStore: Bool {
+        switch self {
+        case .didStartFocus, .didCompleteFocus, .didCancelFocus, .didInterruptFocus:
+            return true
+        case .didStartBreak, .didCompleteBreak, .shouldScheduleNotification, .shouldCancelNotification:
+            return false
+        }
+    }
+
+    static func requiresStoreSave(_ events: [FocusTimerEvent]) -> Bool {
+        events.contains(where: \.mutatesPersistentStore)
+    }
 }
 
 nonisolated struct FocusTimerEngine: Equatable, Codable, Sendable {
@@ -177,7 +190,9 @@ nonisolated struct FocusTimerEngine: Equatable, Codable, Sendable {
                 .didCompleteFocus(elapsedSeconds: elapsed, endedAt: now),
                 .shouldCancelNotification,
             ]
-            events.append(contentsOf: startBreak(now: now))
+            if settings.startBreaksAutomatically {
+                events.append(contentsOf: startBreak(now: now))
+            }
             return events
         }
 
