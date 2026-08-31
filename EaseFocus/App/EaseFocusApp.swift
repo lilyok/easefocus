@@ -4,13 +4,20 @@ import SwiftUI
 @main
 struct EaseFocusApp: App {
     private let modelContainer: ModelContainer?
+    private let persistenceError: Error?
     @State private var timer = FocusTimerController()
     #if os(macOS)
     @NSApplicationDelegateAdaptor(EaseFocusAppDelegate.self) private var appDelegate
     #endif
 
     init() {
-        modelContainer = try? EaseFocusStore.makeContainer()
+        do {
+            modelContainer = try EaseFocusStore.makeContainer()
+            persistenceError = nil
+        } catch {
+            modelContainer = nil
+            persistenceError = error
+        }
         #if os(macOS)
         UserDefaults.standard.set(false, forKey: "NSQuitAlwaysKeepsWindows")
         #endif
@@ -42,7 +49,7 @@ struct EaseFocusApp: App {
                 .modelContainer(modelContainer)
                 .environment(timer)
         } else {
-            PersistenceErrorView()
+            PersistenceErrorView(error: persistenceError)
         }
     }
 }

@@ -177,7 +177,9 @@ nonisolated struct FocusTimerEngine: Equatable, Codable, Sendable {
                 .didCompleteFocus(elapsedSeconds: elapsed, endedAt: now),
                 .shouldCancelNotification,
             ]
-            events.append(contentsOf: startBreak(now: now))
+            if settings.startBreaksAutomatically {
+                events.append(contentsOf: startBreak(now: now))
+            }
             return events
         }
 

@@ -166,7 +166,64 @@ struct FocusTimerControllerTests {
 
         controller.tick(now: start.addingTimeInterval(60))
         #expect(first.status == .pending)
+        #expect(controller.engine.phase == .completed)
+    }
+
+    @Test
+    @MainActor
+    func automaticModeStartsBreakWhenFocusCompletes() throws {
+        let container = try EaseFocusStore.inMemoryContainer()
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let (defaults, suiteName) = uniqueDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        var settings = FocusTimerSettings(focusSeconds: 60, shortBreakSeconds: 5)
+        settings.startBreaksAutomatically = true
+        let controller = FocusTimerController(
+            settings: settings,
+            notifications: SilentNotifications(),
+            defaults: defaults
+        )
+        controller.attach(modelContext: container.mainContext, now: start)
+        controller.startFocus(task: nil, now: start)
+
+        controller.tick(now: start.addingTimeInterval(60))
+
         #expect(controller.engine.phase == .runningBreak)
+        #expect(controller.engine.remainingSeconds == 5)
+    }
+
+    @Test
+    @MainActor
+    func manualModePersistsCompletedStateAcrossRelaunch() throws {
+        let (defaults, suiteName) = uniqueDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let firstContainer = try EaseFocusStore.inMemoryContainer()
+        let first = FocusTimerController(
+            settings: FocusTimerSettings(focusSeconds: 60, shortBreakSeconds: 5),
+            notifications: SilentNotifications(),
+            defaults: defaults
+        )
+        first.attach(modelContext: firstContainer.mainContext, now: start)
+        first.startFocus(task: nil, now: start)
+        first.tick(now: start.addingTimeInterval(60))
+        #expect(first.engine.phase == .completed)
+
+        let restoredContainer = try EaseFocusStore.inMemoryContainer()
+        let relaunched = FocusTimerController(
+            notifications: SilentNotifications(),
+            defaults: defaults
+        )
+        relaunched.attach(
+            modelContext: restoredContainer.mainContext,
+            now: start.addingTimeInterval(61)
+        )
+
+        #expect(!relaunched.settings.startBreaksAutomatically)
+        #expect(relaunched.engine.phase == .completed)
+
+        relaunched.startBreak(now: start.addingTimeInterval(61))
+        #expect(relaunched.engine.phase == .runningBreak)
     }
 
     @Test

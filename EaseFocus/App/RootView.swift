@@ -66,7 +66,6 @@ struct RootView: View {
         }
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
             timer.tick(now: date)
-            Task { await timer.refreshNotificationAccess() }
         }
     }
 }
