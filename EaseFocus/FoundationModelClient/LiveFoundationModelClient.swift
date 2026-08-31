@@ -128,6 +128,6 @@ nonisolated struct GenerableDraftTask {
     @Guide(description: "Estimated Pomodoro sessions from 1 to 8", .range(1...8))
     var estimatedPomodoros: Int
 
-    @Guide(description: "A short web search query with no URLs or domain names")
+    @Guide(description: "Optional generic task-focused search terms with no URLs, domain names, names, deadlines, constraints, or other personal survey details")
     var searchQuery: String
 }

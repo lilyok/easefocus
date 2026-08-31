@@ -9,6 +9,11 @@ nonisolated enum DraftPlanPrompt {
         Do not claim you searched the web.
         Tasks must be achievable and specific.
         Do not replace or mention completed work.
+        Each task may include an optional searchQuery.
+        Search queries must be generic and task-focused.
+        Do not copy names or other personal survey details into a searchQuery, including deadlines and constraints.
+        Search queries must contain no URLs or domain names.
+        Leave searchQuery empty if a useful generic query is not needed.
         """
     }
 
@@ -29,6 +34,8 @@ nonisolated enum DraftPlanPrompt {
         Constraints: \(constraints)
         Keep the number of tasks and estimated sessions appropriate for \(survey.sessionsPerWeek) sessions per week.
         Do not include URLs, domain names, or citations.
+        Search queries must be generic and task-focused.
+        Do not copy names or other personal survey details into a searchQuery, including deadlines and constraints.
         """
     }
 }

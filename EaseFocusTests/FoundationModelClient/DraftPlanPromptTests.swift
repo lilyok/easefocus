@@ -10,6 +10,27 @@ struct DraftPlanPromptTests {
         #expect(instructions.contains("es-ES"))
         #expect(!instructions.contains("the user's language"))
         #expect(instructions.contains("Do not include URLs"))
+        #expect(instructions.contains("generic and task-focused"))
+        #expect(instructions.contains("names or other personal survey details"))
+        #expect(instructions.contains("deadlines and constraints"))
+        #expect(instructions.contains("no URLs or domain names"))
+    }
+
+    @Test
+    func keepsGeneratedSearchQueriesGenericAndFreeOfSurveyDetails() {
+        let instructions = DraftPlanPrompt.instructions(locale: Locale(identifier: "en"))
+        var survey = GoalSurvey()
+        survey.goal = "Help Alex pass a conversation test by Friday"
+        survey.constraints = "Evenings only"
+        let message = DraftPlanPrompt.userMessage(for: survey)
+
+        #expect(instructions.contains("Search queries must be generic and task-focused"))
+        #expect(instructions.contains("Do not copy names or other personal survey details"))
+        #expect(message.contains("Search queries must be generic and task-focused"))
+        #expect(message.contains("names or other personal survey details"))
+        #expect(message.contains("deadlines and constraints"))
+        #expect(!instructions.contains("detect names"))
+        #expect(!message.contains("detect names"))
     }
 
     @Test
@@ -31,6 +52,8 @@ struct DraftPlanPromptTests {
         #expect(message.contains("5"))
         #expect(message.contains("No evenings"))
         #expect(message.contains("Do not include URLs"))
+        #expect(message.contains("generic and task-focused"))
+        #expect(message.contains("personal survey details"))
         #expect(!message.contains("http"))
     }
 }
