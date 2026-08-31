@@ -62,12 +62,17 @@ nonisolated struct TaskSnapshot: Codable, Equatable, Sendable {
     }
 
     func matchesCompletedWork(_ original: TaskSnapshot) -> Bool {
+        matchesProtectedWork(original)
+            && status == .completed
+            && original.status == .completed
+    }
+
+    func matchesProtectedWork(_ original: TaskSnapshot) -> Bool {
         id == original.id
             && title == original.title
             && details == original.details
             && estimatedPomodoros == original.estimatedPomodoros
-            && status == .completed
-            && original.status == .completed
+            && status == original.status
             && searchQuery == original.searchQuery
     }
 }
