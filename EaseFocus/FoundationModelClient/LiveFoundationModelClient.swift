@@ -46,6 +46,11 @@ nonisolated struct LiveFoundationModelClient: FoundationModelGenerating {
             ).content
         } catch is CancellationError {
             throw FoundationModelClientError.cancelled
+        } catch let error as LanguageModelSession.GenerationError {
+            if Task.isCancelled {
+                throw FoundationModelClientError.cancelled
+            }
+            throw FoundationModelGenerationErrorMapper.map(error)
         } catch {
             if Task.isCancelled {
                 throw FoundationModelClientError.cancelled
@@ -74,6 +79,31 @@ nonisolated struct LiveFoundationModelClient: FoundationModelGenerating {
             return validated
         case .failure(let error):
             throw FoundationModelClientError.validation(error)
+        }
+    }
+}
+
+nonisolated enum FoundationModelGenerationErrorMapper {
+    static func map(
+        _ error: LanguageModelSession.GenerationError
+    ) -> FoundationModelClientError {
+        switch error {
+        case .refusal:
+            return .refusal
+        case .guardrailViolation:
+            return .guardrailViolation
+        case .unsupportedLanguageOrLocale:
+            return .unsupportedLanguageOrLocale
+        case .exceededContextWindowSize:
+            return .contextLimitExceeded
+        case .assetsUnavailable,
+             .unsupportedGuide,
+             .decodingFailure,
+             .rateLimited,
+             .concurrentRequests:
+            return .generationFailed
+        @unknown default:
+            return .generationFailed
         }
     }
 }

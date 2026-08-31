@@ -9,50 +9,27 @@ struct NotificationAccessTests {
         #expect(NotificationAccessCopy.title(for: .notDetermined).contains("off until you allow"))
         #expect(NotificationAccessCopy.message(for: .notDetermined).contains("Settings"))
         #expect(NotificationAccessCopy.title(for: .denied).contains("turned off"))
-        #expect(NotificationAccessCopy.message(for: .allowed).contains("banner"))
+        #expect(NotificationAccessCopy.message(for: .allowed).contains("system settings"))
     }
 
     @Test
-    func treatsDisabledDeliveryAsOffEvenIfAuthorized() {
+    func mapsSystemAuthorizationStatus() {
         #expect(
-            NotificationAccess.from(
-                authorizationStatus: .authorized,
-                alertSetting: .disabled,
-                soundSetting: .disabled,
-                notificationCenterSetting: .disabled
-            ) == .denied
+            NotificationAccess.from(authorizationStatus: .authorized) == .allowed
         )
         #expect(
-            NotificationAccess.from(
-                authorizationStatus: .authorized,
-                alertSetting: .enabled,
-                soundSetting: .disabled,
-                notificationCenterSetting: .disabled
-            ) == .allowed
+            NotificationAccess.from(authorizationStatus: .provisional) == .allowed
+        )
+        #if os(iOS)
+        #expect(
+            NotificationAccess.from(authorizationStatus: .ephemeral) == .allowed
+        )
+        #endif
+        #expect(
+            NotificationAccess.from(authorizationStatus: .notDetermined) == .notDetermined
         )
         #expect(
-            NotificationAccess.from(
-                authorizationStatus: .authorized,
-                alertSetting: .notSupported,
-                soundSetting: .notSupported,
-                notificationCenterSetting: .notSupported
-            ) == .allowed
-        )
-        #expect(
-            NotificationAccess.from(
-                authorizationStatus: .notDetermined,
-                alertSetting: .disabled,
-                soundSetting: .disabled,
-                notificationCenterSetting: .disabled
-            ) == .notDetermined
-        )
-        #expect(
-            NotificationAccess.from(
-                authorizationStatus: .denied,
-                alertSetting: .enabled,
-                soundSetting: .enabled,
-                notificationCenterSetting: .enabled
-            ) == .denied
+            NotificationAccess.from(authorizationStatus: .denied) == .denied
         )
     }
 

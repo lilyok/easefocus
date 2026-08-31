@@ -18,11 +18,14 @@ struct PlanDetailView: View {
                     set: { plan.details = $0.nilIfEmpty }
                 ), axis: .vertical)
             }
-            Section("Tasks") {
+            Section {
                 ForEach(plan.orderedTasks) { task in
+                    let index = plan.orderedTasks.firstIndex(where: { $0.id == task.id }) ?? 0
                     EditableTaskRow(
                         task: task,
                         isStartEnabled: timer.engine.canStartFocus,
+                        canMoveUp: index > 0,
+                        canMoveDown: index < plan.orderedTasks.count - 1,
                         onMarkCompleted: {
                             task.toggleCompletion()
                             plan.updatedAt = .now
@@ -31,7 +34,9 @@ struct PlanDetailView: View {
                         onStart: {
                             plan.moveTaskToFront(task)
                             timer.startFocus(task: task)
-                        }
+                        },
+                        onMoveUp: { moveTask(task, direction: .up) },
+                        onMoveDown: { moveTask(task, direction: .down) }
                     )
                     .taskRowActions(
                         canStart: timer.engine.canStartFocus && task.status != .completed,
@@ -56,6 +61,10 @@ struct PlanDetailView: View {
                             .font(FocusTypography.footnote)
                     }
                 }
+            } header: {
+                Text("Tasks")
+            } footer: {
+                Text("Use the arrow buttons to reorder saved tasks. Search queries are saved for external search in a future update.")
             }
         }
         .scrollContentBackground(.hidden)
@@ -125,14 +134,24 @@ struct PlanDetailView: View {
             task.updatedAt = .now
         }
         plan.updatedAt = .now
+        try? modelContext.save()
+    }
+
+    private func moveTask(_ task: PlanTask, direction: TaskMoveDirection) {
+        plan.moveTask(task, direction: direction)
+        try? modelContext.save()
     }
 }
 
 private struct EditableTaskRow: View {
     @Bindable var task: PlanTask
     var isStartEnabled: Bool
+    var canMoveUp: Bool
+    var canMoveDown: Bool
     var onMarkCompleted: () -> Void
     var onStart: () -> Void
+    var onMoveUp: () -> Void
+    var onMoveDown: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: FocusSpacing.small) {
@@ -147,6 +166,18 @@ private struct EditableTaskRow: View {
                     Text("\(task.estimatedPomodoros) estimated sessions")
                         .font(FocusTypography.footnote)
                 }
+            }
+            HStack {
+                Text("Order")
+                    .font(FocusTypography.footnote)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                TaskReorderControls(
+                    canMoveUp: canMoveUp,
+                    canMoveDown: canMoveDown,
+                    onMoveUp: onMoveUp,
+                    onMoveDown: onMoveDown
+                )
             }
         }
     }

@@ -11,6 +11,7 @@ struct TodayView: View {
 
     @State private var isCreatingPlan = false
     @State private var taskPendingRemoval: PlanTask?
+    @State private var expandedPlanIDs: Set<UUID> = []
 
     private var plans: [GoalPlan] {
         allPlans.filter { $0.status == .active }
@@ -26,6 +27,10 @@ struct TodayView: View {
 
     private var completedTasks: [PlanTask] {
         plans.flatMap(\.completedTasks)
+    }
+
+    private var plansWithLaterTasks: [GoalPlan] {
+        plans.filter { !laterTasks(for: $0).isEmpty }
     }
 
     private var availability: FoundationModelAvailability {
@@ -61,7 +66,14 @@ struct TodayView: View {
 
                         if let nextTask {
                             Section("Up next") {
-                                todayTaskRow(nextTask)
+                                VStack(alignment: .leading, spacing: FocusSpacing.small) {
+                                    if let plan = nextTask.plan {
+                                        Text(plan.title)
+                                            .font(FocusTypography.footnote)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    todayTaskRow(nextTask)
+                                }
                                 Button("Start focus") {
                                     startFocus(on: nextTask)
                                 }
@@ -70,10 +82,30 @@ struct TodayView: View {
                             }
                         }
 
-                        if upcomingTasks.count > 1 {
-                            Section("Later") {
-                                ForEach(upcomingTasks.dropFirst()) { task in
-                                    todayTaskRow(task)
+                        if !plansWithLaterTasks.isEmpty {
+                            Section("Plans") {
+                                ForEach(plansWithLaterTasks) { plan in
+                                    DisclosureGroup(
+                                        isExpanded: expansionBinding(for: plan)
+                                    ) {
+                                        ForEach(laterTasks(for: plan)) { task in
+                                            todayTaskRow(task)
+                                                .padding(.leading, FocusSpacing.small)
+                                        }
+                                        NavigationLink(value: plan) {
+                                            Label("Open plan", systemImage: "arrow.right.circle")
+                                                .font(FocusTypography.footnote)
+                                        }
+                                        .accessibilityLabel("Open \(plan.title) plan")
+                                    } label: {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(plan.title)
+                                                .font(FocusTypography.body)
+                                            Text(planProgressLabel(plan))
+                                                .font(FocusTypography.footnote)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -122,6 +154,11 @@ struct TodayView: View {
             } message: { task in
                 Text("“\(task.title)” will be deleted from the plan.")
             }
+            .onAppear {
+                if expandedPlanIDs.isEmpty, let firstPlan = plansWithLaterTasks.first {
+                    expandedPlanIDs.insert(firstPlan.id)
+                }
+            }
         }
     }
 
@@ -153,6 +190,29 @@ struct TodayView: View {
         modelContext.delete(task)
         try? modelContext.save()
         taskPendingRemoval = nil
+    }
+
+    private func laterTasks(for plan: GoalPlan) -> [PlanTask] {
+        plan.pendingTasks.filter { $0.id != nextTask?.id }
+    }
+
+    private func expansionBinding(for plan: GoalPlan) -> Binding<Bool> {
+        Binding(
+            get: { expandedPlanIDs.contains(plan.id) },
+            set: { isExpanded in
+                if isExpanded {
+                    expandedPlanIDs.insert(plan.id)
+                } else {
+                    expandedPlanIDs.remove(plan.id)
+                }
+            }
+        )
+    }
+
+    private func planProgressLabel(_ plan: GoalPlan) -> String {
+        let openCount = plan.pendingTasks.count
+        let doneCount = plan.completedTasks.count
+        return "\(openCount) open · \(doneCount) done"
     }
 
     private var showsAccessNotices: Bool {

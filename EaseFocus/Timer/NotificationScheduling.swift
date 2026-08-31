@@ -34,12 +34,7 @@ struct UserNotificationScheduler: NotificationScheduling {
 
     func currentAccess() async -> NotificationAccess {
         let settings = await UNUserNotificationCenter.current().notificationSettings()
-        return NotificationAccess.from(
-            authorizationStatus: settings.authorizationStatus,
-            alertSetting: settings.alertSetting,
-            soundSetting: settings.soundSetting,
-            notificationCenterSetting: settings.notificationCenterSetting
-        )
+        return NotificationAccess.from(authorizationStatus: settings.authorizationStatus)
     }
 
     func scheduleTimerFinished(at date: Date) async {

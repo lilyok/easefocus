@@ -12,7 +12,7 @@ struct GoalPlanFactoryTests {
         survey.goal = "Learn Spanish greetings"
         survey.sessionsPerWeek = 3
 
-        let plan = GoalPlanFactory.make(
+        let plan = try GoalPlanFactory.make(
             title: "Spanish greetings",
             details: "A short speaking plan.",
             tasks: [
@@ -30,7 +30,43 @@ struct GoalPlanFactoryTests {
         #expect(plan.preferredLocaleIdentifier == "es-ES")
         #expect(GoalSurvey.decode(from: plan.surveySnapshot)?.goal == "Learn Spanish greetings")
         #expect(plan.orderedTasks.map(\.title) == ["Practice hola", "Record a greeting"])
+        #expect(plan.orderedTasks.map(\.position) == [0, 1])
         #expect(plan.orderedTasks.first?.searchQuery == "Spanish greetings audio")
         #expect(plan.orderedTasks.last?.searchQuery == nil)
+    }
+
+    @Test
+    @MainActor
+    func rejectsInvalidSearchQueriesBeforePersistence() {
+        #expect(throws: GoalPlanFactoryError.invalidSearchQuery(
+            index: 0,
+            reason: .urlLikeContent
+        )) {
+            _ = try GoalPlanFactory.make(
+                title: "Plan",
+                details: nil,
+                tasks: [("Task", 1, "https://example.com")],
+                source: .generated,
+                survey: nil,
+                locale: Locale(identifier: "en")
+            )
+        }
+    }
+
+    @Test
+    @MainActor
+    func createsAManualPlanWithoutFoundationModelsOrSearchQueries() throws {
+        let plan = try GoalPlanFactory.make(
+            title: "Manual plan",
+            details: nil,
+            tasks: [("Write an outline", 1, nil)],
+            source: .manual,
+            survey: nil,
+            locale: Locale(identifier: "en")
+        )
+
+        #expect(plan.source == .manual)
+        #expect(plan.surveySnapshot == nil)
+        #expect(plan.orderedTasks.first?.searchQuery == nil)
     }
 }

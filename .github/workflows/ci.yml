@@ -39,4 +39,5 @@ jobs:
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
             test \
-            -skip-testing:EaseFocusUITests
+            -skip-testing:EaseFocusUITests \
+            -skip-testing:EaseFocusTests/LiveDraftPlanGenerationEvaluationTests
