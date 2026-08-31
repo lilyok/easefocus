@@ -1,12 +1,9 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @Environment(\.openURL) private var openURL
     @Environment(\.foundationModelClient) private var foundationModelClient
     @Environment(\.locale) private var locale
     @Environment(FocusTimerController.self) private var timer
-
-    @State private var sampleQuery = "beginner English pronunciation exercises"
 
     private var availability: FoundationModelAvailability {
         foundationModelClient.currentAvailability(locale: locale)
@@ -36,13 +33,6 @@ struct SettingsView: View {
                 Section(ExternalSearchPrivacyCopy.title) {
                     Text(ExternalSearchPrivacyCopy.body)
                         .font(FocusTypography.footnote)
-
-                    TextField("Search query", text: $sampleQuery)
-                    Button("Search Google") {
-                        openSampleSearch()
-                    }
-                    .disabled(GoogleSearchURL.make(from: sampleQuery) == nil)
-                    .accessibilityIdentifier("searchGoogle")
                 }
             }
             .scrollContentBackground(.hidden)
@@ -89,13 +79,6 @@ struct SettingsView: View {
         ), in: 1...60) {
             Text("\(title): \(seconds.wrappedValue / 60)")
         }
-    }
-
-    private func openSampleSearch() {
-        guard let url = GoogleSearchURL.make(from: sampleQuery) else {
-            return
-        }
-        openURL(url)
     }
 }
 

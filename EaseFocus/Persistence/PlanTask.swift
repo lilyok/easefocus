@@ -71,4 +71,14 @@ final class PlanTask {
             markCompleted(at: date)
         }
     }
+
+    @discardableResult
+    func applySearchQuery(_ raw: String, at date: Date = .now) -> Result<String?, SearchQueryValidationError> {
+        let result = SearchQueryValidator.validateOptional(raw)
+        if case .success(let query) = result {
+            searchQuery = query
+            updatedAt = date
+        }
+        return result
+    }
 }

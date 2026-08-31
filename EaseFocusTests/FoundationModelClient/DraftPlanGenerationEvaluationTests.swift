@@ -49,6 +49,10 @@ struct DraftPlanGenerationEvaluationTests {
         #expect(message.contains("\(testCase.survey.sessionsPerWeek)"))
         #expect(message.contains("Do not include URLs"))
         #expect(instructions.contains("Do not include URLs"))
+        #expect(instructions.contains("generic and task-focused"))
+        #expect(instructions.contains("personal survey details"))
+        #expect(message.contains("generic and task-focused"))
+        #expect(message.contains("personal survey details"))
         #expect(!message.lowercased().contains("http://"))
         #expect(!message.lowercased().contains("https://"))
     }
