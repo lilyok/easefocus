@@ -35,7 +35,10 @@ nonisolated struct LiveFoundationModelClient: FoundationModelGenerating {
         }
 
         let session = LanguageModelSession {
-            DraftPlanPrompt.instructions(locale: locale)
+            DraftPlanPrompt.instructions(
+                locale: locale,
+                includesResourceSuggestions: survey.includesResourceSuggestions
+            )
         }
 
         let generated: GenerableDraftPlan
@@ -62,16 +65,19 @@ nonisolated struct LiveFoundationModelClient: FoundationModelGenerating {
             throw FoundationModelClientError.cancelled
         }
 
-        let blueprint = DraftPlanBlueprint(
-            title: generated.title,
-            summary: generated.summary,
-            tasks: generated.tasks.map { task in
-                DraftTaskBlueprint(
-                    title: task.title,
-                    estimatedPomodoros: task.estimatedPomodoros,
-                    searchQuery: task.searchQuery
-                )
-            }
+        let blueprint = ResourceSearchSuggestionPolicy.applied(
+            to: DraftPlanBlueprint(
+                title: generated.title,
+                summary: generated.summary,
+                tasks: generated.tasks.map { task in
+                    DraftTaskBlueprint(
+                        title: task.title,
+                        estimatedPomodoros: task.estimatedPomodoros,
+                        searchQuery: task.searchQuery
+                    )
+                }
+            ),
+            includesResourceSuggestions: survey.includesResourceSuggestions
         )
 
         switch DraftPlanValidator.validate(blueprint) {
@@ -128,6 +134,6 @@ nonisolated struct GenerableDraftTask {
     @Guide(description: "Estimated Pomodoro sessions from 1 to 8", .range(1...8))
     var estimatedPomodoros: Int
 
-    @Guide(description: "Optional generic task-focused search terms with no URLs, domain names, names, deadlines, constraints, or other personal survey details")
+    @Guide(description: "Leave empty unless a generic task-specific search query adds clear value. No URLs, domain names, names, deadlines, constraints, or copies of the task title")
     var searchQuery: String
 }

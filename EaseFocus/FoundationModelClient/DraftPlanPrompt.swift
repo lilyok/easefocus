@@ -1,7 +1,10 @@
 import Foundation
 
 nonisolated enum DraftPlanPrompt {
-    static func instructions(locale: Locale) -> String {
+    static func instructions(
+        locale: Locale,
+        includesResourceSuggestions: Bool
+    ) -> String {
         """
         You create short, concrete focus plans.
         Output in \(locale.identifier).
@@ -9,11 +12,7 @@ nonisolated enum DraftPlanPrompt {
         Do not claim you searched the web.
         Tasks must be achievable and specific.
         Do not replace or mention completed work.
-        Each task may include an optional searchQuery.
-        Search queries must be generic and task-focused.
-        Do not copy names or other personal survey details into a searchQuery, including deadlines and constraints.
-        Search queries must contain no URLs or domain names.
-        Leave searchQuery empty if a useful generic query is not needed.
+        \(resourceSearchInstructions(includesResourceSuggestions: includesResourceSuggestions))
         """
     }
 
@@ -32,10 +31,28 @@ nonisolated enum DraftPlanPrompt {
         Focus sessions available each week: \(survey.sessionsPerWeek)
         Deadline: \(deadline)
         Constraints: \(constraints)
+        Resource search suggestions requested: \(survey.includesResourceSuggestions ? "yes" : "no")
         Keep the number of tasks and estimated sessions appropriate for \(survey.sessionsPerWeek) sessions per week.
         Do not include URLs, domain names, or citations.
-        Search queries must be generic and task-focused.
-        Do not copy names or other personal survey details into a searchQuery, including deadlines and constraints.
+        \(resourceSearchInstructions(includesResourceSuggestions: survey.includesResourceSuggestions))
+        """
+    }
+
+    static func resourceSearchInstructions(includesResourceSuggestions: Bool) -> String {
+        if includesResourceSuggestions {
+            return """
+            Add a searchQuery only for a task where a resource search would provide clear value.
+            Leave searchQuery empty for every other task. A query is optional and must never be required.
+            Search queries must be generic, task-specific, and not copies of the task title.
+            Do not copy names or other personal survey details into a searchQuery, including deadlines and constraints.
+            Search queries must contain no URLs or domain names.
+            Do not claim you searched the web.
+            """
+        }
+
+        return """
+        Do not generate resource search suggestions.
+        Every searchQuery must be empty.
         """
     }
 }

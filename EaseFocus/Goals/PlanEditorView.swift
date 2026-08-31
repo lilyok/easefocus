@@ -19,6 +19,10 @@ struct PlanEditorView: View {
     @State private var pendingSaveRetry: (() -> Void)?
     @State private var pendingSearch: ExternalSearchRequest?
 
+    private var showsResourceSearch: Bool {
+        source == .generated && survey?.includesResourceSuggestions == true
+    }
+
     init(
         draft: DraftPlanBlueprint? = nil,
         source: PlanSource = .manual,
@@ -56,9 +60,22 @@ struct PlanEditorView: View {
                                 Text("\(task.estimatedPomodoros) estimated sessions")
                                     .font(FocusTypography.footnote)
                             }
-                            TaskSearchQueryFields(
+                            TaskResourceSearchControls(
                                 taskID: task.id,
+                                state: ResourceSearchControlPolicy.draftCreation(
+                                    source: source,
+                                    includesResourceSuggestions: survey?.includesResourceSuggestions == true,
+                                    hasQuery: ResourceSearchControlPolicy.hasQuery(task.searchQuery),
+                                    isAdding: task.isAddingResourceSearch
+                                ),
                                 query: $task.searchQuery,
+                                onAdd: {
+                                    task.isAddingResourceSearch = true
+                                },
+                                onRemove: {
+                                    task.searchQuery = ""
+                                    task.isAddingResourceSearch = false
+                                },
                                 onSearch: { query in
                                     pendingSearch = ExternalSearchOpening.request(from: query)
                                 }
@@ -90,7 +107,11 @@ struct PlanEditorView: View {
                 } header: {
                     Text("Tasks")
                 } footer: {
-                    Text("Optional search queries can be edited or removed. A query leaves EaseFocus only when you confirm Search Google.")
+                    if showsResourceSearch {
+                        Text("Resource search suggestions can be edited or removed. A query leaves EaseFocus only when you confirm Search Google.")
+                    } else if source == .manual {
+                        Text("Use the arrow buttons to set the task order.")
+                    }
                 }
             }
             .navigationTitle(source == .generated ? "Review draft" : "New plan")
@@ -123,7 +144,9 @@ struct PlanEditorView: View {
     private var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && tasks.contains { !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            && tasks.allSatisfy { searchQueryError(for: $0.searchQuery) == nil }
+            && tasks.allSatisfy {
+                searchQueryError(for: showsResourceSearch ? $0.searchQuery : "") == nil
+            }
     }
 
     private func save() {
@@ -132,7 +155,9 @@ struct PlanEditorView: View {
             guard !taskTitle.isEmpty else {
                 return nil
             }
-            guard case .success(let searchQuery) = SearchQueryValidator.validateOptional(task.searchQuery) else {
+            guard case .success(let searchQuery) = SearchQueryValidator.validateOptional(
+                showsResourceSearch ? task.searchQuery : ""
+            ) else {
                 return nil
             }
             return (taskTitle, task.estimatedPomodoros, searchQuery)
@@ -208,6 +233,7 @@ private struct DraftTask: Identifiable {
     var title = ""
     var estimatedPomodoros = 1
     var searchQuery = ""
+    var isAddingResourceSearch = false
 }
 
 private extension String {
