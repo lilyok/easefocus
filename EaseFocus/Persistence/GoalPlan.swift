@@ -16,6 +16,9 @@ final class GoalPlan {
     @Relationship(deleteRule: .cascade, inverse: \PlanTask.plan)
     var tasks: [PlanTask]
 
+    @Relationship(deleteRule: .cascade, inverse: \PlanRevision.plan)
+    var revisions: [PlanRevision]
+
     init(
         id: UUID = UUID(),
         title: String,
@@ -26,7 +29,8 @@ final class GoalPlan {
         source: PlanSource = .manual,
         preferredLocaleIdentifier: String = Locale.current.identifier,
         surveySnapshot: Data? = nil,
-        tasks: [PlanTask] = []
+        tasks: [PlanTask] = [],
+        revisions: [PlanRevision] = []
     ) {
         self.id = id
         self.title = title
@@ -38,6 +42,7 @@ final class GoalPlan {
         self.preferredLocaleIdentifier = preferredLocaleIdentifier
         self.surveySnapshot = surveySnapshot
         self.tasks = tasks
+        self.revisions = revisions
     }
 
     var orderedTasks: [PlanTask] {
@@ -50,6 +55,15 @@ final class GoalPlan {
 
     var completedTasks: [PlanTask] {
         orderedTasks.filter { $0.status == .completed }
+    }
+
+    var orderedRevisions: [PlanRevision] {
+        revisions.sorted { lhs, rhs in
+            if lhs.createdAt == rhs.createdAt {
+                return lhs.id.uuidString < rhs.id.uuidString
+            }
+            return lhs.createdAt < rhs.createdAt
+        }
     }
 
     func moveTaskToFront(_ task: PlanTask) {

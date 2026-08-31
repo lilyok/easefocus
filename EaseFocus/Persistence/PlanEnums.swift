@@ -19,6 +19,11 @@ nonisolated enum TaskStatus: String, Codable, CaseIterable, Sendable {
     case archived
 }
 
+nonisolated enum RevisionSource: String, Codable, CaseIterable, Sendable {
+    case user
+    case model
+}
+
 nonisolated enum SessionOutcome: String, Codable, CaseIterable, Sendable {
     case completed
     case cancelled

@@ -10,7 +10,15 @@ nonisolated enum EaseFocusStore {
     }
 
     static var schema: Schema {
-        Schema([GoalPlan.self, PlanTask.self, FocusSession.self])
+        Schema(versionedSchema: EaseFocusSchemaV2.self)
+    }
+
+    static var unversionedLegacySchema: Schema {
+        Schema([
+            EaseFocusSchemaV1.GoalPlan.self,
+            EaseFocusSchemaV1.PlanTask.self,
+            EaseFocusSchemaV1.FocusSession.self,
+        ])
     }
 
     static func makeContainer() throws -> ModelContainer {
@@ -25,12 +33,26 @@ nonisolated enum EaseFocusStore {
 
     static func inMemoryContainer() throws -> ModelContainer {
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        return try ModelContainer(
+            for: schema,
+            migrationPlan: EaseFocusMigrationPlan.self,
+            configurations: [configuration]
+        )
+    }
+
+    static func makeUnversionedLegacyContainer(at storeURL: URL) throws -> ModelContainer {
+        let schema = unversionedLegacySchema
+        let configuration = ModelConfiguration(schema: schema, url: storeURL)
         return try ModelContainer(for: schema, configurations: [configuration])
     }
 
     private static func openContainer(at storeURL: URL) throws -> ModelContainer {
         let configuration = ModelConfiguration(schema: schema, url: storeURL)
-        return try ModelContainer(for: schema, configurations: [configuration])
+        return try ModelContainer(
+            for: schema,
+            migrationPlan: EaseFocusMigrationPlan.self,
+            configurations: [configuration]
+        )
     }
 
     static func makeContainer(at storeURL: URL) throws -> ModelContainer {
