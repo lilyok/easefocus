@@ -67,6 +67,12 @@ struct RootView: View {
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
             timer.tick(now: date)
         }
+        .persistenceSaveAlert(
+            error: Binding(
+                get: { timer.lastSaveErrorMessage },
+                set: { if $0 == nil { timer.dismissSaveError() } }
+            )
+        )
     }
 }
 

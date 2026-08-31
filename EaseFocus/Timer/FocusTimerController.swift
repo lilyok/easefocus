@@ -6,6 +6,7 @@ import SwiftData
 final class FocusTimerController {
     private(set) var engine: FocusTimerEngine
     private(set) var notificationAccess: NotificationAccess = .notDetermined
+    private(set) var lastSaveErrorMessage: String?
     private var openSession: FocusSession?
     private var modelContext: ModelContext?
     private let notifications: any NotificationScheduling
@@ -75,6 +76,10 @@ final class FocusTimerController {
 
     func tick(now: Date = .now) {
         apply(engine.tick(now: now), now: now)
+    }
+
+    func dismissSaveError() {
+        lastSaveErrorMessage = nil
     }
 
     func requestNotificationPermission() async -> Bool {
@@ -186,6 +191,8 @@ final class FocusTimerController {
     }
 
     private func save() {
-        try? modelContext?.save()
+        lastSaveErrorMessage = PersistenceSaving.result {
+            try modelContext?.save()
+        }
     }
 }

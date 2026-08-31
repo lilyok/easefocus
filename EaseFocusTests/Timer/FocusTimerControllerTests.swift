@@ -167,6 +167,7 @@ struct FocusTimerControllerTests {
         controller.tick(now: start.addingTimeInterval(60))
         #expect(first.status == .pending)
         #expect(controller.engine.phase == .completed)
+        #expect(controller.lastSaveErrorMessage == nil)
     }
 
     @Test

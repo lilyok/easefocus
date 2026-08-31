@@ -12,6 +12,7 @@ struct TodayView: View {
     @State private var isCreatingPlan = false
     @State private var taskPendingRemoval: PlanTask?
     @State private var expandedPlanIDs: Set<UUID> = []
+    @State private var saveErrorMessage: String?
 
     private var plans: [GoalPlan] {
         allPlans.filter { $0.status == .active }
@@ -159,6 +160,7 @@ struct TodayView: View {
                     expandedPlanIDs.insert(firstPlan.id)
                 }
             }
+            .persistenceSaveAlert(error: $saveErrorMessage)
         }
     }
 
@@ -176,20 +178,26 @@ struct TodayView: View {
     private func toggleCompletion(_ task: PlanTask) {
         task.toggleCompletion()
         task.plan?.updatedAt = .now
-        try? modelContext.save()
+        saveChanges()
     }
 
     private func startFocus(on task: PlanTask) {
         task.plan?.moveTaskToFront(task)
-        try? modelContext.save()
+        saveChanges()
         timer.startFocus(task: task)
     }
 
     private func remove(_ task: PlanTask) {
         task.plan?.updatedAt = .now
         modelContext.delete(task)
-        try? modelContext.save()
+        saveChanges()
         taskPendingRemoval = nil
+    }
+
+    private func saveChanges() {
+        saveErrorMessage = PersistenceSaving.result {
+            try modelContext.save()
+        }
     }
 
     private func laterTasks(for plan: GoalPlan) -> [PlanTask] {

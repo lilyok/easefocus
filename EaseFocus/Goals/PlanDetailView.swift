@@ -8,6 +8,7 @@ struct PlanDetailView: View {
     @State private var newTaskTitle = ""
     @State private var newTaskEstimate = 1
     @State private var taskPendingRemoval: PlanTask?
+    @State private var saveErrorMessage: String?
 
     var body: some View {
         List {
@@ -29,7 +30,7 @@ struct PlanDetailView: View {
                         onMarkCompleted: {
                             task.toggleCompletion()
                             plan.updatedAt = .now
-                            try? modelContext.save()
+                            saveChanges()
                         },
                         onStart: {
                             plan.moveTaskToFront(task)
@@ -99,13 +100,14 @@ struct PlanDetailView: View {
             Button("Remove", role: .destructive) {
                 modelContext.delete(task)
                 plan.updatedAt = .now
-                try? modelContext.save()
+                saveChanges()
                 taskPendingRemoval = nil
             }
             Button("Cancel", role: .cancel) {}
         } message: { task in
             Text("“\(task.title)” will be deleted from the plan.")
         }
+        .persistenceSaveAlert(error: $saveErrorMessage)
     }
 
     private func addTask() {
@@ -123,7 +125,7 @@ struct PlanDetailView: View {
         plan.updatedAt = .now
         newTaskTitle = ""
         newTaskEstimate = 1
-        try? modelContext.save()
+        saveChanges()
     }
 
     private func moveTasks(from offsets: IndexSet, to destination: Int) {
@@ -134,12 +136,18 @@ struct PlanDetailView: View {
             task.updatedAt = .now
         }
         plan.updatedAt = .now
-        try? modelContext.save()
+        saveChanges()
     }
 
     private func moveTask(_ task: PlanTask, direction: TaskMoveDirection) {
         plan.moveTask(task, direction: direction)
-        try? modelContext.save()
+        saveChanges()
+    }
+
+    private func saveChanges() {
+        saveErrorMessage = PersistenceSaving.result {
+            try modelContext.save()
+        }
     }
 }
 
