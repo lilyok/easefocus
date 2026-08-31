@@ -60,6 +60,16 @@ nonisolated struct TaskSnapshot: Codable, Equatable, Sendable {
             searchQuery: task.searchQuery
         )
     }
+
+    func matchesCompletedWork(_ original: TaskSnapshot) -> Bool {
+        id == original.id
+            && title == original.title
+            && details == original.details
+            && estimatedPomodoros == original.estimatedPomodoros
+            && status == .completed
+            && original.status == .completed
+            && searchQuery == original.searchQuery
+    }
 }
 
 nonisolated enum PlanSnapshotCodingError: Equatable, Error {

@@ -114,6 +114,51 @@ struct PlanRevisionTests {
 
     @Test
     @MainActor
+    func rejectsDeletingOrRewritingCompletedTasks() throws {
+        let container = try EaseFocusStore.inMemoryContainer()
+        let completedID = UUID()
+        let pending = PlanTask(title: "Practice hola", position: 0)
+        let completed = PlanTask(id: completedID, title: "Record a greeting", position: 1, status: .completed)
+        let plan = GoalPlan(title: "Spanish greetings", tasks: [pending, completed])
+        container.mainContext.insert(plan)
+        let before = PlanSnapshot.capturing(plan)
+
+        var deleted = before
+        deleted.tasks = [TaskSnapshot.capturing(pending)]
+        #expect(throws: PlanRevisionFactoryError.completedWorkMutated) {
+            _ = try PlanRevisionFactory.make(
+                for: plan,
+                reason: "Drop completed work",
+                source: .model,
+                changeSummary: "Deleted a completed task",
+                before: before,
+                after: deleted
+            )
+        }
+
+        var rewritten = before
+        rewritten.tasks = before.tasks.map { task in
+            guard task.id == completedID else {
+                return task
+            }
+            var mutated = task
+            mutated.title = "Rewrite completed work"
+            return mutated
+        }
+        #expect(throws: PlanRevisionFactoryError.completedWorkMutated) {
+            _ = try PlanRevisionFactory.make(
+                for: plan,
+                reason: "Rewrite completed work",
+                source: .model,
+                changeSummary: "Changed a completed task",
+                before: before,
+                after: rewritten
+            )
+        }
+    }
+
+    @Test
+    @MainActor
     func deletingAPlanCascadesItsRevisionsAndLeavesOtherPlans() throws {
         let container = try EaseFocusStore.inMemoryContainer()
         let context = container.mainContext

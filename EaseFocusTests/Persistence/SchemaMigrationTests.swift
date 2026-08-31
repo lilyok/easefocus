@@ -16,7 +16,7 @@ struct SchemaMigrationTests {
             let completedAt = Date(timeIntervalSince1970: 1_700_000_000)
 
             do {
-                let v1 = try EaseFocusStore.makeV1Container(at: storeURL)
+                let legacy = try EaseFocusStore.makeUnversionedLegacyContainer(at: storeURL)
                 let plan = EaseFocusSchemaV1.GoalPlan(
                     id: planID,
                     title: "Spanish greetings",
@@ -50,8 +50,8 @@ struct SchemaMigrationTests {
                 pending.plan = plan
                 completed.plan = plan
                 plan.tasks = [pending, completed]
-                v1.mainContext.insert(plan)
-                try v1.mainContext.save()
+                legacy.mainContext.insert(plan)
+                try legacy.mainContext.save()
             }
 
             let migrated = try EaseFocusStore.makeContainer(at: storeURL)
@@ -102,9 +102,9 @@ struct SchemaMigrationTests {
         try withTemporaryDirectory { directory in
             let storeURL = directory.appending(path: EaseFocusStore.storeFileName)
             do {
-                let v1 = try EaseFocusStore.makeV1Container(at: storeURL)
-                v1.mainContext.insert(EaseFocusSchemaV1.GoalPlan(title: "Keep me"))
-                try v1.mainContext.save()
+                let legacy = try EaseFocusStore.makeUnversionedLegacyContainer(at: storeURL)
+                legacy.mainContext.insert(EaseFocusSchemaV1.GoalPlan(title: "Keep me"))
+                try legacy.mainContext.save()
             }
 
             var originals: [String: Data] = [:]

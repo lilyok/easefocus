@@ -5,6 +5,7 @@ nonisolated enum PlanRevisionFactoryError: Equatable, Error {
     case malformedSnapshot
     case duplicateTaskIDs
     case invalidOrdering
+    case completedWorkMutated
 }
 
 nonisolated enum PlanRevisionFactory {
@@ -36,6 +37,7 @@ nonisolated enum PlanRevisionFactory {
         guard validatedBefore.id == plan.id, validatedAfter.id == plan.id else {
             throw PlanRevisionFactoryError.malformedSnapshot
         }
+        try preserveCompletedWork(from: validatedBefore, to: validatedAfter)
 
         let beforeData: Data
         let afterData: Data
@@ -58,6 +60,18 @@ nonisolated enum PlanRevisionFactory {
         )
         revision.plan = plan
         return revision
+    }
+
+    static func preserveCompletedWork(
+        from before: PlanSnapshot,
+        to after: PlanSnapshot
+    ) throws {
+        let afterByID = Dictionary(uniqueKeysWithValues: after.tasks.map { ($0.id, $0) })
+        for task in before.tasks where task.status == .completed {
+            guard let preserved = afterByID[task.id], preserved.matchesCompletedWork(task) else {
+                throw PlanRevisionFactoryError.completedWorkMutated
+            }
+        }
     }
 }
 
