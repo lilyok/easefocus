@@ -25,6 +25,7 @@ nonisolated struct GoalSurvey: Equatable, Codable, Sendable {
     var hasDeadline = false
     var deadline = Date.now
     var constraints = ""
+    var includesResourceSuggestions = false
 
     static let sessionsPerWeekRange = 1...14
 
@@ -57,5 +58,51 @@ nonisolated struct GoalSurvey: Equatable, Codable, Sendable {
             return nil
         }
         return try? JSONDecoder().decode(GoalSurvey.self, from: data)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case goal
+        case experience
+        case successOutcome
+        case sessionsPerWeek
+        case hasDeadline
+        case deadline
+        case constraints
+        case includesResourceSuggestions
+    }
+
+    init(
+        goal: String = "",
+        experience: ExperienceLevel = .beginner,
+        successOutcome: String = "",
+        sessionsPerWeek: Int = 4,
+        hasDeadline: Bool = false,
+        deadline: Date = Date.now,
+        constraints: String = "",
+        includesResourceSuggestions: Bool = false
+    ) {
+        self.goal = goal
+        self.experience = experience
+        self.successOutcome = successOutcome
+        self.sessionsPerWeek = sessionsPerWeek
+        self.hasDeadline = hasDeadline
+        self.deadline = deadline
+        self.constraints = constraints
+        self.includesResourceSuggestions = includesResourceSuggestions
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        goal = try container.decode(String.self, forKey: .goal)
+        experience = try container.decode(ExperienceLevel.self, forKey: .experience)
+        successOutcome = try container.decode(String.self, forKey: .successOutcome)
+        sessionsPerWeek = try container.decode(Int.self, forKey: .sessionsPerWeek)
+        hasDeadline = try container.decode(Bool.self, forKey: .hasDeadline)
+        deadline = try container.decode(Date.self, forKey: .deadline)
+        constraints = try container.decode(String.self, forKey: .constraints)
+        includesResourceSuggestions = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .includesResourceSuggestions
+        ) ?? false
     }
 }

@@ -12,6 +12,7 @@ struct GoalSurveyTests {
         #expect(survey.isReadyToGenerate)
         #expect(survey.trimmedGoal == "Speak Spanish with neighbors")
         #expect(survey.effectiveDeadline == nil)
+        #expect(!survey.includesResourceSuggestions)
     }
 
     @Test
@@ -23,8 +24,26 @@ struct GoalSurveyTests {
         survey.hasDeadline = true
         survey.deadline = Date(timeIntervalSince1970: 1_800_000_000)
         survey.constraints = "No evenings"
+        survey.includesResourceSuggestions = true
 
         let decoded = try #require(GoalSurvey.decode(from: survey.encoded()))
         #expect(decoded == survey)
+        #expect(decoded.includesResourceSuggestions)
+    }
+
+    @Test
+    func decodesLegacySnapshotsWithoutResourcePreferenceAsOptOut() throws {
+        var survey = GoalSurvey()
+        survey.goal = "Speak Spanish"
+        let encoded = try JSONEncoder().encode(survey)
+        var payload = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        payload.removeValue(forKey: "includesResourceSuggestions")
+        #expect(payload["includesResourceSuggestions"] == nil)
+
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        let decoded = try JSONDecoder().decode(GoalSurvey.self, from: data)
+
+        #expect(decoded.goal == "Speak Spanish")
+        #expect(!decoded.includesResourceSuggestions)
     }
 }

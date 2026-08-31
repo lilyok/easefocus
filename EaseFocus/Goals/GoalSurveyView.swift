@@ -68,6 +68,14 @@ struct GoalSurveyView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section {
+                Toggle(ResourceSearchSuggestionCopy.surveyToggle, isOn: $survey.includesResourceSuggestions)
+                    .accessibilityIdentifier("includeResourceSuggestions")
+                Text(ResourceSearchSuggestionCopy.surveyExplanation)
+                    .font(FocusTypography.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
             if let errorMessage, !errorMessage.isEmpty {
                 Section {
                     Text(errorMessage)

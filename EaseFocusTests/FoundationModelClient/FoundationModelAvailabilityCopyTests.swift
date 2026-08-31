@@ -30,6 +30,7 @@ struct FoundationModelAvailabilityCopyTests {
 
         #expect(draft.tasks.count == 3)
         #expect(draft.title == survey.trimmedGoal)
+        #expect(draft.tasks.allSatisfy { $0.searchQuery.isEmpty })
         #expect(client.currentAvailability(locale: Locale(identifier: "en")) == .available)
     }
 

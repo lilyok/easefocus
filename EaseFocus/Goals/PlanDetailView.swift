@@ -71,7 +71,7 @@ struct PlanDetailView: View {
             } header: {
                 Text("Tasks")
             } footer: {
-                Text("Optional search queries can be edited or removed. Search Google opens in your browser after you confirm.")
+                Text("Add a resource search when a Google query would help. Search Google opens in your browser after you confirm.")
             }
         }
         .scrollContentBackground(.hidden)
@@ -252,6 +252,7 @@ private struct EditableTaskRow: View {
     var onSearch: (String) -> Void
 
     @State private var queryDraft: String
+    @State private var isAddingQuery: Bool
 
     init(
         task: PlanTask,
@@ -276,6 +277,7 @@ private struct EditableTaskRow: View {
         self.onPersistQuery = onPersistQuery
         self.onSearch = onSearch
         _queryDraft = State(initialValue: task.searchQuery ?? "")
+        _isAddingQuery = State(initialValue: false)
     }
 
     var body: some View {
@@ -292,9 +294,22 @@ private struct EditableTaskRow: View {
                         .font(FocusTypography.footnote)
                 }
             }
-            TaskSearchQueryFields(
+            TaskResourceSearchControls(
                 taskID: task.id,
+                state: ResourceSearchControlPolicy.savedPlan(
+                    hasQuery: ResourceSearchControlPolicy.hasQuery(task.searchQuery)
+                        || ResourceSearchControlPolicy.hasQuery(queryDraft),
+                    isAdding: isAddingQuery
+                ),
                 query: $queryDraft,
+                onAdd: {
+                    isAddingQuery = true
+                },
+                onRemove: {
+                    queryDraft = ""
+                    isAddingQuery = false
+                    onPersistQuery(nil)
+                },
                 onSearch: onSearch
             )
             .onChange(of: queryDraft) { _, newValue in
@@ -306,6 +321,9 @@ private struct EditableTaskRow: View {
                 }
                 if draftValue != newValue {
                     queryDraft = newValue ?? ""
+                    if newValue == nil {
+                        isAddingQuery = false
+                    }
                 }
             }
             HStack {

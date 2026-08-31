@@ -25,6 +25,23 @@ struct PlanTaskSearchQueryTests {
 
     @Test
     @MainActor
+    func preservesAnExistingQueryWithoutBulkDeleting() throws {
+        let container = try EaseFocusStore.inMemoryContainer()
+        let context = container.mainContext
+        let withQuery = PlanTask(title: "Practice hola", position: 0, searchQuery: "Spanish greetings audio")
+        let withoutQuery = PlanTask(title: "Record a greeting", position: 1)
+        let plan = GoalPlan(title: "Spanish greetings", tasks: [withQuery, withoutQuery])
+        context.insert(plan)
+        try context.save()
+
+        #expect(withQuery.searchQuery == "Spanish greetings audio")
+        #expect(withoutQuery.searchQuery == nil)
+        #expect(ResourceSearchControlPolicy.savedPlan(hasQuery: true, isAdding: false) == .editor)
+        #expect(ResourceSearchControlPolicy.savedPlan(hasQuery: false, isAdding: false) == .addAction)
+    }
+
+    @Test
+    @MainActor
     func rejectsInvalidQueriesWithoutChangingThePersistedValue() throws {
         let container = try EaseFocusStore.inMemoryContainer()
         let context = container.mainContext
