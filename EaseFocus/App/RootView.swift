@@ -68,10 +68,13 @@ struct RootView: View {
             timer.tick(now: date)
         }
         .persistenceSaveAlert(
-            error: Binding(
-                get: { timer.lastSaveErrorMessage },
-                set: { if $0 == nil { timer.dismissSaveError() } }
-            )
+            isPresented: Binding(
+                get: { timer.isSaveAlertPresented },
+                set: { if !$0 { timer.acknowledgeSaveError() } }
+            ),
+            message: timer.lastSaveErrorMessage,
+            onRetry: { timer.retrySave() },
+            onDefer: { timer.acknowledgeSaveError() }
         )
     }
 }

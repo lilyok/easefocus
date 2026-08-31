@@ -25,6 +25,23 @@ struct FocusTimerEngineTests {
     }
 
     @Test
+    func onlySessionLifecycleEventsRequireASwiftDataSave() {
+        #expect(
+            !FocusTimerEvent.requiresStoreSave([
+                .shouldScheduleNotification(start),
+                .shouldCancelNotification,
+                .didStartBreak(isLong: false, plannedDurationSeconds: 5),
+            ])
+        )
+        #expect(
+            FocusTimerEvent.requiresStoreSave([
+                .didCompleteFocus(elapsedSeconds: 60, endedAt: start),
+                .shouldCancelNotification,
+            ])
+        )
+    }
+
+    @Test
     func pauseExcludesStoppedTimeFromElapsed() {
         var engine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 120))
         _ = engine.startFocus(taskID: nil, now: start)

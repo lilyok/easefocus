@@ -163,11 +163,18 @@ struct FocusTimerControllerTests {
         controller.attach(modelContext: context, now: start)
         controller.startFocus(task: first, now: start)
         #expect(first.status == .active)
+        #expect(!controller.isSaveAlertPresented)
+
+        controller.tick(now: start.addingTimeInterval(20))
+        #expect(controller.engine.phase == .runningFocus)
+        #expect(controller.lastSaveErrorMessage == nil)
+        #expect(!controller.isSaveAlertPresented)
 
         controller.tick(now: start.addingTimeInterval(60))
         #expect(first.status == .pending)
         #expect(controller.engine.phase == .completed)
         #expect(controller.lastSaveErrorMessage == nil)
+        #expect(!controller.isSaveAlertPresented)
     }
 
     @Test

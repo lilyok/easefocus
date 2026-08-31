@@ -13,6 +13,8 @@ struct TodayView: View {
     @State private var taskPendingRemoval: PlanTask?
     @State private var expandedPlanIDs: Set<UUID> = []
     @State private var saveErrorMessage: String?
+    @State private var isSaveAlertPresented = false
+    @State private var pendingSaveRetry: (() -> Void)?
 
     private var plans: [GoalPlan] {
         allPlans.filter { $0.status == .active }
@@ -160,7 +162,12 @@ struct TodayView: View {
                     expandedPlanIDs.insert(firstPlan.id)
                 }
             }
-            .persistenceSaveAlert(error: $saveErrorMessage)
+            .persistenceSaveAlert(
+                isPresented: $isSaveAlertPresented,
+                message: saveErrorMessage,
+                onRetry: { pendingSaveRetry?() },
+                onDiscard: discardFailedSave
+            )
         }
     }
 
@@ -176,28 +183,64 @@ struct TodayView: View {
     }
 
     private func toggleCompletion(_ task: PlanTask) {
-        task.toggleCompletion()
-        task.plan?.updatedAt = .now
-        saveChanges()
+        commit(
+            apply: {
+                task.toggleCompletion()
+                task.plan?.updatedAt = .now
+            },
+            retry: { toggleCompletion(task) }
+        )
     }
 
     private func startFocus(on task: PlanTask) {
-        task.plan?.moveTaskToFront(task)
-        saveChanges()
-        timer.startFocus(task: task)
+        commit(
+            apply: {
+                task.plan?.moveTaskToFront(task)
+            },
+            retry: { startFocus(on: task) },
+            onSuccess: {
+                timer.startFocus(task: task)
+            }
+        )
     }
 
     private func remove(_ task: PlanTask) {
-        task.plan?.updatedAt = .now
-        modelContext.delete(task)
-        saveChanges()
+        commit(
+            apply: {
+                task.plan?.updatedAt = .now
+                modelContext.delete(task)
+            },
+            retry: { remove(task) }
+        )
         taskPendingRemoval = nil
     }
 
-    private func saveChanges() {
-        saveErrorMessage = PersistenceSaving.result {
-            try modelContext.save()
+    private func commit(
+        apply: () -> Void,
+        retry: @escaping () -> Void,
+        onSuccess: () -> Void = {}
+    ) {
+        switch PersistenceSaving.commit(
+            apply: apply,
+            save: { try modelContext.save() },
+            rollback: { modelContext.rollback() }
+        ) {
+        case .saved:
+            saveErrorMessage = nil
+            isSaveAlertPresented = false
+            pendingSaveRetry = nil
+            onSuccess()
+        case .failed(let message):
+            saveErrorMessage = message
+            isSaveAlertPresented = true
+            pendingSaveRetry = retry
         }
+    }
+
+    private func discardFailedSave() {
+        saveErrorMessage = nil
+        isSaveAlertPresented = false
+        pendingSaveRetry = nil
     }
 
     private func laterTasks(for plan: GoalPlan) -> [PlanTask] {

@@ -7,6 +7,8 @@ final class FocusTimerController {
     private(set) var engine: FocusTimerEngine
     private(set) var notificationAccess: NotificationAccess = .notDetermined
     private(set) var lastSaveErrorMessage: String?
+    private(set) var isSaveAlertPresented = false
+    private var hasAcknowledgedCurrentSaveError = false
     private var openSession: FocusSession?
     private var modelContext: ModelContext?
     private let notifications: any NotificationScheduling
@@ -39,12 +41,12 @@ final class FocusTimerController {
 
     func attach(modelContext: ModelContext, now: Date = .now) {
         self.modelContext = modelContext
-        closeDanglingSessions(now: now)
+        let closedDanglingSessions = closeDanglingSessions(now: now)
         var events = engine.tick(now: now)
         if events.isEmpty, engine.isRunning, let periodEndsAt = engine.periodEndsAt {
             events.append(.shouldScheduleNotification(periodEndsAt))
         }
-        apply(events, now: now)
+        apply(events, now: now, additionalStoreChanges: closedDanglingSessions)
     }
 
     func startFocus(task: PlanTask?, now: Date = .now) {
@@ -78,8 +80,14 @@ final class FocusTimerController {
         apply(engine.tick(now: now), now: now)
     }
 
-    func dismissSaveError() {
-        lastSaveErrorMessage = nil
+    func retrySave() {
+        hasAcknowledgedCurrentSaveError = false
+        save()
+    }
+
+    func acknowledgeSaveError() {
+        hasAcknowledgedCurrentSaveError = true
+        isSaveAlertPresented = false
     }
 
     func requestNotificationPermission() async -> Bool {
@@ -105,7 +113,16 @@ final class FocusTimerController {
         await notifications.scheduleTimerFinished(at: periodEndsAt)
     }
 
-    private func apply(_ events: [FocusTimerEvent], now: Date, startedTask: PlanTask? = nil) {
+    private func apply(
+        _ events: [FocusTimerEvent],
+        now: Date,
+        startedTask: PlanTask? = nil,
+        additionalStoreChanges: Bool = false
+    ) {
+        if events.isEmpty, !additionalStoreChanges {
+            return
+        }
+
         for event in events {
             switch event {
             case .didStartFocus(let taskID, let planned, let startedAt):
@@ -140,25 +157,34 @@ final class FocusTimerController {
                 notifications.cancelTimerFinished()
             }
         }
-        persistEngine()
-        save()
+        if !events.isEmpty {
+            persistEngine()
+        }
+        if additionalStoreChanges || FocusTimerEvent.requiresStoreSave(events) {
+            hasAcknowledgedCurrentSaveError = false
+            save()
+        }
     }
 
-    private func closeDanglingSessions(now: Date) {
+    @discardableResult
+    private func closeDanglingSessions(now: Date) -> Bool {
         guard let modelContext else {
-            return
+            return false
         }
 
         let descriptor = FetchDescriptor<FocusSession>()
         let sessions = (try? modelContext.fetch(descriptor)) ?? []
+        var didChange = false
         for session in sessions where session.isOpen {
             if engine.phase == .runningFocus || engine.phase == .pausedFocus {
                 openSession = session
             } else {
                 session.finish(outcome: .interrupted, at: now, elapsedSeconds: session.elapsedSeconds)
                 revertTask(session.task, at: now)
+                didChange = true
             }
         }
+        return didChange
     }
 
     private func revertActiveTask(at date: Date) {
@@ -191,8 +217,16 @@ final class FocusTimerController {
     }
 
     private func save() {
-        lastSaveErrorMessage = PersistenceSaving.result {
-            try modelContext?.save()
+        switch PersistenceSaving.result(of: { try modelContext?.save() }) {
+        case .saved:
+            lastSaveErrorMessage = nil
+            isSaveAlertPresented = false
+            hasAcknowledgedCurrentSaveError = false
+        case .failed(let message):
+            lastSaveErrorMessage = message
+            if !hasAcknowledgedCurrentSaveError {
+                isSaveAlertPresented = true
+            }
         }
     }
 }

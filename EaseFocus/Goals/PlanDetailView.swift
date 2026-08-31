@@ -9,6 +9,8 @@ struct PlanDetailView: View {
     @State private var newTaskEstimate = 1
     @State private var taskPendingRemoval: PlanTask?
     @State private var saveErrorMessage: String?
+    @State private var isSaveAlertPresented = false
+    @State private var pendingSaveRetry: (() -> Void)?
 
     var body: some View {
         List {
@@ -28,13 +30,10 @@ struct PlanDetailView: View {
                         canMoveUp: index > 0,
                         canMoveDown: index < plan.orderedTasks.count - 1,
                         onMarkCompleted: {
-                            task.toggleCompletion()
-                            plan.updatedAt = .now
-                            saveChanges()
+                            toggleCompletion(task)
                         },
                         onStart: {
-                            plan.moveTaskToFront(task)
-                            timer.startFocus(task: task)
+                            startFocus(on: task)
                         },
                         onMoveUp: { moveTask(task, direction: .up) },
                         onMoveDown: { moveTask(task, direction: .down) }
@@ -42,8 +41,7 @@ struct PlanDetailView: View {
                     .taskRowActions(
                         canStart: timer.engine.canStartFocus && task.status != .completed,
                         onStart: {
-                            plan.moveTaskToFront(task)
-                            timer.startFocus(task: task)
+                            startFocus(on: task)
                         },
                         onRemove: { taskPendingRemoval = task }
                     )
@@ -98,16 +96,19 @@ struct PlanDetailView: View {
             presenting: taskPendingRemoval
         ) { task in
             Button("Remove", role: .destructive) {
-                modelContext.delete(task)
-                plan.updatedAt = .now
-                saveChanges()
+                remove(task)
                 taskPendingRemoval = nil
             }
             Button("Cancel", role: .cancel) {}
         } message: { task in
             Text("“\(task.title)” will be deleted from the plan.")
         }
-        .persistenceSaveAlert(error: $saveErrorMessage)
+        .persistenceSaveAlert(
+            isPresented: $isSaveAlertPresented,
+            message: saveErrorMessage,
+            onRetry: { pendingSaveRetry?() },
+            onDiscard: discardFailedSave
+        )
     }
 
     private func addTask() {
@@ -115,39 +116,108 @@ struct PlanDetailView: View {
         guard !title.isEmpty else {
             return
         }
-        let task = PlanTask(
-            title: title,
-            position: plan.tasks.count,
-            estimatedPomodoros: newTaskEstimate
+        let estimate = newTaskEstimate
+        commit(
+            apply: {
+                let task = PlanTask(
+                    title: title,
+                    position: plan.tasks.count,
+                    estimatedPomodoros: estimate
+                )
+                task.plan = plan
+                plan.tasks.append(task)
+                plan.updatedAt = .now
+            },
+            retry: addTask,
+            onSuccess: {
+                newTaskTitle = ""
+                newTaskEstimate = 1
+            }
         )
-        task.plan = plan
-        plan.tasks.append(task)
-        plan.updatedAt = .now
-        newTaskTitle = ""
-        newTaskEstimate = 1
-        saveChanges()
+    }
+
+    private func toggleCompletion(_ task: PlanTask) {
+        commit(
+            apply: {
+                task.toggleCompletion()
+                plan.updatedAt = .now
+            },
+            retry: { toggleCompletion(task) }
+        )
+    }
+
+    private func startFocus(on task: PlanTask) {
+        commit(
+            apply: {
+                plan.moveTaskToFront(task)
+            },
+            retry: { startFocus(on: task) },
+            onSuccess: {
+                timer.startFocus(task: task)
+            }
+        )
+    }
+
+    private func remove(_ task: PlanTask) {
+        commit(
+            apply: {
+                plan.updatedAt = .now
+                modelContext.delete(task)
+            },
+            retry: { remove(task) }
+        )
     }
 
     private func moveTasks(from offsets: IndexSet, to destination: Int) {
-        var ordered = plan.orderedTasks
-        ordered.move(fromOffsets: offsets, toOffset: destination)
-        for (index, task) in ordered.enumerated() {
-            task.position = index
-            task.updatedAt = .now
-        }
-        plan.updatedAt = .now
-        saveChanges()
+        commit(
+            apply: {
+                var ordered = plan.orderedTasks
+                ordered.move(fromOffsets: offsets, toOffset: destination)
+                for (index, task) in ordered.enumerated() {
+                    task.position = index
+                    task.updatedAt = .now
+                }
+                plan.updatedAt = .now
+            },
+            retry: { moveTasks(from: offsets, to: destination) }
+        )
     }
 
     private func moveTask(_ task: PlanTask, direction: TaskMoveDirection) {
-        plan.moveTask(task, direction: direction)
-        saveChanges()
+        commit(
+            apply: {
+                plan.moveTask(task, direction: direction)
+            },
+            retry: { moveTask(task, direction: direction) }
+        )
     }
 
-    private func saveChanges() {
-        saveErrorMessage = PersistenceSaving.result {
-            try modelContext.save()
+    private func commit(
+        apply: () -> Void,
+        retry: @escaping () -> Void,
+        onSuccess: () -> Void = {}
+    ) {
+        switch PersistenceSaving.commit(
+            apply: apply,
+            save: { try modelContext.save() },
+            rollback: { modelContext.rollback() }
+        ) {
+        case .saved:
+            saveErrorMessage = nil
+            isSaveAlertPresented = false
+            pendingSaveRetry = nil
+            onSuccess()
+        case .failed(let message):
+            saveErrorMessage = message
+            isSaveAlertPresented = true
+            pendingSaveRetry = retry
         }
+    }
+
+    private func discardFailedSave() {
+        saveErrorMessage = nil
+        isSaveAlertPresented = false
+        pendingSaveRetry = nil
     }
 }
 

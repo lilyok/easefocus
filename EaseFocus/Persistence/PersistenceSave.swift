@@ -5,37 +5,63 @@ nonisolated enum PersistenceSaveCopy {
     static let title = "Couldn't save your data"
     static let message =
         "EaseFocus could not save your latest changes. Try again. If this keeps happening, quit other EaseFocus copies and restart the app."
+    static let retry = "Try again"
+    static let discard = "Discard changes"
+    static let later = "Later"
 
     static func message(for error: Error) -> String {
         "\(message)\n\n\(error.localizedDescription)"
     }
 }
 
+nonisolated enum PersistenceMutationResult: Equatable {
+    case saved
+    case failed(String)
+}
+
 nonisolated enum PersistenceSaving {
-    static func result(of save: () throws -> Void) -> String? {
+    static func result(of save: () throws -> Void) -> PersistenceMutationResult {
         do {
             try save()
-            return nil
+            return .saved
         } catch {
-            return PersistenceSaveCopy.message(for: error)
+            return .failed(PersistenceSaveCopy.message(for: error))
+        }
+    }
+
+    static func commit(
+        apply: () -> Void,
+        save: () throws -> Void,
+        rollback: () -> Void
+    ) -> PersistenceMutationResult {
+        apply()
+        switch result(of: save) {
+        case .saved:
+            return .saved
+        case .failed(let message):
+            rollback()
+            return .failed(message)
         }
     }
 }
 
 extension View {
-    func persistenceSaveAlert(error: Binding<String?>) -> some View {
-        alert(
-            PersistenceSaveCopy.title,
-            isPresented: Binding(
-                get: { error.wrappedValue != nil },
-                set: { if !$0 { error.wrappedValue = nil } }
-            )
-        ) {
-            Button("OK", role: .cancel) {
-                error.wrappedValue = nil
+    func persistenceSaveAlert(
+        isPresented: Binding<Bool>,
+        message: String?,
+        onRetry: @escaping () -> Void,
+        onDiscard: (() -> Void)? = nil,
+        onDefer: (() -> Void)? = nil
+    ) -> some View {
+        alert(PersistenceSaveCopy.title, isPresented: isPresented) {
+            Button(PersistenceSaveCopy.retry, action: onRetry)
+            if let onDiscard {
+                Button(PersistenceSaveCopy.discard, role: .cancel, action: onDiscard)
+            } else if let onDefer {
+                Button(PersistenceSaveCopy.later, role: .cancel, action: onDefer)
             }
         } message: {
-            Text(error.wrappedValue ?? PersistenceSaveCopy.message)
+            Text(message ?? PersistenceSaveCopy.message)
         }
         .accessibilityIdentifier("persistenceSaveError")
     }
