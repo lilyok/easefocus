@@ -82,5 +82,7 @@ struct RootView: View {
 #Preview {
     RootView()
         .environment(FocusTimerController())
+        .environment(\.foundationModelClient, PreviewFoundationModelClient())
+        .environment(\.planRefinementClient, PreviewPlanRefinementClient())
         .modelContainer(try! EaseFocusStore.inMemoryContainer())
 }
