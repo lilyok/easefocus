@@ -87,10 +87,12 @@ struct FocusTimerEngineTests {
         var settings = FocusTimerSettings(focusSeconds: 10, shortBreakSeconds: 5)
         settings.startBreaksAutomatically = true
         var engine = FocusTimerEngine(settings: settings)
-        _ = engine.startFocus(taskID: nil, now: start)
+        let taskID = UUID()
+        _ = engine.startFocus(taskID: taskID, now: start)
         let events = engine.tick(now: start.addingTimeInterval(10))
 
         #expect(engine.phase == .runningBreak)
+        #expect(engine.taskID == taskID)
         #expect(events.contains(.didStartBreak(isLong: false, plannedDurationSeconds: 5)))
         #expect(!events.contains(where: { if case .didStartFocus = $0 { return true }; return false }))
     }

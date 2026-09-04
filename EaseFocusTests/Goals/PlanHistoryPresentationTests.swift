@@ -92,7 +92,7 @@ struct PlanHistoryPresentationTests {
     }
 
     @Test
-    func treatsAnActiveTaskOrFocusPhaseOnThePlanAsARunningSession() {
+    func treatsAnActiveTaskOrNonIdleTimerOnThePlanAsARunningSession() {
         #expect(
             PlanHistoryPresentation.isSessionRunning(
                 planTaskIDs: [pendingID],
@@ -118,10 +118,34 @@ struct PlanHistoryPresentationTests {
             )
         )
         #expect(
-            !PlanHistoryPresentation.isSessionRunning(
+            PlanHistoryPresentation.isSessionRunning(
                 planTaskIDs: [pendingID],
                 hasActiveTask: false,
                 timerTaskID: pendingID,
+                timerPhase: .completed
+            )
+        )
+        #expect(
+            PlanHistoryPresentation.isSessionRunning(
+                planTaskIDs: [pendingID],
+                hasActiveTask: false,
+                timerTaskID: pendingID,
+                timerPhase: .runningBreak
+            )
+        )
+        #expect(
+            PlanHistoryPresentation.isSessionRunning(
+                planTaskIDs: [pendingID],
+                hasActiveTask: false,
+                timerTaskID: pendingID,
+                timerPhase: .pausedBreak
+            )
+        )
+        #expect(
+            PlanHistoryPresentation.isSessionRunning(
+                planTaskIDs: [pendingID],
+                hasActiveTask: false,
+                timerTaskID: nil,
                 timerPhase: .runningBreak
             )
         )
@@ -131,6 +155,14 @@ struct PlanHistoryPresentationTests {
                 hasActiveTask: false,
                 timerTaskID: UUID(),
                 timerPhase: .runningFocus
+            )
+        )
+        #expect(
+            !PlanHistoryPresentation.isSessionRunning(
+                planTaskIDs: [pendingID],
+                hasActiveTask: false,
+                timerTaskID: UUID(),
+                timerPhase: .runningBreak
             )
         )
     }

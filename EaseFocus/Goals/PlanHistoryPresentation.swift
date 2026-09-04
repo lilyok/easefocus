@@ -58,10 +58,18 @@ nonisolated enum PlanHistoryPresentation {
         if hasActiveTask {
             return true
         }
-        guard let timerTaskID, planTaskIDs.contains(timerTaskID) else {
+        guard timerPhase != .idle else {
             return false
         }
-        return timerPhase == .runningFocus || timerPhase == .pausedFocus
+        if let timerTaskID {
+            return planTaskIDs.contains(timerTaskID)
+        }
+        switch timerPhase {
+        case .runningBreak, .pausedBreak, .completed:
+            return true
+        case .idle, .runningFocus, .pausedFocus:
+            return false
+        }
     }
 
     static func undoAvailability(
@@ -175,7 +183,7 @@ nonisolated enum PlanHistoryCopy {
     static let confirmStartOver = "Start over"
     static let cancelStartOver = "Cancel"
     static let staleUndo = "The plan changed after this revision, so Undo last is unavailable. History is still readable."
-    static let sessionRunning = "A focus session is running on this plan. Finish or cancel it before Undo last or Start over."
+    static let sessionRunning = "Finish or cancel the timer on this plan before Undo last or Start over."
     static let noRevision = "There is no revision to undo."
     static let malformed = "Couldn't read this revision. History is still available for other entries."
     static let undoReason = "Undo last change"
