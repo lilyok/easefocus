@@ -3,7 +3,9 @@ import SwiftUI
 
 struct PlanDetailView: View {
     @Bindable var plan: GoalPlan
+    @Environment(\.locale) private var locale
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.planRefinementClient) private var planRefinementClient
     @Environment(FocusTimerController.self) private var timer
     @State private var newTaskTitle = ""
     @State private var newTaskEstimate = 1
@@ -12,6 +14,14 @@ struct PlanDetailView: View {
     @State private var isSaveAlertPresented = false
     @State private var pendingSaveRetry: (() -> Void)?
     @State private var pendingSearch: ExternalSearchRequest?
+    @State private var isRefiningPlan = false
+
+    private var showsRefineAction: Bool {
+        PlanRefinementPresentation.showsRefineAction(
+            planStatus: plan.status,
+            availability: planRefinementClient.currentAvailability(locale: locale)
+        )
+    }
 
     var body: some View {
         List {
@@ -78,6 +88,14 @@ struct PlanDetailView: View {
         .background(Color.focusBackground)
         .navigationTitle("Plan")
         .toolbar {
+            if showsRefineAction {
+                ToolbarItem(placement: .primaryAction) {
+                    Button(PlanRefinementCopy.refineAction) {
+                        isRefiningPlan = true
+                    }
+                    .accessibilityIdentifier(PlanRefinementAccessibilityIdentifier.refineAction)
+                }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Menu("Plan actions") {
                     Button("Archive") {
@@ -118,6 +136,9 @@ struct PlanDetailView: View {
             onDiscard: discardFailedSave
         )
         .externalSearchConfirmation($pendingSearch)
+        .sheet(isPresented: $isRefiningPlan) {
+            RefinePlanView(plan: plan)
+        }
     }
 
     private func addTask() {

@@ -102,5 +102,6 @@ private struct PlanRowView: View {
 #Preview {
     PlansListView()
         .environment(\.foundationModelClient, PreviewFoundationModelClient())
+        .environment(\.planRefinementClient, PreviewPlanRefinementClient())
         .modelContainer(try! EaseFocusStore.inMemoryContainer())
 }
