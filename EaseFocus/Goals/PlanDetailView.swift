@@ -15,6 +15,7 @@ struct PlanDetailView: View {
     @State private var pendingSaveRetry: (() -> Void)?
     @State private var pendingSearch: ExternalSearchRequest?
     @State private var isRefiningPlan = false
+    @State private var historyCoordinator = PlanHistoryCoordinator()
 
     private var showsRefineAction: Bool {
         PlanRefinementPresentation.showsRefineAction(
@@ -83,6 +84,17 @@ struct PlanDetailView: View {
             } footer: {
                 Text("Add a resource search when a Google query would help. Search Google opens in your browser after you confirm.")
             }
+
+            if PlanHistoryPresentation.showsHistory(revisionCount: plan.revisions.count) {
+                Section {
+                    NavigationLink {
+                        PlanHistoryView(plan: plan)
+                    } label: {
+                        Text(PlanHistoryCopy.historyTitle)
+                    }
+                    .accessibilityIdentifier(PlanHistoryAccessibilityIdentifier.history)
+                }
+            }
         }
         .scrollContentBackground(.hidden)
         .background(Color.focusBackground)
@@ -106,6 +118,15 @@ struct PlanDetailView: View {
                         plan.status = .completed
                         plan.updatedAt = .now
                     }
+                    Button(PlanHistoryCopy.startOverAction, role: .destructive) {
+                        historyCoordinator.requestStartOver(
+                            isSessionRunningOnPlan: PlanHistorySession.isRunning(on: plan, timer: timer)
+                        )
+                    }
+                    .disabled(!historyCoordinator.canStartOver(
+                        isSessionRunningOnPlan: PlanHistorySession.isRunning(on: plan, timer: timer)
+                    ))
+                    .accessibilityIdentifier(PlanHistoryAccessibilityIdentifier.startOver)
                 }
             }
         }
@@ -129,11 +150,36 @@ struct PlanDetailView: View {
         } message: { task in
             Text("“\(task.title)” will be deleted from the plan.")
         }
+        .confirmationDialog(
+            PlanHistoryCopy.startOverConfirmTitle,
+            isPresented: $historyCoordinator.isStartOverConfirmPresented,
+            titleVisibility: .visible
+        ) {
+            Button(PlanHistoryCopy.confirmStartOver, role: .destructive) {
+                historyCoordinator.confirmStartOver(
+                    plan: plan,
+                    context: modelContext,
+                    isSessionRunningOnPlan: PlanHistorySession.isRunning(on: plan, timer: timer)
+                )
+            }
+            .accessibilityIdentifier(PlanHistoryAccessibilityIdentifier.confirmStartOver)
+            Button(PlanHistoryCopy.cancelStartOver, role: .cancel) {
+            }
+            .accessibilityIdentifier(PlanHistoryAccessibilityIdentifier.cancelStartOver)
+        } message: {
+            Text(PlanHistoryCopy.startOverConfirmMessage)
+        }
         .persistenceSaveAlert(
             isPresented: $isSaveAlertPresented,
             message: saveErrorMessage,
             onRetry: { pendingSaveRetry?() },
             onDiscard: discardFailedSave
+        )
+        .persistenceSaveAlert(
+            isPresented: $historyCoordinator.isSaveAlertPresented,
+            message: historyCoordinator.saveErrorMessage,
+            onRetry: { historyCoordinator.retrySave() },
+            onDiscard: { historyCoordinator.discardFailedSave() }
         )
         .externalSearchConfirmation($pendingSearch)
         .sheet(isPresented: $isRefiningPlan) {
