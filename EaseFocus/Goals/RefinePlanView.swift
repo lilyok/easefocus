@@ -48,26 +48,31 @@ struct RefinePlanView: View {
                 }
             }
         }
+        #if os(macOS)
+        .frame(minWidth: 480, minHeight: 560, idealHeight: 640, maxHeight: 780)
+        #endif
+        #if os(iOS)
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+        #endif
     }
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
-            if coordinator.preview == nil {
-                Button(
-                    coordinator.isGenerating ? PlanRefinementCopy.stop : PlanRefinementCopy.cancel
-                ) {
-                    if coordinator.isGenerating {
-                        coordinator.cancelGeneration()
-                    } else {
-                        dismiss()
-                    }
+            if coordinator.isGenerating {
+                Button(PlanRefinementCopy.stop) {
+                    coordinator.cancelGeneration()
+                }
+                .accessibilityIdentifier(PlanRefinementAccessibilityIdentifier.cancel)
+            } else if coordinator.preview == nil {
+                Button(PlanRefinementCopy.cancel) {
+                    dismiss()
                 }
                 .accessibilityIdentifier(PlanRefinementAccessibilityIdentifier.cancel)
             } else {
                 Button(PlanRefinementCopy.discard) {
                     coordinator.discardPreview()
-                    dismiss()
                 }
                 .accessibilityIdentifier(PlanRefinementAccessibilityIdentifier.discard)
             }
@@ -88,7 +93,7 @@ struct RefinePlanView: View {
                 Button(PlanRefinementCopy.confirm) {
                     coordinator.confirm(plan: plan, context: modelContext)
                 }
-                .disabled(coordinator.isGenerating || coordinator.isStale(plan: plan))
+                .disabled(!coordinator.canConfirm(plan: plan))
                 .accessibilityIdentifier(PlanRefinementAccessibilityIdentifier.confirm)
             }
         }
@@ -133,52 +138,54 @@ struct RefinePlanView: View {
     }
 
     private func previewList(_ preview: PlanRefinementPreview) -> some View {
-        List {
-            Section {
-                Text(preview.changeSummary)
-                    .font(FocusTypography.body)
-            }
-
-            if coordinator.isStale(plan: plan) {
-                Section {
-                    Text(PlanRefinementCopy.staleTitle)
+        ScrollView {
+            VStack(alignment: .leading, spacing: FocusSpacing.large) {
+                previewSection(title: PlanRefinementCopy.summarySection) {
+                    Text(preview.changeSummary)
                         .font(FocusTypography.body)
-                        .foregroundStyle(Color.focusError)
-                    Text(PlanRefinementCopy.staleMessage)
-                        .font(FocusTypography.footnote)
-                        .foregroundStyle(Color.focusError)
-                    Button(PlanRefinementCopy.generateAgain) {
-                        coordinator.generate(
-                            plan: plan,
-                            client: planRefinementClient,
-                            locale: locale
-                        )
-                    }
-                    .disabled(coordinator.isGenerating)
-                    .accessibilityIdentifier(PlanRefinementAccessibilityIdentifier.generate)
+                        .foregroundStyle(Color.focusPrimary)
                 }
-            } else if let generationError = coordinator.generationError, !generationError.isEmpty {
-                Section {
+
+                if coordinator.isStale(plan: plan) {
+                    previewSection(title: PlanRefinementCopy.staleTitle) {
+                        Text(PlanRefinementCopy.staleMessage)
+                            .font(FocusTypography.footnote)
+                            .foregroundStyle(Color.focusError)
+                        Button(PlanRefinementCopy.generateAgain) {
+                            coordinator.generate(
+                                plan: plan,
+                                client: planRefinementClient,
+                                locale: locale
+                            )
+                        }
+                        .disabled(coordinator.isGenerating)
+                        .accessibilityIdentifier(PlanRefinementAccessibilityIdentifier.generate)
+                    }
+                } else if let generationError = coordinator.generationError, !generationError.isEmpty {
                     Text(generationError)
                         .font(FocusTypography.footnote)
                         .foregroundStyle(Color.focusError)
                 }
-            }
 
-            Section(PlanRefinementCopy.beforeSection) {
-                ForEach(PlanRefinementPresentation.beforeTasks(for: preview), id: \.id) { task in
-                    refinementTaskRow(task: task, kind: nil)
+                if coordinator.showsPreviousPreviewNotice(plan: plan) {
+                    Text(PlanRefinementCopy.previousPreviewNotice)
+                        .font(FocusTypography.footnote)
+                        .foregroundStyle(.secondary)
                 }
-            }
 
-            Section(PlanRefinementCopy.afterSection) {
-                ForEach(PlanRefinementPresentation.displayedTasks(for: preview)) { row in
-                    refinementTaskRow(task: row.after, kind: row.kind, before: row.before)
+                previewSection(title: PlanRefinementCopy.beforeSection) {
+                    ForEach(PlanRefinementPresentation.beforeTasks(for: preview), id: \.id) { task in
+                        refinementTaskRow(task: task, kind: nil)
+                    }
                 }
-            }
 
-            if !coordinator.isStale(plan: plan) {
-                Section {
+                previewSection(title: PlanRefinementCopy.afterSection) {
+                    ForEach(PlanRefinementPresentation.displayedTasks(for: preview)) { row in
+                        refinementTaskRow(task: row.after, kind: row.kind, before: row.before)
+                    }
+                }
+
+                if !coordinator.isStale(plan: plan) {
                     Button(PlanRefinementCopy.generateAgain) {
                         coordinator.generate(
                             plan: plan,
@@ -190,8 +197,25 @@ struct RefinePlanView: View {
                     .accessibilityIdentifier(PlanRefinementAccessibilityIdentifier.generate)
                 }
             }
+            .padding(FocusSpacing.medium)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .scrollContentBackground(.hidden)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func previewSection<Content: View>(
+        title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: FocusSpacing.small) {
+            Text(title)
+                .font(FocusTypography.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+                .accessibilityAddTraits(.isHeader)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func refinementTaskRow(
@@ -200,11 +224,19 @@ struct RefinePlanView: View {
         before: TaskSnapshot? = nil
     ) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack {
+            HStack(alignment: .firstTextBaseline, spacing: FocusSpacing.small) {
+                Text(task.title)
+                    .font(FocusTypography.body)
+                    .foregroundStyle(Color.focusPrimary)
+                    .strikethrough(task.status == .archived)
                 if let kind, let badge = PlanRefinementCopy.badge(for: kind) {
                     Text(badge)
-                        .font(FocusTypography.footnote)
+                        .font(FocusTypography.footnote.weight(.semibold))
                         .foregroundStyle(Color.focusAccent)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.focusAccent.opacity(0.12), in: Capsule())
+                        .fixedSize()
                 }
                 if let status = PlanRefinementCopy.statusLabel(for: task.status) {
                     Text(status)
@@ -212,9 +244,6 @@ struct RefinePlanView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            Text(task.title)
-                .font(FocusTypography.body)
-                .strikethrough(task.status == .archived)
             if kind == .updated, let before, before.title != task.title {
                 Text("Was: \(before.title)")
                     .font(FocusTypography.footnote)

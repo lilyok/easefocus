@@ -390,46 +390,85 @@ nonisolated enum PlanRefinementValidator {
                 throw PlanRefinementValidationError.duplicateInOrdering
             }
 
-            if let update = updatesByID[id] {
-                let title = try validatedTitle(update.title)
-                let details: String?
-                if update.details.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    details = task.details
-                } else {
-                    details = try validatedDetails(update.details)
-                }
+            ordered.append(
+                try applied(
+                    update: updatesByID[id],
+                    to: task,
+                    includesResourceSuggestions: includesResourceSuggestions
+                )
+            )
+        }
+
+        if seenSurviving.isEmpty {
+            let listedAdditions = ordered
+            ordered = try survivingPending.map { task in
+                try applied(
+                    update: updatesByID[task.id],
+                    to: task,
+                    includesResourceSuggestions: includesResourceSuggestions
+                )
+            }
+            seenSurviving = Set(survivingPending.map(\.id))
+            ordered.append(contentsOf: listedAdditions)
+        } else {
+            for task in survivingPending where seenSurviving.insert(task.id).inserted {
                 ordered.append(
-                    TaskSnapshot(
-                        id: task.id,
-                        title: title,
-                        details: details,
-                        position: 0,
-                        estimatedPomodoros: update.estimatedPomodoros,
-                        status: .pending,
-                        searchQuery: try resolvedSearchQuery(
-                            proposed: update.searchQuery,
-                            original: task.searchQuery,
-                            title: title,
-                            includesResourceSuggestions: includesResourceSuggestions
-                        )
+                    try applied(
+                        update: updatesByID[task.id],
+                        to: task,
+                        includesResourceSuggestions: includesResourceSuggestions
                     )
                 )
-            } else {
-                ordered.append(task)
             }
         }
 
-        let missingAdditions = Set(additions.keys).subtracting(seenTokens)
-        guard missingAdditions.isEmpty else {
-            throw PlanRefinementValidationError.missingFromOrdering
+        for localID in additions.keys.sorted() where seenTokens.insert(localID).inserted {
+            if let addition = additions[localID] {
+                ordered.append(addition)
+            }
         }
 
         let survivingIDs = Set(survivingPending.map(\.id))
         guard seenSurviving == survivingIDs else {
             throw PlanRefinementValidationError.missingFromOrdering
         }
+        guard Set(additions.keys).isSubset(of: seenTokens) else {
+            throw PlanRefinementValidationError.missingFromOrdering
+        }
 
         return ordered
+    }
+
+    private static func applied(
+        update: PlanRefinementUpdate?,
+        to task: TaskSnapshot,
+        includesResourceSuggestions: Bool
+    ) throws -> TaskSnapshot {
+        guard let update else {
+            return task
+        }
+
+        let title = try validatedTitle(update.title)
+        let details: String?
+        if update.details.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            details = task.details
+        } else {
+            details = try validatedDetails(update.details)
+        }
+        return TaskSnapshot(
+            id: task.id,
+            title: title,
+            details: details,
+            position: 0,
+            estimatedPomodoros: update.estimatedPomodoros,
+            status: .pending,
+            searchQuery: try resolvedSearchQuery(
+                proposed: update.searchQuery,
+                original: task.searchQuery,
+                title: title,
+                includesResourceSuggestions: includesResourceSuggestions
+            )
+        )
     }
 
     private static func assemble(
@@ -522,9 +561,6 @@ nonisolated enum PlanRefinementValidator {
     ) throws -> String? {
         let trimmed = proposed.trimmingCharacters(in: .whitespacesAndNewlines)
         if !includesResourceSuggestions {
-            guard trimmed.isEmpty else {
-                throw PlanRefinementValidationError.resourceQueryWhenDisabled
-            }
             return original
         }
 

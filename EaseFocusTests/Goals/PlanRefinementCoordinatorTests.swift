@@ -154,6 +154,75 @@ struct PlanRefinementCoordinatorTests {
 
     @Test
     @MainActor
+    func failedRegenerateKeepsTheLastPreviewAndBlocksConfirm() async throws {
+        let (plan, context, container) = try makePlan()
+        _ = container
+        let coordinator = PlanRefinementCoordinator()
+        coordinator.request = "Add speaking exercises"
+        coordinator.generate(
+            plan: plan,
+            client: PreviewPlanRefinementClient(makeID: { firstAddedID }),
+            locale: Locale(identifier: "en")
+        )
+        await waitUntil { !coordinator.isGenerating }
+        let firstPreview = try #require(coordinator.preview)
+        #expect(coordinator.canConfirm(plan: plan))
+
+        coordinator.generate(
+            plan: plan,
+            client: FailingPlanRefinementClient(),
+            locale: Locale(identifier: "en")
+        )
+        await waitUntil { !coordinator.isGenerating }
+
+        #expect(coordinator.preview == firstPreview)
+        #expect(coordinator.generationError == PlanRefinementGenerationErrorCopy.message(for: .generationFailed))
+        #expect(!coordinator.canConfirm(plan: plan))
+        #expect(coordinator.showsPreviousPreviewNotice(plan: plan))
+
+        coordinator.confirm(plan: plan, context: context)
+
+        #expect(!coordinator.didApply)
+        #expect(coordinator.preview == firstPreview)
+        #expect(plan.revisions.isEmpty)
+        #expect(plan.orderedTasks.map(\.title) == ["Practice hola", "Record a greeting"])
+    }
+
+    @Test
+    @MainActor
+    func cancellingARegenerateKeepsTheLastPreview() async throws {
+        let (plan, _, container) = try makePlan()
+        _ = container
+        let coordinator = PlanRefinementCoordinator()
+        coordinator.request = "Add speaking exercises"
+        coordinator.generate(
+            plan: plan,
+            client: PreviewPlanRefinementClient(makeID: { firstAddedID }),
+            locale: Locale(identifier: "en")
+        )
+        await waitUntil { !coordinator.isGenerating }
+        let firstPreview = try #require(coordinator.preview)
+
+        coordinator.generate(
+            plan: plan,
+            client: DelayedPreviewPlanRefinementClient(delay: .milliseconds(200)),
+            locale: Locale(identifier: "en")
+        )
+        #expect(coordinator.isGenerating)
+        #expect(coordinator.preview == firstPreview)
+        #expect(!coordinator.canConfirm(plan: plan))
+        coordinator.cancelGeneration()
+
+        #expect(!coordinator.isGenerating)
+        try await Task.sleep(for: .milliseconds(300))
+        #expect(coordinator.preview == firstPreview)
+        #expect(coordinator.generationError == nil)
+        #expect(coordinator.canConfirm(plan: plan))
+        #expect(!coordinator.showsPreviousPreviewNotice(plan: plan))
+    }
+
+    @Test
+    @MainActor
     func confirmAppliesThroughTheApplierAndRecordsARevision() async throws {
         let (plan, context, container) = try makePlan()
         _ = container
@@ -199,6 +268,7 @@ struct PlanRefinementCoordinatorTests {
 
         #expect(coordinator.preview == nil)
         #expect(!coordinator.didApply)
+        #expect(coordinator.request == "Add speaking exercises")
         #expect(PlanSnapshot.capturing(plan) == before)
         #expect(plan.revisions.isEmpty)
         #expect(plan.orderedTasks.map(\.title) == ["Practice hola", "Record a greeting"])
@@ -492,6 +562,30 @@ private struct RecordingPreviewPlanRefinementClient: PlanRefinementGenerating {
             survey: survey,
             includesResourceSuggestions: includesResourceSuggestions
         )
+    }
+}
+
+private struct FailingPlanRefinementClient: PlanRefinementGenerating {
+    var error: PlanRefinementGenerationError = .generationFailed
+
+    func currentAvailability(locale: Locale) -> FoundationModelAvailability {
+        _ = locale
+        return .available
+    }
+
+    func generateRefinementPreview(
+        snapshot: PlanSnapshot,
+        request: String,
+        locale: Locale,
+        survey: GoalSurvey?,
+        includesResourceSuggestions: Bool
+    ) async throws -> PlanRefinementPreview {
+        _ = snapshot
+        _ = request
+        _ = locale
+        _ = survey
+        _ = includesResourceSuggestions
+        throw error
     }
 }
 

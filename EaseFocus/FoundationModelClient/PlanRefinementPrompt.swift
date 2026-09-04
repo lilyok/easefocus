@@ -15,7 +15,10 @@ nonisolated enum PlanRefinementPrompt {
         Task IDs in the prompt are stable UUID strings. Use those exact strings to reference existing pending tasks.
         Identify new tasks with local IDs such as new-1. Never invent a UUID for a new task.
         Include every surviving pending task UUID and every addition local ID exactly once in pendingTaskOrder.
+        If you are unsure of order, keep the current pending order and append additions at the end.
         Leave a pending task out of updates to keep it unchanged, but still list it in pendingTaskOrder.
+        If the user asks to add a task that already exists with the same or a very similar title, do not add a duplicate.
+        Extra project context belongs in a task’s details. Do not rewrite every task or add many tasks from background context.
         The combined number of additions, updates, and archives must be at most \(PlanRefinementLimits.maximumOperationCount).
         When updating a pending task, repeat its existing details unless you are changing them. Leave details empty to keep the current details.
         Do not copy a task title into searchQuery.
@@ -74,6 +77,9 @@ nonisolated enum PlanRefinementPrompt {
         Completion summary: \(completionSummary(for: snapshot))
         Current plan:
         \(planListing(snapshot))
+        If a requested task already exists, do not add another with the same title.
+        Put extra context into details on the added or existing task. Do not rewrite the whole plan unless asked.
+        pendingTaskOrder must include every remaining pending task UUID and every new local ID.
         Do not include URLs, domain names, or citations.
         Do not include focus-session details.
         \(DraftPlanPrompt.resourceSearchInstructions(includesResourceSuggestions: includesResourceSuggestions))

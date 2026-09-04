@@ -140,6 +140,10 @@ struct PlanRefinementPresentationTests {
         #expect(byID[reviewID]?.kind == .archived)
         #expect(byID[activeID]?.kind == .protected)
         #expect(byID[completedID]?.kind == .protected)
+        #expect(PlanRefinementCopy.summarySection == "Summary")
+        #expect(PlanRefinementCopy.beforeSection == "Before")
+        #expect(PlanRefinementCopy.afterSection == "After")
+        #expect(PlanRefinementCopy.previousPreviewNotice.contains("last successful preview"))
         #expect(PlanRefinementCopy.badge(for: .added) == "Added")
         #expect(PlanRefinementCopy.badge(for: .updated) == "Updated")
         #expect(PlanRefinementCopy.badge(for: .archived) == "Archived")
@@ -214,6 +218,50 @@ struct PlanRefinementPresentationTests {
     }
 
     @Test
+    func blocksConfirmWhileGeneratingOrAfterAFailedRegenerate() {
+        #expect(
+            PlanRefinementPresentation.canConfirm(
+                hasPreview: true,
+                isGenerating: false,
+                generationError: nil,
+                isStale: false
+            )
+        )
+        #expect(
+            !PlanRefinementPresentation.canConfirm(
+                hasPreview: true,
+                isGenerating: true,
+                generationError: nil,
+                isStale: false
+            )
+        )
+        #expect(
+            !PlanRefinementPresentation.canConfirm(
+                hasPreview: true,
+                isGenerating: false,
+                generationError: "Couldn't generate a refinement.",
+                isStale: false
+            )
+        )
+        #expect(
+            !PlanRefinementPresentation.canConfirm(
+                hasPreview: true,
+                isGenerating: false,
+                generationError: nil,
+                isStale: true
+            )
+        )
+        #expect(
+            !PlanRefinementPresentation.canConfirm(
+                hasPreview: false,
+                isGenerating: false,
+                generationError: nil,
+                isStale: false
+            )
+        )
+    }
+
+    @Test
     func mapsGenerationErrorsToActionableCopy() {
         #expect(
             PlanRefinementGenerationErrorCopy.message(
@@ -232,7 +280,11 @@ struct PlanRefinementPresentationTests {
         )
         #expect(
             PlanRefinementGenerationErrorCopy.message(for: .validation(.noChanges))
-                .contains("wasn't valid")
+                .contains("already in the plan")
+        )
+        #expect(
+            PlanRefinementGenerationErrorCopy.message(for: .validation(.tooManyOperations))
+                .contains("smaller change")
         )
         #expect(PlanRefinementGenerationErrorCopy.message(for: .refusal).contains("declined"))
         #expect(PlanRefinementGenerationErrorCopy.message(for: .guardrailViolation).contains("safety"))

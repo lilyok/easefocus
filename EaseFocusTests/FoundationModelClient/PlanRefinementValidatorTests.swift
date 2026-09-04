@@ -34,6 +34,27 @@ struct PlanRefinementValidatorTests {
     }
 
     @Test
+    func addsAPendingTaskWhenOrderOmitsExistingPendingTasks() throws {
+        let before = pendingSnapshot()
+        let preview = try makePreview(
+            snapshot: before,
+            proposal: proposal(
+                additions: [addition(title: "Write cold emails")],
+                order: ["new-1"]
+            )
+        )
+
+        #expect(preview.after.tasks.map(\.title) == [
+            "Practice hola",
+            "Review phrases",
+            "Write cold emails",
+        ])
+        #expect(preview.after.tasks.last?.id == newID)
+        #expect(preview.after.tasks.last?.status == .pending)
+        #expect(preview.before == before)
+    }
+
+    @Test
     func modifiesAPendingTaskAndLeavesTheOtherUnchanged() throws {
         let before = pendingSnapshot()
         let preview = try makePreview(
@@ -231,7 +252,7 @@ struct PlanRefinementValidatorTests {
             )
         }
 
-        #expect(throws: PlanRefinementValidationError.missingFromOrdering) {
+        #expect(throws: PlanRefinementValidationError.noChanges) {
             _ = try makePreview(
                 snapshot: before,
                 proposal: proposal(order: [pendingA.uuidString])
@@ -387,37 +408,38 @@ struct PlanRefinementValidatorTests {
     }
 
     @Test
-    func rejectsResourceQueriesWhenSuggestionsAreDisabledAndPreservesExistingQueries() throws {
+    func ignoresResourceQueriesWhenSuggestionsAreDisabledAndPreservesExistingQueries() throws {
         let before = pendingSnapshot()
 
-        #expect(throws: PlanRefinementValidationError.resourceQueryWhenDisabled) {
-            _ = try makePreview(
-                snapshot: before,
-                proposal: proposal(
-                    additions: [
-                        addition(title: "Shadow a dialogue", searchQuery: "focused speaking practice")
-                    ],
-                    order: [pendingA.uuidString, pendingB.uuidString, "new-1"]
-                )
+        let added = try makePreview(
+            snapshot: before,
+            proposal: proposal(
+                additions: [
+                    addition(title: "Shadow a dialogue", searchQuery: "focused speaking practice")
+                ],
+                order: [pendingA.uuidString, pendingB.uuidString, "new-1"]
             )
-        }
-        #expect(throws: PlanRefinementValidationError.resourceQueryWhenDisabled) {
-            _ = try makePreview(
-                snapshot: before,
-                proposal: proposal(
-                    updates: [
-                        PlanRefinementUpdate(
-                            taskID: pendingA.uuidString,
-                            title: "Practice hola",
-                            details: "",
-                            estimatedPomodoros: 1,
-                            searchQuery: "Spanish greetings audio"
-                        )
-                    ],
-                    order: [pendingA.uuidString, pendingB.uuidString]
-                )
+        )
+        #expect(added.after.tasks.last?.title == "Shadow a dialogue")
+        #expect(added.after.tasks.last?.searchQuery == nil)
+
+        let updated = try makePreview(
+            snapshot: before,
+            proposal: proposal(
+                updates: [
+                    PlanRefinementUpdate(
+                        taskID: pendingA.uuidString,
+                        title: "Practice hola and adios",
+                        details: "",
+                        estimatedPomodoros: 1,
+                        searchQuery: "a different query the model invented"
+                    )
+                ],
+                order: [pendingA.uuidString, pendingB.uuidString]
             )
-        }
+        )
+        #expect(updated.after.tasks[0].title == "Practice hola and adios")
+        #expect(updated.after.tasks[0].searchQuery == "Spanish greetings audio")
 
         let preserved = try makePreview(
             snapshot: before,

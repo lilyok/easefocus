@@ -35,13 +35,27 @@ final class PlanRefinementCoordinator {
         )
     }
 
+    func showsPreviousPreviewNotice(plan: GoalPlan) -> Bool {
+        preview != nil && (
+            isGenerating || (!(generationError ?? "").isEmpty && !isStale(plan: plan))
+        )
+    }
+
+    func canConfirm(plan: GoalPlan) -> Bool {
+        PlanRefinementPresentation.canConfirm(
+            hasPreview: preview != nil,
+            isGenerating: isGenerating,
+            generationError: generationError,
+            isStale: isStale(plan: plan)
+        )
+    }
+
     func generate(
         plan: GoalPlan,
         client: any PlanRefinementGenerating,
         locale: Locale
     ) {
         hasAttemptedGenerate = true
-        generationError = nil
         if requestError != nil {
             return
         }
@@ -55,6 +69,7 @@ final class PlanRefinementCoordinator {
         let id = UUID()
         generationID = id
         isGenerating = true
+        generationError = nil
         generateTask?.cancel()
         generateTask = Task { @MainActor [weak self] in
             guard let self else {
@@ -116,6 +131,9 @@ final class PlanRefinementCoordinator {
         save: @escaping (ModelContext) throws -> Void = { try $0.save() }
     ) {
         guard let preview else {
+            return
+        }
+        guard !isGenerating, (generationError ?? "").isEmpty else {
             return
         }
         if isStale(plan: plan) {

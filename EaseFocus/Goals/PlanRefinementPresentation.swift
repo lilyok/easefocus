@@ -54,6 +54,15 @@ nonisolated enum PlanRefinementPresentation {
         }
     }
 
+    static func canConfirm(
+        hasPreview: Bool,
+        isGenerating: Bool,
+        generationError: String?,
+        isStale: Bool
+    ) -> Bool {
+        hasPreview && !isGenerating && (generationError ?? "").isEmpty && !isStale
+    }
+
     static func displayedTasks(for preview: PlanRefinementPreview) -> [PlanRefinementDisplayedTask] {
         let beforeByID = Dictionary(uniqueKeysWithValues: preview.before.tasks.map { ($0.id, $0) })
         let beforePendingIDs = preview.before.tasks.filter { $0.status == .pending }.map(\.id)
@@ -141,11 +150,13 @@ nonisolated enum PlanRefinementCopy {
     static let stop = "Stop"
     static let confirm = "Confirm"
     static let discard = "Discard"
+    static let previousPreviewNotice = "This is the last successful preview. Confirm stays off until a new preview is generated."
     static let staleTitle = "This plan has changed"
     static let staleMessage = "The plan was edited after this preview was created. Generate again to review a new preview."
     static let emptyRequest = "Enter a short request, such as add speaking exercises."
     static let requestTooLong = "Keep the request to \(PlanRefinementLimits.maximumRequestLength) characters or fewer."
     static let malformedApply = "Couldn't apply this preview. Generate again or edit the plan manually."
+    static let summarySection = "Summary"
     static let beforeSection = "Before"
     static let afterSection = "After"
 
@@ -206,8 +217,30 @@ nonisolated enum PlanRefinementGenerationErrorCopy {
             return PlanRefinementCopy.emptyRequest
         case .requestTooLong:
             return PlanRefinementCopy.requestTooLong
-        default:
-            return "The generated preview wasn't valid. Rephrase the request and try again, or keep editing the plan manually."
+        case .noChanges:
+            return "Nothing would change. If that work is already in the plan, say what else should change, or keep editing manually."
+        case .tooManyOperations:
+            return "The preview changed too many things at once. Ask for a smaller change, such as adding one task, and try again."
+        case .tooManyTasks:
+            return "The preview would add too many tasks. Ask to add fewer tasks and try again."
+        case .emptyTaskTitle:
+            return "The preview included a task without a title. Rephrase the request and try again."
+        case .emptyChangeSummary, .textTooLong:
+            return "The generated text was empty or too long. Ask for a shorter change and try again."
+        case .urlLikeContent:
+            return "The preview included a URL. Rephrase the request without asking for links."
+        case .malformedTaskID, .unknownTaskID, .missingFromOrdering:
+            return "The preview didn't line up with this plan’s tasks. Try again, or keep editing the plan manually."
+        case .protectedTaskReferenced:
+            return "The preview tried to change a completed or in-progress task. Those stay as they are. Ask to change pending work only."
+        case .duplicateOperation, .conflictingOperations, .duplicateInOrdering:
+            return "The preview repeated the same change twice. Rephrase the request and try again."
+        case .invalidPomodoroEstimate:
+            return "The preview had an invalid session estimate. Try again."
+        case .invalidSearchQuery, .searchQueryCopiesTitle, .resourceQueryWhenDisabled:
+            return "The preview included an invalid resource search. Try again, or keep editing the plan manually."
+        case .malformedSnapshot:
+            return "Couldn't apply that preview to this plan. Try again or edit the plan manually."
         }
     }
 }
