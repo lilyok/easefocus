@@ -146,6 +146,15 @@ struct RefinePlanView: View {
                         .foregroundStyle(Color.focusPrimary)
                 }
 
+                if let generationError = PlanRefinementPresentation.displayedGenerationError(
+                    isStale: coordinator.isStale(plan: plan),
+                    generationError: coordinator.generationError
+                ) {
+                    Text(generationError)
+                        .font(FocusTypography.footnote)
+                        .foregroundStyle(Color.focusError)
+                }
+
                 if coordinator.isStale(plan: plan) {
                     previewSection(title: PlanRefinementCopy.staleTitle) {
                         Text(PlanRefinementCopy.staleMessage)
@@ -161,10 +170,6 @@ struct RefinePlanView: View {
                         .disabled(coordinator.isGenerating)
                         .accessibilityIdentifier(PlanRefinementAccessibilityIdentifier.generate)
                     }
-                } else if let generationError = coordinator.generationError, !generationError.isEmpty {
-                    Text(generationError)
-                        .font(FocusTypography.footnote)
-                        .foregroundStyle(Color.focusError)
                 }
 
                 if coordinator.showsPreviousPreviewNotice(plan: plan) {
@@ -244,14 +249,45 @@ struct RefinePlanView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            if kind == .updated, let before, before.title != task.title {
-                Text("Was: \(before.title)")
-                    .font(FocusTypography.footnote)
-                    .foregroundStyle(.secondary)
+            if kind == .updated, let before {
+                let diff = PlanRefinementPresentation.updateDiff(before: before, after: task)
+                if let previousTitle = diff.previousTitle {
+                    Text(PlanRefinementCopy.wasTitle(previousTitle))
+                        .font(FocusTypography.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                if let details = diff.details {
+                    Text(PlanRefinementCopy.detailsLine(details))
+                        .font(FocusTypography.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                if let previousDetails = diff.previousDetails {
+                    Text(PlanRefinementCopy.wasDetails(previousDetails))
+                        .font(FocusTypography.footnote)
+                        .foregroundStyle(.secondary)
+                }
             }
-            Text("\(task.estimatedPomodoros) estimated sessions")
+            Text(PlanRefinementCopy.estimatedSessions(task.estimatedPomodoros))
                 .font(FocusTypography.footnote)
                 .foregroundStyle(.secondary)
+            if kind == .updated, let before {
+                let diff = PlanRefinementPresentation.updateDiff(before: before, after: task)
+                if let previousEstimatedPomodoros = diff.previousEstimatedPomodoros {
+                    Text(PlanRefinementCopy.wasEstimatedSessions(previousEstimatedPomodoros))
+                        .font(FocusTypography.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                if let searchQuery = diff.searchQuery {
+                    Text(PlanRefinementCopy.searchLine(searchQuery))
+                        .font(FocusTypography.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                if let previousSearchQuery = diff.previousSearchQuery {
+                    Text(PlanRefinementCopy.wasSearch(previousSearchQuery))
+                        .font(FocusTypography.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
         .padding(.vertical, 4)
         .accessibilityIdentifier(rowAccessibilityIdentifier(kind: kind))

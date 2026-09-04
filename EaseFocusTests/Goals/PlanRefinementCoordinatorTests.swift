@@ -313,6 +313,44 @@ struct PlanRefinementCoordinatorTests {
 
     @Test
     @MainActor
+    func failedRegenerateOnAStalePlanKeepsTheGenerateError() async throws {
+        let (plan, context, container) = try makePlan()
+        _ = container
+        let coordinator = PlanRefinementCoordinator()
+        coordinator.request = "Add speaking exercises"
+        coordinator.generate(
+            plan: plan,
+            client: PreviewPlanRefinementClient(makeID: { firstAddedID }),
+            locale: Locale(identifier: "en")
+        )
+        await waitUntil { !coordinator.isGenerating }
+
+        plan.orderedTasks[0].title = "Edited after preview"
+        try context.save()
+        #expect(coordinator.isStale(plan: plan))
+
+        coordinator.generate(
+            plan: plan,
+            client: FailingPlanRefinementClient(),
+            locale: Locale(identifier: "en")
+        )
+        await waitUntil { !coordinator.isGenerating }
+
+        let failed = PlanRefinementGenerationErrorCopy.message(for: .generationFailed)
+        #expect(coordinator.isStale(plan: plan))
+        #expect(coordinator.generationError == failed)
+        #expect(!coordinator.canConfirm(plan: plan))
+        #expect(
+            PlanRefinementPresentation.displayedGenerationError(
+                isStale: true,
+                generationError: coordinator.generationError
+            ) == failed
+        )
+        #expect(plan.revisions.isEmpty)
+    }
+
+    @Test
+    @MainActor
     func saveFailureSurfacesRetryAndDiscardWithoutASecondRollback() async throws {
         let (plan, context, container) = try makePlan()
         _ = container

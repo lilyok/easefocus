@@ -18,6 +18,15 @@ nonisolated struct PlanRefinementDisplayedTask: Equatable, Identifiable, Sendabl
     var id: UUID { after.id }
 }
 
+nonisolated struct PlanRefinementUpdateDiff: Equatable, Sendable {
+    var previousTitle: String?
+    var details: String?
+    var previousDetails: String?
+    var previousEstimatedPomodoros: Int?
+    var searchQuery: String?
+    var previousSearchQuery: String?
+}
+
 nonisolated enum PlanRefinementPresentation {
     static func showsRefineAction(
         planStatus: PlanStatus,
@@ -61,6 +70,33 @@ nonisolated enum PlanRefinementPresentation {
         isStale: Bool
     ) -> Bool {
         hasPreview && !isGenerating && (generationError ?? "").isEmpty && !isStale
+    }
+
+    static func displayedGenerationError(isStale: Bool, generationError: String?) -> String? {
+        guard let generationError, !generationError.isEmpty else {
+            return nil
+        }
+        if isStale, generationError == PlanRefinementCopy.staleMessage {
+            return nil
+        }
+        return generationError
+    }
+
+    static func updateDiff(before: TaskSnapshot, after: TaskSnapshot) -> PlanRefinementUpdateDiff {
+        let beforeDetails = collapsed(before.details)
+        let afterDetails = collapsed(after.details)
+        let beforeQuery = collapsed(before.searchQuery)
+        let afterQuery = collapsed(after.searchQuery)
+        return PlanRefinementUpdateDiff(
+            previousTitle: before.title != after.title ? before.title : nil,
+            details: beforeDetails != afterDetails && !afterDetails.isEmpty ? afterDetails : nil,
+            previousDetails: beforeDetails != afterDetails && !beforeDetails.isEmpty ? beforeDetails : nil,
+            previousEstimatedPomodoros: before.estimatedPomodoros != after.estimatedPomodoros
+                ? before.estimatedPomodoros
+                : nil,
+            searchQuery: beforeQuery != afterQuery && !afterQuery.isEmpty ? afterQuery : nil,
+            previousSearchQuery: beforeQuery != afterQuery && !beforeQuery.isEmpty ? beforeQuery : nil
+        )
     }
 
     static func displayedTasks(for preview: PlanRefinementPreview) -> [PlanRefinementDisplayedTask] {
@@ -125,6 +161,10 @@ nonisolated enum PlanRefinementPresentation {
 
         return .unchanged
     }
+
+    private static func collapsed(_ text: String?) -> String {
+        text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
 }
 
 nonisolated enum PlanRefinementAccessibilityIdentifier {
@@ -159,6 +199,34 @@ nonisolated enum PlanRefinementCopy {
     static let summarySection = "Summary"
     static let beforeSection = "Before"
     static let afterSection = "After"
+
+    static func wasTitle(_ title: String) -> String {
+        "Was: \(title)"
+    }
+
+    static func detailsLine(_ details: String) -> String {
+        "Details: \(details)"
+    }
+
+    static func wasDetails(_ details: String) -> String {
+        "Details were: \(details)"
+    }
+
+    static func estimatedSessions(_ count: Int) -> String {
+        "\(count) estimated sessions"
+    }
+
+    static func wasEstimatedSessions(_ count: Int) -> String {
+        "Was: \(count) estimated sessions"
+    }
+
+    static func searchLine(_ query: String) -> String {
+        "Search: \(query)"
+    }
+
+    static func wasSearch(_ query: String) -> String {
+        "Search was: \(query)"
+    }
 
     static func badge(for kind: PlanRefinementChangeKind) -> String? {
         switch kind {

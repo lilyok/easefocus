@@ -218,6 +218,86 @@ struct PlanRefinementPresentationTests {
     }
 
     @Test
+    func surfacesGenerateErrorsAboveStaleCopyWithoutDuplicatingStaleMessage() {
+        #expect(
+            PlanRefinementPresentation.displayedGenerationError(
+                isStale: true,
+                generationError: PlanRefinementCopy.staleMessage
+            ) == nil
+        )
+        let failed = PlanRefinementGenerationErrorCopy.message(for: .generationFailed)
+        #expect(
+            PlanRefinementPresentation.displayedGenerationError(
+                isStale: true,
+                generationError: failed
+            ) == failed
+        )
+        #expect(
+            PlanRefinementPresentation.displayedGenerationError(
+                isStale: false,
+                generationError: failed
+            ) == failed
+        )
+        #expect(
+            PlanRefinementPresentation.displayedGenerationError(
+                isStale: false,
+                generationError: nil
+            ) == nil
+        )
+    }
+
+    @Test
+    func describesUpdatedTitleDetailsEstimateAndSearchDiffs() {
+        let before = TaskSnapshot(
+            id: pendingID,
+            title: "Practice hola",
+            details: nil,
+            position: 0,
+            estimatedPomodoros: 1,
+            status: .pending,
+            searchQuery: nil
+        )
+        var after = before
+        after.title = "Practice hola and adios"
+        after.details = "Speak slowly"
+        after.estimatedPomodoros = 2
+        after.searchQuery = "focused speaking practice"
+
+        let added = PlanRefinementPresentation.updateDiff(before: before, after: after)
+        #expect(added.previousTitle == "Practice hola")
+        #expect(added.details == "Speak slowly")
+        #expect(added.previousDetails == nil)
+        #expect(added.previousEstimatedPomodoros == 1)
+        #expect(added.searchQuery == "focused speaking practice")
+        #expect(added.previousSearchQuery == nil)
+        #expect(PlanRefinementCopy.wasTitle("Practice hola") == "Was: Practice hola")
+        #expect(PlanRefinementCopy.detailsLine("Speak slowly") == "Details: Speak slowly")
+        #expect(PlanRefinementCopy.wasEstimatedSessions(1) == "Was: 1 estimated sessions")
+        #expect(PlanRefinementCopy.searchLine("focused speaking practice") == "Search: focused speaking practice")
+
+        var cleared = after
+        cleared.details = nil
+        cleared.searchQuery = nil
+        let removed = PlanRefinementPresentation.updateDiff(before: after, after: cleared)
+        #expect(removed.previousTitle == nil)
+        #expect(removed.details == nil)
+        #expect(removed.previousDetails == "Speak slowly")
+        #expect(removed.previousEstimatedPomodoros == nil)
+        #expect(removed.searchQuery == nil)
+        #expect(removed.previousSearchQuery == "focused speaking practice")
+        #expect(PlanRefinementCopy.wasDetails("Speak slowly") == "Details were: Speak slowly")
+        #expect(PlanRefinementCopy.wasSearch("focused speaking practice") == "Search was: focused speaking practice")
+
+        let unchanged = PlanRefinementPresentation.updateDiff(before: after, after: after)
+        #expect(unchanged.previousTitle == nil)
+        #expect(unchanged.details == nil)
+        #expect(unchanged.previousDetails == nil)
+        #expect(unchanged.previousEstimatedPomodoros == nil)
+        #expect(unchanged.searchQuery == nil)
+        #expect(unchanged.previousSearchQuery == nil)
+    }
+
+    @Test
     func blocksConfirmWhileGeneratingOrAfterAFailedRegenerate() {
         #expect(
             PlanRefinementPresentation.canConfirm(
