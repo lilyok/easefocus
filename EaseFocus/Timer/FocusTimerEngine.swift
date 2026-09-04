@@ -149,7 +149,6 @@ nonisolated struct FocusTimerEngine: Equatable, Codable, Sendable {
             && completedFocusCount > 0
             && completedFocusCount.isMultiple(of: settings.sessionsBeforeLongBreak)
         let duration = isLongBreak ? settings.longBreakSeconds : settings.shortBreakSeconds
-        taskID = nil
         beginPeriod(duration: duration, now: now)
         phase = .runningBreak
         return [

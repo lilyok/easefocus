@@ -100,13 +100,17 @@ nonisolated enum PlanRefinementPresentation {
     }
 
     static func displayedTasks(for preview: PlanRefinementPreview) -> [PlanRefinementDisplayedTask] {
-        let beforeByID = Dictionary(uniqueKeysWithValues: preview.before.tasks.map { ($0.id, $0) })
-        let beforePendingIDs = preview.before.tasks.filter { $0.status == .pending }.map(\.id)
-        let afterPendingIDs = preview.after.tasks.filter { $0.status == .pending }.map(\.id)
+        displayedTasks(before: preview.before, after: preview.after)
+    }
+
+    static func displayedTasks(before: PlanSnapshot, after: PlanSnapshot) -> [PlanRefinementDisplayedTask] {
+        let beforeByID = Dictionary(uniqueKeysWithValues: before.tasks.map { ($0.id, $0) })
+        let beforePendingIDs = before.tasks.filter { $0.status == .pending }.map(\.id)
+        let afterPendingIDs = after.tasks.filter { $0.status == .pending }.map(\.id)
         let survivingBefore = beforePendingIDs.filter { afterPendingIDs.contains($0) }
         let survivingAfter = afterPendingIDs.filter { beforePendingIDs.contains($0) }
 
-        return preview.after.tasks
+        return after.tasks
             .sorted { $0.position < $1.position }
             .map { afterTask in
                 let beforeTask = beforeByID[afterTask.id]
@@ -124,7 +128,11 @@ nonisolated enum PlanRefinementPresentation {
     }
 
     static func beforeTasks(for preview: PlanRefinementPreview) -> [TaskSnapshot] {
-        preview.before.tasks.sorted { $0.position < $1.position }
+        beforeTasks(preview.before)
+    }
+
+    static func beforeTasks(_ snapshot: PlanSnapshot) -> [TaskSnapshot] {
+        snapshot.tasks.sorted { $0.position < $1.position }
     }
 
     private static func changeKind(
