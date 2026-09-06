@@ -1961,23 +1961,6 @@
         }
       }
     },
-    "%@ remaining": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ remaining"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ restantes"
-          }
-        }
-      }
-    },
     "Remaining time": {
       "extractionState": "manual",
       "localizations": {
@@ -4059,129 +4042,6 @@
         }
       }
     },
-    "%lld hours": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld hour"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld hours"
-                }
-              }
-            }
-          }
-        },
-        "es": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld hora"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld horas"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld minutes": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld minute"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld minutes"
-                }
-              }
-            }
-          }
-        },
-        "es": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld minuto"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld minutos"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld seconds": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld second"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld seconds"
-                }
-              }
-            }
-          }
-        },
-        "es": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld segundo"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld segundos"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "%lld estimated sessions": {
       "extractionState": "manual",
       "localizations": {
@@ -4355,6 +4215,217 @@
           "stringUnit": {
             "state": "translated",
             "value": "“%@”"
+          }
+        }
+      }
+    },
+    "%lld hours %lld minutes %lld seconds remaining": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%#@hours@%#@minutes@%#@seconds@ remaining"
+          },
+          "substitutions": {
+            "hours": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "zero": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": ""
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg hour "
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg hours "
+                    }
+                  }
+                }
+              }
+            },
+            "minutes": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "zero": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": ""
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg minute "
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg minutes "
+                    }
+                  }
+                }
+              }
+            },
+            "seconds": {
+              "argNum": 3,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "zero": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": ""
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg second"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg seconds"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%#@hours@%#@minutes@%#@seconds@ restantes"
+          },
+          "substitutions": {
+            "hours": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "zero": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": ""
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg hora "
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg horas "
+                    }
+                  }
+                }
+              }
+            },
+            "minutes": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "zero": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": ""
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg minuto "
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg minutos "
+                    }
+                  }
+                }
+              }
+            },
+            "seconds": {
+              "argNum": 3,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "zero": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": ""
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg segundo"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg segundos"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "0 seconds remaining": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0 seconds remaining"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0 segundos restantes"
+          }
+        }
+      }
+    },
+    "%@ – %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ – %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ a %@"
           }
         }
       }

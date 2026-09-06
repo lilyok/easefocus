@@ -53,5 +53,15 @@ struct LocalizationCatalogTests {
         #expect(AppCopy.cancel.localized(L10n.spanish) == "Cancelar")
         #expect(AppCopy.confirm.localized(L10n.spanish) == "Confirmar")
         #expect(ProgressCopy.emptyTitle.localized(L10n.spanish) == "Aún no hay sesiones")
+        #expect(
+            TimerAccessibilityPresentation.spokenRemaining(seconds: 0, locale: L10n.spanish)
+                == "0 segundos restantes"
+        )
+        #expect(
+            TimerAccessibilityPresentation.spokenRemaining(seconds: 1, locale: L10n.spanish)
+                == "1 segundo restantes"
+        )
+        #expect(ProgressCopy.weekRange(start: "A", end: "B").localized(L10n.english) == "A – B")
+        #expect(ProgressCopy.weekRange(start: "A", end: "B").localized(L10n.spanish) == "A a B")
     }
 }

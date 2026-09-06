@@ -182,7 +182,10 @@ nonisolated enum ProgressPresentation {
         var format = Date.FormatStyle(date: .abbreviated, time: .omitted)
         format.calendar = calendar
         format.locale = locale
-        return "\(week.start.formatted(format)) – \(endDay.formatted(format))"
+        return ProgressCopy.weekRange(
+            start: week.start.formatted(format),
+            end: endDay.formatted(format)
+        ).localized(locale)
     }
 
     static func countLine(
@@ -317,6 +320,10 @@ nonisolated enum ProgressCopy {
             format: "\(weekday), no completed focus",
             english: "\(weekday), no completed focus"
         )
+    }
+
+    static func weekRange(start: String, end: String) -> LocalizedCopy {
+        LocalizedCopy(format: "\(start) – \(end)", english: "\(start) – \(end)")
     }
 
     static func historyDetail(outcome: String, duration: String, when: String) -> LocalizedCopy {

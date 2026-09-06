@@ -76,6 +76,19 @@ struct ProgressPresentationTests {
     }
 
     @Test
+    func weekTitleUsesLocalizedRangePatternWithoutEnglishMonthNames() {
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let now = date(2025, 1, 8, 12, 0, calendar: calendar)
+        let week = ProgressPresentation.weekInterval(containing: now, calendar: calendar)
+        let english = ProgressPresentation.weekTitle(week: week, calendar: calendar, locale: L10n.english)
+        let spanish = ProgressPresentation.weekTitle(week: week, calendar: calendar, locale: L10n.spanish)
+        #expect(english.contains("–"))
+        #expect(!english.contains(" a "))
+        #expect(spanish.contains(" a "))
+        #expect(!spanish.contains("–"))
+    }
+
+    @Test
     func countsCompletedAndBrokenSeparatelyAndSumsOnlyCompletedElapsedTime() {
         let calendar = gregorianCalendar(firstWeekday: 1)
         let now = date(2025, 1, 8, 15, 0, calendar: calendar)

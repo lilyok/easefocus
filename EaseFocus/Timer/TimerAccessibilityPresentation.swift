@@ -82,20 +82,27 @@ nonisolated enum TimerAccessibilityCopy {
     static let startFromTask = LocalizedCopy("Start a focus session from a task.")
     static let startFocus = AppCopy.startFocus
 
-    static func hours(_ count: Int) -> LocalizedCopy {
-        LocalizedCopy(format: "\(count) hours", english: "\(count) hours")
+    static let zeroSecondsRemaining = LocalizedCopy("0 seconds remaining")
+
+    static func remaining(hours: Int, minutes: Int, seconds: Int) -> LocalizedCopy {
+        LocalizedCopy(
+            format: "\(hours) hours \(minutes) minutes \(seconds) seconds remaining",
+            english: englishSpokenRemaining(hours: hours, minutes: minutes, seconds: seconds)
+        )
     }
 
-    static func minutes(_ count: Int) -> LocalizedCopy {
-        LocalizedCopy(format: "\(count) minutes", english: "\(count) minutes")
-    }
-
-    static func seconds(_ count: Int) -> LocalizedCopy {
-        LocalizedCopy(format: "\(count) seconds", english: "\(count) seconds")
-    }
-
-    static func remaining(_ duration: String) -> LocalizedCopy {
-        LocalizedCopy(format: "\(duration) remaining", english: "\(duration) remaining")
+    private static func englishSpokenRemaining(hours: Int, minutes: Int, seconds: Int) -> String {
+        var parts: [String] = []
+        if hours > 0 {
+            parts.append(hours == 1 ? "\(hours) hour" : "\(hours) hours")
+        }
+        if minutes > 0 {
+            parts.append(minutes == 1 ? "\(minutes) minute" : "\(minutes) minutes")
+        }
+        if seconds > 0 || parts.isEmpty {
+            parts.append(seconds == 1 ? "\(seconds) second" : "\(seconds) seconds")
+        }
+        return "\(parts.joined(separator: " ")) remaining"
     }
 }
 
@@ -125,17 +132,22 @@ nonisolated enum TimerAccessibilityPresentation {
         let hours = clamped / 3600
         let minutes = (clamped % 3600) / 60
         let remainder = clamped % 60
-        var parts: [String] = []
-        if hours > 0 {
-            parts.append(TimerAccessibilityCopy.hours(hours).localized(locale))
+        if hours == 0, minutes == 0, remainder == 0 {
+            return TimerAccessibilityCopy.zeroSecondsRemaining.localized(locale)
         }
-        if minutes > 0 {
-            parts.append(TimerAccessibilityCopy.minutes(minutes).localized(locale))
-        }
-        if remainder > 0 || parts.isEmpty {
-            parts.append(TimerAccessibilityCopy.seconds(remainder).localized(locale))
-        }
-        return TimerAccessibilityCopy.remaining(parts.joined(separator: " ")).localized(locale)
+        return collapsedSpaces(
+            TimerAccessibilityCopy.remaining(
+                hours: hours,
+                minutes: minutes,
+                seconds: remainder
+            ).localized(locale)
+        )
+    }
+
+    private static func collapsedSpaces(_ string: String) -> String {
+        string
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     static func actions(for phase: FocusTimerPhase, reduceMotion: Bool = false) -> [CompactTimerAction] {
