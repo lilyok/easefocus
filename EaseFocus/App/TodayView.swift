@@ -82,6 +82,10 @@ struct TodayView: View {
                                     startFocus(on: nextTask)
                                 }
                                 .accessibilityIdentifier("startFocus")
+                                .frame(
+                                    minWidth: FocusSpacing.minimumTapTarget,
+                                    minHeight: FocusSpacing.minimumTapTarget
+                                )
                                 .disabled(!timer.engine.canStartFocus)
                             }
                         }
