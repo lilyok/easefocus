@@ -59,7 +59,10 @@ struct SessionHistoryView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if sessions.isEmpty && planRows.isEmpty {
+                if ProgressPresentation.showsFullEmptyState(
+                    sessionCount: sessions.count,
+                    planRowCount: planRows.count
+                ) {
                     ContentUnavailableView {
                         Label(ProgressCopy.emptyTitle, systemImage: "chart.line.uptrend.xyaxis")
                     } description: {
@@ -105,35 +108,25 @@ struct SessionHistoryView: View {
                             NavigationLink(value: plan) {
                                 planRowView(row)
                             }
-                            .accessibilityIdentifier(ProgressAccessibilityIdentifier.planRow)
+                            .accessibilityIdentifier(ProgressAccessibilityIdentifier.planRow(for: row.id))
                         }
                     }
                 }
             }
 
-            if sessions.isEmpty {
-                Section {
-                    Text(ProgressCopy.emptyTitle)
-                        .font(FocusTypography.body)
-                    Text(ProgressCopy.emptyDescription)
-                        .font(FocusTypography.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                Section(ProgressCopy.today) {
-                    Text(ProgressPresentation.countLine(todaySummary))
-                        .font(FocusTypography.body)
-                }
-                Section(ProgressCopy.history) {
-                    ForEach(historyItems) { item in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(item.title)
-                                .font(FocusTypography.body)
-                                .foregroundStyle(Color.focusPrimary)
-                            Text(item.detail)
-                                .font(FocusTypography.footnote)
-                                .foregroundStyle(.secondary)
-                        }
+            Section(ProgressCopy.today) {
+                Text(ProgressPresentation.countLine(todaySummary))
+                    .font(FocusTypography.body)
+            }
+            Section(ProgressCopy.history) {
+                ForEach(historyItems) { item in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.title)
+                            .font(FocusTypography.body)
+                            .foregroundStyle(Color.focusPrimary)
+                        Text(item.detail)
+                            .font(FocusTypography.footnote)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }

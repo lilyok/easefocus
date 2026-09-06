@@ -61,6 +61,10 @@ nonisolated struct ProgressHistoryItem: Equatable, Identifiable, Sendable {
 }
 
 nonisolated enum ProgressPresentation {
+    static func showsFullEmptyState(sessionCount: Int, planRowCount: Int) -> Bool {
+        sessionCount == 0 && planRowCount == 0
+    }
+
     static func weekInterval(containing date: Date, calendar: Calendar) -> ProgressWeekInterval {
         if let interval = calendar.dateInterval(of: .weekOfYear, for: date) {
             return ProgressWeekInterval(start: interval.start, end: interval.end)
@@ -222,7 +226,10 @@ nonisolated enum ProgressPresentation {
 nonisolated enum ProgressAccessibilityIdentifier {
     static let weekSummary = "progressWeekSummary"
     static let momentum = "progressMomentum"
-    static let planRow = "progressPlanRow"
+
+    static func planRow(for id: UUID) -> String {
+        "progressPlan-\(id.uuidString)"
+    }
 }
 
 nonisolated enum ProgressCopy {

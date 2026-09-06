@@ -22,6 +22,9 @@ struct ProgressPresentationTests {
         #expect(days.allSatisfy { !$0.hasCompletedFocus })
         #expect(ProgressPresentation.countLine(summary) == "0 completed · 0 broken · 0:00 focused")
         #expect(ProgressPresentation.planRows(plans: [], sessions: [], week: week).isEmpty)
+        #expect(ProgressPresentation.showsFullEmptyState(sessionCount: 0, planRowCount: 0))
+        #expect(!ProgressPresentation.showsFullEmptyState(sessionCount: 0, planRowCount: 1))
+        #expect(!ProgressPresentation.showsFullEmptyState(sessionCount: 1, planRowCount: 0))
     }
 
     @Test
@@ -297,7 +300,8 @@ struct ProgressPresentationTests {
     func exposesProgressAccessibilityIdentifiers() {
         #expect(ProgressAccessibilityIdentifier.weekSummary == "progressWeekSummary")
         #expect(ProgressAccessibilityIdentifier.momentum == "progressMomentum")
-        #expect(ProgressAccessibilityIdentifier.planRow == "progressPlanRow")
+        #expect(ProgressAccessibilityIdentifier.planRow(for: planA) == "progressPlan-\(planA.uuidString)")
+        #expect(ProgressAccessibilityIdentifier.planRow(for: planA) != ProgressAccessibilityIdentifier.planRow(for: planB))
     }
 
     private func gregorianCalendar(firstWeekday: Int) -> Calendar {
