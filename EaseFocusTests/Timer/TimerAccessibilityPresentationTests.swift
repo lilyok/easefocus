@@ -115,6 +115,11 @@ struct TimerAccessibilityPresentationTests {
         #expect(TimerAccessibilityIdentifier.compactTimer == "compactTimer")
         #expect(TimerAccessibilityIdentifier.openTimer == "openTimer")
         #expect(TimerAccessibilityIdentifier.remainingTime == "remainingTime")
+        #expect(TimerAccessibilityIdentifier.timerRemainingTime == "timerRemainingTime")
+        #expect(
+            TimerAccessibilityIdentifier.remainingTime
+                != TimerAccessibilityIdentifier.timerRemainingTime
+        )
         #expect(TimerAccessibilityIdentifier.pause == "pause")
         #expect(TimerAccessibilityIdentifier.resume == "resume")
         #expect(TimerAccessibilityIdentifier.cancel == "cancel")

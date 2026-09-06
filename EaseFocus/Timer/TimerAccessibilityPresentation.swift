@@ -61,6 +61,7 @@ nonisolated enum TimerAccessibilityIdentifier {
     static let compactTimer = "compactTimer"
     static let openTimer = "openTimer"
     static let remainingTime = "remainingTime"
+    static let timerRemainingTime = "timerRemainingTime"
     static let pause = "pause"
     static let resume = "resume"
     static let cancel = "cancel"

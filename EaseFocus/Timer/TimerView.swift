@@ -6,20 +6,7 @@ struct TimerView: View {
 
     var body: some View {
         VStack(spacing: FocusSpacing.large) {
-            Text(FocusDurationFormat.clock(remainingSeconds))
-                .font(FocusTypography.timer)
-                .monospacedDigit()
-                .foregroundStyle(Color.focusPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.4)
-                .frame(maxWidth: .infinity)
-                .animation(
-                    reduceMotion ? nil : .linear(duration: 0.2),
-                    value: timer.engine.remainingSeconds
-                )
-                .accessibilityLabel(TimerAccessibilityCopy.remainingTime)
-                .accessibilityValue(TimerAccessibilityPresentation.spokenRemaining(seconds: remainingSeconds))
-                .accessibilityIdentifier(TimerAccessibilityIdentifier.remainingTime)
+            remainingTimeDisplay
             Text(statusTitle)
                 .font(FocusTypography.title)
                 .foregroundStyle(Color.focusPrimary)
@@ -31,6 +18,31 @@ struct TimerView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.focusBackground)
         .navigationTitle("Timer")
+    }
+
+    private var remainingTimeDisplay: some View {
+        ViewThatFits(in: .horizontal) {
+            remainingClockText(font: FocusTypography.timer)
+            remainingClockText(font: FocusTypography.timerFitted)
+            remainingClockText(font: FocusTypography.compactTimer)
+        }
+        .frame(maxWidth: .infinity)
+        .animation(
+            reduceMotion ? nil : .linear(duration: 0.2),
+            value: timer.engine.remainingSeconds
+        )
+        .accessibilityLabel(TimerAccessibilityCopy.remainingTime)
+        .accessibilityValue(TimerAccessibilityPresentation.spokenRemaining(seconds: remainingSeconds))
+        .accessibilityIdentifier(TimerAccessibilityIdentifier.timerRemainingTime)
+    }
+
+    private func remainingClockText(font: Font) -> some View {
+        Text(FocusDurationFormat.clock(remainingSeconds))
+            .font(font)
+            .monospacedDigit()
+            .foregroundStyle(Color.focusPrimary)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
     }
 
     @ViewBuilder
