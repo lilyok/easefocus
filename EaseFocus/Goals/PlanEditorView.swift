@@ -48,16 +48,18 @@ struct PlanEditorView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Plan") {
-                    TextField("Title", text: $title)
-                    TextField("Details", text: $details, axis: .vertical)
+                Section {
+                    TextField(PlanEditorCopy.title, text: $title)
+                    TextField(PlanEditorCopy.details, text: $details, axis: .vertical)
+                } header: {
+                    Text(PlanEditorCopy.plan)
                 }
                 Section {
                     ForEach($tasks) { $task in
                         VStack(alignment: .leading, spacing: FocusSpacing.small) {
-                            TextField("Task title", text: $task.title)
+                            TextField(PlanEditorCopy.taskTitle, text: $task.title)
                             Stepper(value: $task.estimatedPomodoros, in: DraftPlanValidator.pomodoroRange) {
-                                Text("\(task.estimatedPomodoros) estimated sessions")
+                                Text(TaskCopy.estimatedSessions(task.estimatedPomodoros))
                                     .font(FocusTypography.footnote)
                             }
                             TaskResourceSearchControls(
@@ -101,32 +103,32 @@ struct PlanEditorView: View {
                     .onMove { offsets, destination in
                         tasks.move(fromOffsets: offsets, toOffset: destination)
                     }
-                    Button("Add task") {
+                    Button(PlanEditorCopy.addTask) {
                         tasks.append(DraftTask())
                     }
                 } header: {
-                    Text("Tasks")
+                    Text(PlanEditorCopy.tasks)
                 } footer: {
                     if showsResourceSearch {
-                        Text("Resource search suggestions can be edited or removed. A query leaves EaseFocus only when you confirm Search Google.")
+                        Text(PlanEditorCopy.resourceSearchFooter)
                     } else if source == .manual {
-                        Text("Use the arrow buttons to set the task order.")
+                        Text(PlanEditorCopy.reorderFooter)
                     }
                 }
             }
-            .navigationTitle(source == .generated ? "Review draft" : "New plan")
+            .navigationTitle(source == .generated ? PlanEditorCopy.reviewDraft : PlanEditorCopy.newPlan)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: cancel)
+                    Button(PlanEditorCopy.cancel, action: cancel)
                 }
                 if let onRegenerate {
                     ToolbarItem(placement: .primaryAction) {
-                        Button("Regenerate", action: onRegenerate)
+                        Button(PlanEditorCopy.regenerate, action: onRegenerate)
                             .accessibilityIdentifier("regenerateDraft")
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save", action: save)
+                    Button(PlanEditorCopy.save, action: save)
                         .disabled(!canSave)
                         .accessibilityIdentifier("savePlan")
                 }

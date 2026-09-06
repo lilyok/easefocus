@@ -8,7 +8,7 @@ struct TaskSearchQueryFields: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: FocusSpacing.small) {
-            TextField("Optional search query", text: $query, axis: .vertical)
+            TextField(TaskCopy.optionalSearchQuery, text: $query, axis: .vertical)
                 .accessibilityIdentifier("searchQuery-\(taskID)")
             if let error = searchQueryError {
                 Text(SearchQueryValidationCopy.message(for: error))
@@ -17,7 +17,7 @@ struct TaskSearchQueryFields: View {
                     .accessibilityIdentifier("searchQueryError-\(taskID)")
             }
             if showsSearchAction, let validated = validatedQuery {
-                Button("Search Google") {
+                Button(AppCopy.searchGoogle) {
                     onSearch?(validated)
                 }
                 .accessibilityIdentifier("searchGoogle-\(taskID)")

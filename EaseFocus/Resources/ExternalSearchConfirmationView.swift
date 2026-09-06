@@ -9,12 +9,12 @@ struct ExternalSearchConfirmationView: View {
         NavigationStack {
             List {
                 Section {
-                    Text("“\(query)”")
+                    Text(ExternalSearchPrivacyCopy.quotedQuery(query))
                         .font(FocusTypography.body)
                         .textSelection(.enabled)
                         .accessibilityIdentifier("externalSearchQueryPreview")
                 } header: {
-                    Text("Search Google for")
+                    Text(ExternalSearchPrivacyCopy.searchGoogleFor)
                 }
 
                 Section {

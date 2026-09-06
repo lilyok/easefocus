@@ -18,52 +18,59 @@ struct GoalSurveyView: View {
             }
 
             Section {
-                TextField("What do you want to achieve?", text: $survey.goal, axis: .vertical)
-                Text("This becomes the plan’s focus.")
+                TextField(SurveyCopy.goalPlaceholder, text: $survey.goal, axis: .vertical)
+                Text(SurveyCopy.goalHint)
                     .font(FocusTypography.footnote)
                     .foregroundStyle(.secondary)
             }
 
             Section {
-                Picker("Current experience", selection: $survey.experience) {
+                Picker(selection: $survey.experience) {
                     ForEach(ExperienceLevel.allCases, id: \.self) { level in
                         Text(level.title).tag(level)
                     }
+                } label: {
+                    Text(SurveyCopy.experience)
                 }
-                Text("Used to keep tasks at the right difficulty.")
+                Text(SurveyCopy.experienceHint)
                     .font(FocusTypography.footnote)
                     .foregroundStyle(.secondary)
             }
 
             Section {
-                TextField("What would make this plan successful?", text: $survey.successOutcome, axis: .vertical)
-                Text("Helps the draft aim at a concrete outcome.")
+                TextField(SurveyCopy.successPlaceholder, text: $survey.successOutcome, axis: .vertical)
+                Text(SurveyCopy.successHint)
                     .font(FocusTypography.footnote)
                     .foregroundStyle(.secondary)
             }
 
             Section {
                 Stepper(value: $survey.sessionsPerWeek, in: GoalSurvey.sessionsPerWeekRange) {
-                    Text("\(survey.sessionsPerWeek) focus sessions a week")
+                    Text(SurveyCopy.sessionsPerWeek(survey.sessionsPerWeek))
                 }
-                Text("Keeps the plan sized to the time you actually have.")
+                Text(SurveyCopy.sessionsHint)
                     .font(FocusTypography.footnote)
                     .foregroundStyle(.secondary)
             }
 
             Section {
-                Toggle("I have a deadline", isOn: $survey.hasDeadline)
+                Toggle(SurveyCopy.deadlineToggle, isOn: $survey.hasDeadline)
                 if survey.hasDeadline {
-                    DatePicker("Deadline", selection: $survey.deadline, displayedComponents: .date)
+                    DatePicker(
+                        selection: $survey.deadline,
+                        displayedComponents: .date
+                    ) {
+                        Text(SurveyCopy.deadline)
+                    }
                 }
-                Text("Optional. Used only to pace the work.")
+                Text(SurveyCopy.deadlineHint)
                     .font(FocusTypography.footnote)
                     .foregroundStyle(.secondary)
             }
 
             Section {
-                TextField("Preferences or constraints", text: $survey.constraints, axis: .vertical)
-                Text("Optional. Examples: no evenings, keep sessions short, avoid public speaking.")
+                TextField(SurveyCopy.constraintsPlaceholder, text: $survey.constraints, axis: .vertical)
+                Text(SurveyCopy.constraintsHint)
                     .font(FocusTypography.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -85,22 +92,22 @@ struct GoalSurveyView: View {
             }
 
             Section {
-                Button("Create manually", action: onCreateManually)
+                Button(SurveyCopy.createManually, action: onCreateManually)
                     .disabled(isGenerating)
                     .accessibilityIdentifier("createManually")
             }
         }
         .disabled(isGenerating)
-        .navigationTitle("New plan")
+        .navigationTitle(SurveyCopy.navigationTitle)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button(isGenerating ? "Stop" : "Cancel", action: onCancel)
+                Button(isGenerating ? SurveyCopy.stop : SurveyCopy.cancel, action: onCancel)
             }
             ToolbarItem(placement: .confirmationAction) {
                 if isGenerating {
                     ProgressView()
                 } else {
-                    Button("Generate", action: onGenerate)
+                    Button(SurveyCopy.generate, action: onGenerate)
                         .disabled(!survey.isReadyToGenerate || !availability.allowsGeneration)
                         .accessibilityIdentifier("generatePlan")
                 }
@@ -108,7 +115,7 @@ struct GoalSurveyView: View {
         }
         .overlay {
             if isGenerating {
-                ProgressView("Generating a draft…")
+                ProgressView(SurveyCopy.generating)
                     .padding(FocusSpacing.large)
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
             }

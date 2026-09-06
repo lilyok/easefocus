@@ -108,7 +108,8 @@ enum EaseFocusWindow {
             return false
         }
         let title = window.title
-        if title == "Timer" || title.contains("Welcome") {
+        if title == AppCopy.timer.localized()
+            || title == OnboardingCopy.navigationTitle.localized() {
             return false
         }
         let className = String(describing: type(of: window))

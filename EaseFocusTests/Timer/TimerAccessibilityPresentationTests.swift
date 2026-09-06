@@ -37,17 +37,17 @@ struct TimerAccessibilityPresentationTests {
 
     @Test
     func spokenRemainingUsesFullUnitsInsteadOfClockString() {
-        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 724) == "12 minutes 4 seconds remaining")
-        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 724) != FocusDurationFormat.clock(724))
-        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 1500) == "25 minutes remaining")
-        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 61) == "1 minute 1 second remaining")
-        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 60) == "1 minute remaining")
-        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 5) == "5 seconds remaining")
-        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 1) == "1 second remaining")
-        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 0) == "0 seconds remaining")
-        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: -12) == "0 seconds remaining")
-        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 3600) == "1 hour remaining")
-        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 3661) == "1 hour 1 minute 1 second remaining")
+        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 724, locale: L10n.english) == "12 minutes 4 seconds remaining")
+        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 724, locale: L10n.english) != FocusDurationFormat.clock(724))
+        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 1500, locale: L10n.english) == "25 minutes remaining")
+        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 61, locale: L10n.english) == "1 minute 1 second remaining")
+        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 60, locale: L10n.english) == "1 minute remaining")
+        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 5, locale: L10n.english) == "5 seconds remaining")
+        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 1, locale: L10n.english) == "1 second remaining")
+        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 0, locale: L10n.english) == "0 seconds remaining")
+        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: -12, locale: L10n.english) == "0 seconds remaining")
+        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 3600, locale: L10n.english) == "1 hour remaining")
+        #expect(TimerAccessibilityPresentation.spokenRemaining(seconds: 3661, locale: L10n.english) == "1 hour 1 minute 1 second remaining")
     }
 
     @Test

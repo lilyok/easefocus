@@ -24,27 +24,33 @@ nonisolated enum NotificationAccess: Equatable, Sendable {
 }
 
 nonisolated enum NotificationAccessCopy {
-    static func title(for access: NotificationAccess) -> String {
+    static func title(for access: NotificationAccess) -> LocalizedCopy {
         switch access {
         case .notDetermined:
-            return "Notifications are off until you allow them"
+            return LocalizedCopy("Notifications are off until you allow them")
         case .denied:
-            return "Notifications are turned off"
+            return LocalizedCopy("Notifications are turned off")
         case .allowed:
-            return "Notifications are on"
+            return LocalizedCopy("Notifications are on")
         }
     }
 
-    static func message(for access: NotificationAccess) -> String {
+    static func message(for access: NotificationAccess) -> LocalizedCopy {
         switch access {
         case .notDetermined, .denied:
             #if os(macOS)
-            return "Turn on EaseFocus notifications in System Settings to get an alert when a timer ends."
+            return LocalizedCopy(
+                "Turn on EaseFocus notifications in System Settings to get an alert when a timer ends."
+            )
             #else
-            return "Turn on EaseFocus notifications in Settings to get an alert when a timer ends."
+            return LocalizedCopy(
+                "Turn on EaseFocus notifications in Settings to get an alert when a timer ends."
+            )
             #endif
         case .allowed:
-            return "EaseFocus notifications are allowed. Alert style and sound follow your system settings."
+            return LocalizedCopy(
+                "EaseFocus notifications are allowed. Alert style and sound follow your system settings."
+            )
         }
     }
 }

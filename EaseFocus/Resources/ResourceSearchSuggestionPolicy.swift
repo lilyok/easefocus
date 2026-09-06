@@ -1,12 +1,14 @@
 import Foundation
 
 nonisolated enum ResourceSearchSuggestionCopy {
-    static let surveyToggle = "Include resource search suggestions"
-    static let surveyExplanation = """
-    When on, EaseFocus may add optional Google search terms to tasks where they help. These are search suggestions, not links. Nothing is sent to Google during generation or when you save the plan.
-    """
-    static let addAction = "Add resource search"
-    static let removeAction = "Remove"
+    static let surveyToggle = LocalizedCopy("Include resource search suggestions")
+    static let surveyExplanation = LocalizedCopy(
+        """
+        When on, EaseFocus may add optional Google search terms to tasks where they help. These are search suggestions, not links. Nothing is sent to Google during generation or when you save the plan.
+        """
+    )
+    static let addAction = LocalizedCopy("Add resource search")
+    static let removeAction = AppCopy.remove
 }
 
 nonisolated enum ResourceSearchControlState: Equatable {

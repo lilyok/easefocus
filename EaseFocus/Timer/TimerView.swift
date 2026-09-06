@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TimerView: View {
     @Environment(FocusTimerController.self) private var timer
+    @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -17,7 +18,7 @@ struct TimerView: View {
         .padding(FocusSpacing.large)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.focusBackground)
-        .navigationTitle("Timer")
+        .navigationTitle(AppCopy.timer)
     }
 
     private var remainingTimeDisplay: some View {
@@ -32,7 +33,7 @@ struct TimerView: View {
             value: timer.engine.remainingSeconds
         )
         .accessibilityLabel(TimerAccessibilityCopy.remainingTime)
-        .accessibilityValue(TimerAccessibilityPresentation.spokenRemaining(seconds: remainingSeconds))
+        .accessibilityValue(TimerAccessibilityPresentation.spokenRemaining(seconds: remainingSeconds, locale: locale))
         .accessibilityIdentifier(TimerAccessibilityIdentifier.timerRemainingTime)
     }
 
@@ -73,7 +74,7 @@ struct TimerView: View {
         timer.engine.remainingSeconds(at: .now)
     }
 
-    private var statusTitle: String {
+    private var statusTitle: LocalizedCopy {
         TimerAccessibilityPresentation.statusTitle(
             phase: timer.engine.phase,
             isLongBreak: timer.engine.isLongBreak

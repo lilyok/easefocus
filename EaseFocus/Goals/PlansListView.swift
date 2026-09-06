@@ -30,11 +30,11 @@ struct PlansListView: View {
                                 .padding(.horizontal)
                         }
                         ContentUnavailableView {
-                            Label("No plans yet", systemImage: "list.bullet.rectangle")
+                            Label(PlansCopy.emptyTitle, systemImage: "list.bullet.rectangle")
                         } description: {
-                            Text("Create a manual plan. Generated plans can wait until Apple Intelligence is available.")
+                            Text(PlansCopy.emptyDescription)
                         } actions: {
-                            Button("Create a plan", systemImage: "plus") {
+                            Button(PlansCopy.createPlan, systemImage: "plus") {
                                 isCreatingPlan = true
                             }
                             .accessibilityIdentifier("createPlanFromPlans")
@@ -43,21 +43,25 @@ struct PlansListView: View {
                 } else {
                     List {
                         if !activePlans.isEmpty {
-                            Section("Active") {
+                            Section {
                                 ForEach(activePlans) { plan in
                                     NavigationLink(value: plan) {
                                         PlanRowView(plan: plan)
                                     }
                                 }
+                            } header: {
+                                Text(PlansCopy.active)
                             }
                         }
                         if !archivedPlans.isEmpty {
-                            Section("Archived") {
+                            Section {
                                 ForEach(archivedPlans) { plan in
                                     NavigationLink(value: plan) {
                                         PlanRowView(plan: plan)
                                     }
                                 }
+                            } header: {
+                                Text(PlansCopy.archived)
                             }
                         }
                     }
@@ -65,13 +69,13 @@ struct PlansListView: View {
                 }
             }
             .background(Color.focusBackground)
-            .navigationTitle("Plans")
+            .navigationTitle(PlansCopy.navigationTitle)
             .navigationDestination(for: GoalPlan.self) { plan in
                 PlanDetailView(plan: plan)
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Create a plan", systemImage: "plus") {
+                    Button(PlansCopy.createPlan, systemImage: "plus") {
                         isCreatingPlan = true
                     }
                 }
@@ -85,13 +89,18 @@ struct PlansListView: View {
 }
 
 private struct PlanRowView: View {
+    @Environment(\.locale) private var locale
     let plan: GoalPlan
 
     var body: some View {
         VStack(alignment: .leading, spacing: FocusSpacing.small) {
             Text(plan.title)
                 .font(FocusTypography.body)
-            Text("\(plan.pendingTasks.count) open · \(plan.orderedTasks.filter { $0.status == .completed }.count) done")
+            Text(ProgressPresentation.planTaskLine(
+                open: plan.pendingTasks.count,
+                done: plan.orderedTasks.filter { $0.status == .completed }.count,
+                locale: locale
+            ))
                 .font(FocusTypography.footnote)
                 .foregroundStyle(.secondary)
         }

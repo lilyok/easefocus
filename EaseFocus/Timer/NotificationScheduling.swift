@@ -41,7 +41,7 @@ struct UserNotificationScheduler: NotificationScheduling {
         cancelTimerFinished()
         let request = UNNotificationRequest(
             identifier: Self.timerFinishedIdentifier,
-            content: makeContent(body: "Your timer has finished.", playsSound: true),
+            content: makeContent(body: TimerNotificationCopy.finished.localized(), playsSound: true),
             trigger: UNTimeIntervalNotificationTrigger(
                 timeInterval: max(1, date.timeIntervalSinceNow),
                 repeats: false
@@ -66,7 +66,9 @@ struct UserNotificationScheduler: NotificationScheduling {
         let request = UNNotificationRequest(
             identifier: Self.timerFinishedNowIdentifier,
             content: makeContent(
-                body: isBreak ? "Break finished." : "Focus session complete.",
+                body: isBreak
+                    ? TimerNotificationCopy.breakFinished.localized()
+                    : TimerNotificationCopy.focusComplete.localized(),
                 playsSound: false
             ),
             trigger: nil
@@ -76,7 +78,7 @@ struct UserNotificationScheduler: NotificationScheduling {
 
     private func makeContent(body: String, playsSound: Bool) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
-        content.title = "EaseFocus"
+        content.title = TimerNotificationCopy.appName.localized()
         content.body = body
         if playsSound {
             content.sound = .default

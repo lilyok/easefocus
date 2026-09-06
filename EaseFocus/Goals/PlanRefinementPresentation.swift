@@ -38,7 +38,7 @@ nonisolated enum PlanRefinementPresentation {
     static func requestError(
         for request: String,
         hasAttemptedGenerate: Bool
-    ) -> String? {
+    ) -> LocalizedCopy? {
         do {
             _ = try PlanRefinementPreviewFactory.validatedRequest(request)
             return nil
@@ -66,13 +66,16 @@ nonisolated enum PlanRefinementPresentation {
     static func canConfirm(
         hasPreview: Bool,
         isGenerating: Bool,
-        generationError: String?,
+        generationError: LocalizedCopy?,
         isStale: Bool
     ) -> Bool {
-        hasPreview && !isGenerating && (generationError ?? "").isEmpty && !isStale
+        hasPreview && !isGenerating && (generationError?.isEmpty ?? true) && !isStale
     }
 
-    static func displayedGenerationError(isStale: Bool, generationError: String?) -> String? {
+    static func displayedGenerationError(
+        isStale: Bool,
+        generationError: LocalizedCopy?
+    ) -> LocalizedCopy? {
         guard let generationError, !generationError.isEmpty else {
             return nil
         }
@@ -185,80 +188,100 @@ nonisolated enum PlanRefinementAccessibilityIdentifier {
 }
 
 nonisolated enum PlanRefinementCopy {
-    static let refineAction = "Refine plan"
-    static let requestTitle = "Refine plan"
-    static let previewTitle = "Review changes"
-    static let requestPrompt = "What should change?"
-    static let examples = "Examples: reduce weekly workload, add speaking exercises, adapt to a new deadline, or break a hard task into smaller steps."
-    static let protectedExplanation = "Completed and currently active tasks will not change. Focus sessions stay as they are."
-    static let generating = "Generating a preview…"
-    static let generate = "Generate preview"
-    static let generateAgain = "Generate again"
-    static let cancel = "Cancel"
-    static let stop = "Stop"
-    static let confirm = "Confirm"
-    static let discard = "Discard"
-    static let previousPreviewNotice = "This is the last successful preview. Confirm stays off until a new preview is generated."
-    static let staleTitle = "This plan has changed"
-    static let staleMessage = "The plan was edited after this preview was created. Generate again to review a new preview."
-    static let emptyRequest = "Enter a short request, such as add speaking exercises."
-    static let requestTooLong = "Keep the request to \(PlanRefinementLimits.maximumRequestLength) characters or fewer."
-    static let malformedApply = "Couldn't apply this preview. Generate again or edit the plan manually."
-    static let summarySection = "Summary"
-    static let beforeSection = "Before"
-    static let afterSection = "After"
+    static let refineAction = LocalizedCopy("Refine plan")
+    static let requestTitle = LocalizedCopy("Refine plan")
+    static let previewTitle = LocalizedCopy("Review changes")
+    static let requestPrompt = LocalizedCopy("What should change?")
+    static let examples = LocalizedCopy(
+        "Examples: reduce weekly workload, add speaking exercises, adapt to a new deadline, or break a hard task into smaller steps."
+    )
+    static let protectedExplanation = LocalizedCopy(
+        "Completed and currently active tasks will not change. Focus sessions stay as they are."
+    )
+    static let generating = LocalizedCopy("Generating a preview…")
+    static let generate = LocalizedCopy("Generate preview")
+    static let generateAgain = LocalizedCopy("Generate again")
+    static let cancel = AppCopy.cancel
+    static let stop = LocalizedCopy("Stop")
+    static let confirm = AppCopy.confirm
+    static let discard = LocalizedCopy("Discard")
+    static let previousPreviewNotice = LocalizedCopy(
+        "This is the last successful preview. Confirm stays off until a new preview is generated."
+    )
+    static let staleTitle = LocalizedCopy("This plan has changed")
+    static let staleMessage = LocalizedCopy(
+        "The plan was edited after this preview was created. Generate again to review a new preview."
+    )
+    static let emptyRequest = LocalizedCopy(
+        "Enter a short request, such as add speaking exercises."
+    )
+    static var requestTooLong: LocalizedCopy {
+        LocalizedCopy(
+            format: "Keep the request to \(PlanRefinementLimits.maximumRequestLength) characters or fewer.",
+            english: "Keep the request to \(PlanRefinementLimits.maximumRequestLength) characters or fewer."
+        )
+    }
+    static let malformedApply = LocalizedCopy(
+        "Couldn't apply this preview. Generate again or edit the plan manually."
+    )
+    static let summarySection = LocalizedCopy("Summary")
+    static let beforeSection = LocalizedCopy("Before")
+    static let afterSection = LocalizedCopy("After")
 
-    static func wasTitle(_ title: String) -> String {
-        "Was: \(title)"
+    static func wasTitle(_ title: String) -> LocalizedCopy {
+        LocalizedCopy(format: "Was: \(title)", english: "Was: \(title)")
     }
 
-    static func detailsLine(_ details: String) -> String {
-        "Details: \(details)"
+    static func detailsLine(_ details: String) -> LocalizedCopy {
+        LocalizedCopy(format: "Details: \(details)", english: "Details: \(details)")
     }
 
-    static func wasDetails(_ details: String) -> String {
-        "Details were: \(details)"
+    static func wasDetails(_ details: String) -> LocalizedCopy {
+        LocalizedCopy(format: "Details were: \(details)", english: "Details were: \(details)")
     }
 
-    static func estimatedSessions(_ count: Int) -> String {
-        "\(count) estimated sessions"
+    static func estimatedSessions(_ count: Int) -> LocalizedCopy {
+        TaskCopy.estimatedSessions(count)
     }
 
-    static func wasEstimatedSessions(_ count: Int) -> String {
-        "Was: \(count) estimated sessions"
+    static func wasEstimatedSessions(_ count: Int) -> LocalizedCopy {
+        LocalizedCopy(
+            format: "Was: \(count) estimated sessions",
+            english: "Was: \(count) estimated sessions"
+        )
     }
 
-    static func searchLine(_ query: String) -> String {
-        "Search: \(query)"
+    static func searchLine(_ query: String) -> LocalizedCopy {
+        LocalizedCopy(format: "Search: \(query)", english: "Search: \(query)")
     }
 
-    static func wasSearch(_ query: String) -> String {
-        "Search was: \(query)"
+    static func wasSearch(_ query: String) -> LocalizedCopy {
+        LocalizedCopy(format: "Search was: \(query)", english: "Search was: \(query)")
     }
 
-    static func badge(for kind: PlanRefinementChangeKind) -> String? {
+    static func badge(for kind: PlanRefinementChangeKind) -> LocalizedCopy? {
         switch kind {
         case .added:
-            return "Added"
+            return LocalizedCopy("Added")
         case .updated:
-            return "Updated"
+            return LocalizedCopy("Updated")
         case .archived:
-            return "Archived"
+            return LocalizedCopy("Archived")
         case .reordered:
-            return "Moved"
+            return LocalizedCopy("Moved")
         case .protected, .unchanged:
             return nil
         }
     }
 
-    static func statusLabel(for status: TaskStatus) -> String? {
+    static func statusLabel(for status: TaskStatus) -> LocalizedCopy? {
         switch status {
         case .completed:
-            return "Completed"
+            return LocalizedCopy("Completed")
         case .active:
-            return "In progress"
+            return LocalizedCopy("In progress")
         case .archived:
-            return "Archived"
+            return LocalizedCopy("Archived")
         case .pending:
             return nil
         }
@@ -266,57 +289,89 @@ nonisolated enum PlanRefinementCopy {
 }
 
 nonisolated enum PlanRefinementGenerationErrorCopy {
-    static func message(for error: PlanRefinementGenerationError) -> String {
+    static func message(for error: PlanRefinementGenerationError) -> LocalizedCopy {
         switch error {
         case .unavailable(let availability):
             return FoundationModelAvailabilityCopy.message(for: availability)
         case .validation(let reason):
             return validationMessage(for: reason)
         case .refusal:
-            return "Apple Intelligence declined this request. Rephrase it and try again."
+            return LocalizedCopy(
+                "Apple Intelligence declined this request. Rephrase it and try again."
+            )
         case .guardrailViolation:
-            return "Apple Intelligence blocked this request for safety. Adjust the request and try again."
+            return LocalizedCopy(
+                "Apple Intelligence blocked this request for safety. Adjust the request and try again."
+            )
         case .unsupportedLanguageOrLocale:
-            return "Apple Intelligence cannot refine this plan in this language. Choose a supported language or edit the plan manually."
+            return LocalizedCopy(
+                "Apple Intelligence cannot refine this plan in this language. Choose a supported language or edit the plan manually."
+            )
         case .contextLimitExceeded:
-            return "The request is too long for Apple Intelligence. Shorten it and try again."
+            return LocalizedCopy(
+                "The request is too long for Apple Intelligence. Shorten it and try again."
+            )
         case .generationFailed:
-            return "Couldn't generate a refinement. You can try again or keep editing the plan manually."
+            return LocalizedCopy(
+                "Couldn't generate a refinement. You can try again or keep editing the plan manually."
+            )
         case .cancelled:
-            return ""
+            return LocalizedCopy("")
         }
     }
 
-    static func validationMessage(for error: PlanRefinementValidationError) -> String {
+    static func validationMessage(for error: PlanRefinementValidationError) -> LocalizedCopy {
         switch error {
         case .emptyRequest:
             return PlanRefinementCopy.emptyRequest
         case .requestTooLong:
             return PlanRefinementCopy.requestTooLong
         case .noChanges:
-            return "Nothing would change. If that work is already in the plan, say what else should change, or keep editing manually."
+            return LocalizedCopy(
+                "Nothing would change. If that work is already in the plan, say what else should change, or keep editing manually."
+            )
         case .tooManyOperations:
-            return "The preview changed too many things at once. Ask for a smaller change, such as adding one task, and try again."
+            return LocalizedCopy(
+                "The preview changed too many things at once. Ask for a smaller change, such as adding one task, and try again."
+            )
         case .tooManyTasks:
-            return "The preview would add too many tasks. Ask to add fewer tasks and try again."
+            return LocalizedCopy(
+                "The preview would add too many tasks. Ask to add fewer tasks and try again."
+            )
         case .emptyTaskTitle:
-            return "The preview included a task without a title. Rephrase the request and try again."
+            return LocalizedCopy(
+                "The preview included a task without a title. Rephrase the request and try again."
+            )
         case .emptyChangeSummary, .textTooLong:
-            return "The generated text was empty or too long. Ask for a shorter change and try again."
+            return LocalizedCopy(
+                "The generated text was empty or too long. Ask for a shorter change and try again."
+            )
         case .urlLikeContent:
-            return "The preview included a URL. Rephrase the request without asking for links."
+            return LocalizedCopy(
+                "The preview included a URL. Rephrase the request without asking for links."
+            )
         case .malformedTaskID, .unknownTaskID, .missingFromOrdering:
-            return "The preview didn't line up with this plan’s tasks. Try again, or keep editing the plan manually."
+            return LocalizedCopy(
+                "The preview didn't line up with this plan’s tasks. Try again, or keep editing the plan manually."
+            )
         case .protectedTaskReferenced:
-            return "The preview tried to change a completed or in-progress task. Those stay as they are. Ask to change pending work only."
+            return LocalizedCopy(
+                "The preview tried to change a completed or in-progress task. Those stay as they are. Ask to change pending work only."
+            )
         case .duplicateOperation, .conflictingOperations, .duplicateInOrdering:
-            return "The preview repeated the same change twice. Rephrase the request and try again."
+            return LocalizedCopy(
+                "The preview repeated the same change twice. Rephrase the request and try again."
+            )
         case .invalidPomodoroEstimate:
-            return "The preview had an invalid session estimate. Try again."
+            return LocalizedCopy("The preview had an invalid session estimate. Try again.")
         case .invalidSearchQuery, .searchQueryCopiesTitle, .resourceQueryWhenDisabled:
-            return "The preview included an invalid resource search. Try again, or keep editing the plan manually."
+            return LocalizedCopy(
+                "The preview included an invalid resource search. Try again, or keep editing the plan manually."
+            )
         case .malformedSnapshot:
-            return "Couldn't apply that preview to this plan. Try again or edit the plan manually."
+            return LocalizedCopy(
+                "Couldn't apply that preview to this plan. Try again or edit the plan manually."
+            )
         }
     }
 }

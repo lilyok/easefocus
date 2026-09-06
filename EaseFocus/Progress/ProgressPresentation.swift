@@ -167,7 +167,7 @@ nonisolated enum ProgressPresentation {
         sessions.map { session in
             ProgressHistoryItem(
                 id: session.id,
-                title: session.taskTitle ?? ProgressCopy.quickFocusTitle,
+                title: session.taskTitle ?? ProgressCopy.quickFocusTitle.localized(locale),
                 detail: historyDetail(session, locale: locale)
             )
         }
@@ -185,24 +185,46 @@ nonisolated enum ProgressPresentation {
         return "\(week.start.formatted(format)) – \(endDay.formatted(format))"
     }
 
-    static func countLine(_ summary: ProgressCountSummary) -> String {
-        "\(summary.completedCount) completed · \(summary.brokenCount) broken · \(FocusDurationFormat.clock(summary.focusedSeconds)) focused"
+    static func countLine(
+        _ summary: ProgressCountSummary,
+        locale: Locale = .autoupdatingCurrent
+    ) -> String {
+        ProgressCopy.countLine(
+            completed: summary.completedCount,
+            broken: summary.brokenCount,
+            focused: FocusDurationFormat.clock(summary.focusedSeconds)
+        ).localized(locale)
     }
 
-    static func planTaskLine(open: Int, done: Int) -> String {
-        "\(open) open · \(done) done"
+    static func planTaskLine(open: Int, done: Int, locale: Locale = .autoupdatingCurrent) -> String {
+        ProgressCopy.planTaskLine(open: open, done: done).localized(locale)
     }
 
-    static func planWeekLine(completed: Int, focusedSeconds: Int) -> String {
-        "\(completed) completed this week · \(FocusDurationFormat.clock(focusedSeconds)) focused"
+    static func planWeekLine(
+        completed: Int,
+        focusedSeconds: Int,
+        locale: Locale = .autoupdatingCurrent
+    ) -> String {
+        ProgressCopy.planWeekLine(
+            completed: completed,
+            focused: FocusDurationFormat.clock(focusedSeconds)
+        ).localized(locale)
     }
 
-    static func momentumAccessibilityLabel(_ day: ProgressMomentumDay) -> String {
-        let focusState = day.hasCompletedFocus ? "completed focus" : "no completed focus"
-        if day.isToday {
-            return "\(day.weekdaySymbol), \(focusState), today"
+    static func momentumAccessibilityLabel(
+        _ day: ProgressMomentumDay,
+        locale: Locale = .autoupdatingCurrent
+    ) -> String {
+        if day.hasCompletedFocus {
+            if day.isToday {
+                return ProgressCopy.momentumCompletedToday(weekday: day.weekdaySymbol).localized(locale)
+            }
+            return ProgressCopy.momentumCompleted(weekday: day.weekdaySymbol).localized(locale)
         }
-        return "\(day.weekdaySymbol), \(focusState)"
+        if day.isToday {
+            return ProgressCopy.momentumNoneToday(weekday: day.weekdaySymbol).localized(locale)
+        }
+        return ProgressCopy.momentumNone(weekday: day.weekdaySymbol).localized(locale)
     }
 
     private static func counts(in sessions: [ProgressSessionRecord]) -> ProgressCountSummary {
@@ -216,11 +238,15 @@ nonisolated enum ProgressPresentation {
     }
 
     private static func historyDetail(_ session: ProgressSessionRecord, locale: Locale) -> String {
-        let outcome = session.outcome?.progressTitle ?? ProgressCopy.openSession
+        let outcome = (session.outcome?.progressTitle ?? ProgressCopy.openSession).localized(locale)
         var format = Date.FormatStyle(date: .abbreviated, time: .shortened)
         format.locale = locale
         let when = session.startedAt.formatted(format)
-        return "\(outcome) · \(FocusDurationFormat.clock(session.elapsedSeconds)) · \(when)"
+        return ProgressCopy.historyDetail(
+            outcome: outcome,
+            duration: FocusDurationFormat.clock(session.elapsedSeconds),
+            when: when
+        ).localized(locale)
     }
 }
 
@@ -234,14 +260,69 @@ nonisolated enum ProgressAccessibilityIdentifier {
 }
 
 nonisolated enum ProgressCopy {
-    static let navigationTitle = "Progress"
-    static let thisWeek = "This week"
-    static let today = "Today"
-    static let history = "History"
-    static let plans = "Plans"
-    static let emptyTitle = "No sessions yet"
-    static let emptyDescription = "Completed and broken focus sessions will show up here."
-    static let completedPlan = "Completed"
-    static let quickFocusTitle = "Quick focus"
-    static let openSession = "open"
+    static let navigationTitle = AppCopy.progress
+    static let thisWeek = LocalizedCopy("This week")
+    static let today = AppCopy.today
+    static let history = LocalizedCopy("History")
+    static let plans = AppCopy.plans
+    static let emptyTitle = LocalizedCopy("No sessions yet")
+    static let emptyDescription = LocalizedCopy(
+        "Completed and broken focus sessions will show up here."
+    )
+    static let completedPlan = LocalizedCopy("Completed")
+    static let quickFocusTitle = LocalizedCopy("Quick focus")
+    static let openSession = LocalizedCopy("open")
+
+    static func countLine(completed: Int, broken: Int, focused: String) -> LocalizedCopy {
+        LocalizedCopy(
+            format: "\(completed) completed · \(broken) broken · \(focused) focused",
+            english: "\(completed) completed · \(broken) broken · \(focused) focused"
+        )
+    }
+
+    static func planTaskLine(open: Int, done: Int) -> LocalizedCopy {
+        LocalizedCopy(format: "\(open) open · \(done) done", english: "\(open) open · \(done) done")
+    }
+
+    static func planWeekLine(completed: Int, focused: String) -> LocalizedCopy {
+        LocalizedCopy(
+            format: "\(completed) completed this week · \(focused) focused",
+            english: "\(completed) completed this week · \(focused) focused"
+        )
+    }
+
+    static func momentumCompletedToday(weekday: String) -> LocalizedCopy {
+        LocalizedCopy(
+            format: "\(weekday), completed focus, today",
+            english: "\(weekday), completed focus, today"
+        )
+    }
+
+    static func momentumNoneToday(weekday: String) -> LocalizedCopy {
+        LocalizedCopy(
+            format: "\(weekday), no completed focus, today",
+            english: "\(weekday), no completed focus, today"
+        )
+    }
+
+    static func momentumCompleted(weekday: String) -> LocalizedCopy {
+        LocalizedCopy(
+            format: "\(weekday), completed focus",
+            english: "\(weekday), completed focus"
+        )
+    }
+
+    static func momentumNone(weekday: String) -> LocalizedCopy {
+        LocalizedCopy(
+            format: "\(weekday), no completed focus",
+            english: "\(weekday), no completed focus"
+        )
+    }
+
+    static func historyDetail(outcome: String, duration: String, when: String) -> LocalizedCopy {
+        LocalizedCopy(
+            format: "\(outcome) · \(duration) · \(when)",
+            english: "\(outcome) · \(duration) · \(when)"
+        )
+    }
 }

@@ -20,7 +20,7 @@ struct ProgressPresentationTests {
         #expect(summary == ProgressCountSummary(completedCount: 0, brokenCount: 0, focusedSeconds: 0))
         #expect(days.count == 7)
         #expect(days.allSatisfy { !$0.hasCompletedFocus })
-        #expect(ProgressPresentation.countLine(summary) == "0 completed · 0 broken · 0:00 focused")
+        #expect(ProgressPresentation.countLine(summary, locale: L10n.english) == "0 completed · 0 broken · 0:00 focused")
         #expect(ProgressPresentation.planRows(plans: [], sessions: [], week: week).isEmpty)
         #expect(ProgressPresentation.showsFullEmptyState(sessionCount: 0, planRowCount: 0))
         #expect(!ProgressPresentation.showsFullEmptyState(sessionCount: 0, planRowCount: 1))
@@ -115,7 +115,7 @@ struct ProgressPresentationTests {
         #expect(summary.completedCount == 1)
         #expect(summary.brokenCount == 2)
         #expect(summary.focusedSeconds == 1_500)
-        #expect(ProgressPresentation.countLine(summary) == "1 completed · 2 broken · 25:00 focused")
+        #expect(ProgressPresentation.countLine(summary, locale: L10n.english) == "1 completed · 2 broken · 25:00 focused")
     }
 
     @Test
@@ -227,7 +227,7 @@ struct ProgressPresentationTests {
         #expect(rows[1].doneTaskCount == 0)
         #expect(rows[1].completedSessionCount == 1)
         #expect(rows[1].focusedSeconds == 1_200)
-        #expect(ProgressPresentation.planTaskLine(open: 2, done: 1) == "2 open · 1 done")
+        #expect(ProgressPresentation.planTaskLine(open: 2, done: 1, locale: L10n.english) == "2 open · 1 done")
         #expect(ProgressPresentation.openTaskCount(taskStatuses: [.pending, .active, .completed]) == 2)
         #expect(ProgressPresentation.doneTaskCount(taskStatuses: [.pending, .active, .completed]) == 1)
     }
@@ -310,8 +310,8 @@ struct ProgressPresentationTests {
             hasCompletedFocus: true,
             isToday: false
         )
-        #expect(ProgressPresentation.momentumAccessibilityLabel(today) == "W, no completed focus, today")
-        #expect(ProgressPresentation.momentumAccessibilityLabel(other) == "T, completed focus")
+        #expect(ProgressPresentation.momentumAccessibilityLabel(today, locale: L10n.english) == "W, no completed focus, today")
+        #expect(ProgressPresentation.momentumAccessibilityLabel(other, locale: L10n.english) == "T, completed focus")
     }
 
     @Test

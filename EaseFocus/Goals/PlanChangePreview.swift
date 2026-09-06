@@ -33,7 +33,7 @@ struct PlanSnapshotComparisonView: View {
     }
 
     private func previewSection<Content: View>(
-        title: String,
+        title: LocalizedCopy,
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: FocusSpacing.small) {

@@ -7,7 +7,7 @@ import SwiftData
 final class PlanHistoryCoordinator {
     private(set) var isUndoConfirmPresented = false
     var isStartOverConfirmPresented = false
-    private(set) var actionError: String?
+    private(set) var actionError: LocalizedCopy?
     private(set) var saveErrorMessage: String?
     var isSaveAlertPresented = false
     private(set) var didApply = false
@@ -159,7 +159,7 @@ final class PlanHistoryCoordinator {
             actionError = PlanHistoryCopy.malformed
         case .saveFailed:
             isUndoConfirmPresented = false
-            saveErrorMessage = PersistenceSaveCopy.message
+            saveErrorMessage = PersistenceSaveCopy.message.localized()
             isSaveAlertPresented = true
             pendingSaveRetry = retry
         }

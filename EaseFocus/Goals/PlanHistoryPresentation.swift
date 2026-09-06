@@ -45,7 +45,7 @@ nonisolated enum PlanHistoryPresentation {
         }
     }
 
-    static func sourceLabel(for source: RevisionSource) -> String {
+    static func sourceLabel(for source: RevisionSource) -> LocalizedCopy {
         PlanHistoryCopy.sourceLabel(for: source)
     }
 
@@ -170,41 +170,55 @@ nonisolated enum PlanHistoryAccessibilityIdentifier {
 }
 
 nonisolated enum PlanHistoryCopy {
-    static let historyTitle = "History"
-    static let revisionTitle = "Revision"
-    static let undoAction = "Undo last"
-    static let undoConfirmTitle = "Undo this change?"
-    static let undoConfirmMessage = "The plan will go back to the state before this change. Completed tasks and focus sessions stay."
-    static let confirmUndo = "Confirm undo"
-    static let discardUndo = "Keep plan"
-    static let startOverAction = "Start over"
-    static let startOverConfirmTitle = "Start over?"
-    static let startOverConfirmMessage = "Pending work will be cleared. Completed tasks and focus sessions will stay. You can add tasks manually or use Refine after this."
-    static let confirmStartOver = "Start over"
-    static let cancelStartOver = "Cancel"
-    static let staleUndo = "The plan changed after this revision, so Undo last is unavailable. History is still readable."
-    static let sessionRunning = "Finish or cancel the timer on this plan before Undo last or Start over."
-    static let noRevision = "There is no revision to undo."
-    static let malformed = "Couldn't read this revision. History is still available for other entries."
+    static let historyTitle = LocalizedCopy("History")
+    static let revisionTitle = LocalizedCopy("Revision")
+    static let undoAction = LocalizedCopy("Undo last")
+    static let undoConfirmTitle = LocalizedCopy("Undo this change?")
+    static let undoConfirmMessage = LocalizedCopy(
+        "The plan will go back to the state before this change. Completed tasks and focus sessions stay."
+    )
+    static let confirmUndo = LocalizedCopy("Confirm undo")
+    static let discardUndo = LocalizedCopy("Keep plan")
+    static let startOverAction = LocalizedCopy("Start over")
+    static let startOverConfirmTitle = LocalizedCopy("Start over?")
+    static let startOverConfirmMessage = LocalizedCopy(
+        "Pending work will be cleared. Completed tasks and focus sessions will stay. You can add tasks manually or use Refine after this."
+    )
+    static let confirmStartOver = LocalizedCopy("Start over")
+    static let cancelStartOver = AppCopy.cancel
+    static let staleUndo = LocalizedCopy(
+        "The plan changed after this revision, so Undo last is unavailable. History is still readable."
+    )
+    static let sessionRunning = LocalizedCopy(
+        "Finish or cancel the timer on this plan before Undo last or Start over."
+    )
+    static let noRevision = LocalizedCopy("There is no revision to undo.")
+    static let malformed = LocalizedCopy(
+        "Couldn't read this revision. History is still available for other entries."
+    )
+    /// Persisted revision reason; not localized.
     static let undoReason = "Undo last change"
+    /// Persisted revision reason; not localized.
     static let startOverReason = "Start over"
+    /// Persisted revision summary; not localized.
     static let startOverSummary = "Cleared pending work. Completed tasks and focus sessions stayed."
-    static let unreadableRevision = "Couldn't read this revision's snapshots."
+    static let unreadableRevision = LocalizedCopy("Couldn't read this revision's snapshots.")
 
-    static func sourceLabel(for source: RevisionSource) -> String {
+    static func sourceLabel(for source: RevisionSource) -> LocalizedCopy {
         switch source {
         case .user:
-            return "You"
+            return LocalizedCopy("You")
         case .model:
-            return "Apple Intelligence"
+            return LocalizedCopy("Apple Intelligence")
         }
     }
 
+    /// Persisted undo summary; not localized.
     static func undoSummary(restoringReason: String) -> String {
         "Restored the plan to the state before “\(restoringReason)”."
     }
 
-    static func message(for availability: PlanHistoryUndoAvailability) -> String? {
+    static func message(for availability: PlanHistoryUndoAvailability) -> LocalizedCopy? {
         switch availability {
         case .available:
             return nil

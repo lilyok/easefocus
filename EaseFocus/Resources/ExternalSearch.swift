@@ -43,15 +43,44 @@ nonisolated enum SearchQueryValidator {
 }
 
 nonisolated enum SearchQueryValidationCopy {
-    static func message(for error: SearchQueryValidationError) -> String {
+    static func message(for error: SearchQueryValidationError) -> LocalizedCopy {
         switch error {
         case .empty:
-            return "Leave this field blank to remove the search query."
+            return LocalizedCopy("Leave this field blank to remove the search query.")
         case .tooLong:
-            return "Keep the search query to \(SearchQueryValidator.maximumLength) characters or fewer."
+            return LocalizedCopy(
+                format: "Keep the search query to \(SearchQueryValidator.maximumLength) characters or fewer.",
+                english: "Keep the search query to \(SearchQueryValidator.maximumLength) characters or fewer."
+            )
         case .urlLikeContent:
-            return "Enter search terms, not a URL or website address."
+            return LocalizedCopy("Enter search terms, not a URL or website address.")
         }
+    }
+}
+
+nonisolated enum ExternalSearchPrivacyCopy {
+    static let title = LocalizedCopy("Search happens in your browser")
+    static let confirmationTitle = LocalizedCopy("Search Google?")
+    static let confirmAction = AppCopy.searchGoogle
+    static let cancelAction = AppCopy.cancel
+    static let searchGoogleFor = LocalizedCopy("Search Google for")
+
+    static let body = LocalizedCopy(
+        """
+        EaseFocus can suggest a search query for a task. Nothing is sent until you tap Search Google.
+
+        The query leaves EaseFocus and is handled under Google’s privacy terms. Generated plans, survey answers, and focus history stay on this device.
+
+        EaseFocus does not inspect, save, or endorse the results. For health, legal, financial, or safety-sensitive goals, treat results as starting points only.
+        """
+    )
+
+    static func confirmationMessage(for query: String) -> LocalizedCopy {
+        LocalizedCopy(format: "Search Google for “\(query)”.", english: "Search Google for “\(query)”.")
+    }
+
+    static func quotedQuery(_ query: String) -> LocalizedCopy {
+        LocalizedCopy(format: "“\(query)”", english: "“\(query)”")
     }
 }
 
@@ -66,29 +95,6 @@ nonisolated enum GoogleSearchURL {
             URLQueryItem(name: "q", value: validated)
         ]
         return components?.url
-    }
-}
-
-nonisolated enum ExternalSearchPrivacyCopy {
-    static let title = "Search happens in your browser"
-    static let confirmationTitle = "Search Google?"
-    static let confirmAction = "Search Google"
-    static let cancelAction = "Cancel"
-
-    static let body = """
-    EaseFocus can suggest a search query for a task. Nothing is sent until you tap Search Google.
-
-    The query leaves EaseFocus and is handled under Google’s privacy terms. Generated plans, survey answers, and focus history stay on this device.
-
-    EaseFocus does not inspect, save, or endorse the results. For health, legal, financial, or safety-sensitive goals, treat results as starting points only.
-    """
-
-    static func confirmationMessage(for query: String) -> String {
-        """
-        Search Google for “\(query)”.
-
-        \(body)
-        """
     }
 }
 

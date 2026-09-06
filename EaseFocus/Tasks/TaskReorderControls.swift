@@ -8,14 +8,14 @@ struct TaskReorderControls: View {
 
     var body: some View {
         HStack(spacing: FocusSpacing.small) {
-            Button("Move task up", systemImage: "chevron.up", action: onMoveUp)
+            Button(TaskCopy.moveUp, systemImage: "chevron.up", action: onMoveUp)
                 .labelStyle(.iconOnly)
                 .disabled(!canMoveUp)
-                .accessibilityLabel("Move task up")
-            Button("Move task down", systemImage: "chevron.down", action: onMoveDown)
+                .accessibilityLabel(TaskCopy.moveUp)
+            Button(TaskCopy.moveDown, systemImage: "chevron.down", action: onMoveDown)
                 .labelStyle(.iconOnly)
                 .disabled(!canMoveDown)
-                .accessibilityLabel("Move task down")
+                .accessibilityLabel(TaskCopy.moveDown)
         }
     }
 }

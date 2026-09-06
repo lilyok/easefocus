@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CompactTimerBar: View {
     @Environment(FocusTimerController.self) private var timer
+    @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var onOpenTimer: () -> Void
 
@@ -81,12 +82,12 @@ struct CompactTimerBar: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(TimerAccessibilityCopy.remainingTime)
-        .accessibilityValue(TimerAccessibilityPresentation.spokenRemaining(seconds: remainingSeconds))
+        .accessibilityValue(TimerAccessibilityPresentation.spokenRemaining(seconds: remainingSeconds, locale: locale))
         .accessibilityHint(TimerAccessibilityCopy.openTimerHint)
         .accessibilityIdentifier(TimerAccessibilityIdentifier.remainingTime)
     }
 
-    private var statusTitle: String {
+    private var statusTitle: LocalizedCopy {
         TimerAccessibilityPresentation.statusTitle(
             phase: timer.engine.phase,
             isLongBreak: timer.engine.isLongBreak

@@ -12,32 +12,40 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Timer") {
-                    durationStepper("Focus minutes", seconds: focusSecondsBinding)
-                    durationStepper("Short break", seconds: shortBreakBinding)
-                    durationStepper("Long break", seconds: longBreakBinding)
-                    Toggle("Start breaks automatically", isOn: automaticBreakBinding)
+                Section {
+                    durationStepper(minutes: focusSecondsBinding, label: SettingsCopy.focusMinutes)
+                    durationStepper(minutes: shortBreakBinding, label: SettingsCopy.shortBreak)
+                    durationStepper(minutes: longBreakBinding, label: SettingsCopy.longBreak)
+                    Toggle(SettingsCopy.startBreaksAutomatically, isOn: automaticBreakBinding)
+                } header: {
+                    Text(SettingsCopy.timer)
                 }
 
-                Section("Notifications") {
+                Section {
                     NotificationAccessNotice(access: timer.notificationAccess)
+                } header: {
+                    Text(SettingsCopy.notifications)
                 }
 
-                Section("Apple Intelligence") {
+                Section {
                     AvailabilityNotice(availability: availability)
-                    Text("Generated plans start from Today or Plans, and you review every draft before it is saved.")
+                    Text(SettingsCopy.generatedPlansHint)
                         .font(FocusTypography.footnote)
                         .foregroundStyle(.secondary)
+                } header: {
+                    Text(SettingsCopy.appleIntelligence)
                 }
 
-                Section(ExternalSearchPrivacyCopy.title) {
+                Section {
                     Text(ExternalSearchPrivacyCopy.body)
                         .font(FocusTypography.footnote)
+                } header: {
+                    Text(ExternalSearchPrivacyCopy.title)
                 }
             }
             .scrollContentBackground(.hidden)
             .background(Color.focusBackground)
-            .navigationTitle("Settings")
+            .navigationTitle(SettingsCopy.navigationTitle)
             .task {
                 await timer.refreshNotificationAccess()
             }
@@ -72,12 +80,15 @@ struct SettingsView: View {
         )
     }
 
-    private func durationStepper(_ title: String, seconds: Binding<Int>) -> some View {
+    private func durationStepper(
+        minutes seconds: Binding<Int>,
+        label: (Int) -> LocalizedCopy
+    ) -> some View {
         Stepper(value: Binding(
             get: { seconds.wrappedValue / 60 },
             set: { seconds.wrappedValue = max(60, $0 * 60) }
         ), in: 1...60) {
-            Text("\(title): \(seconds.wrappedValue / 60)")
+            Text(label(seconds.wrappedValue / 60))
         }
     }
 }

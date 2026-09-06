@@ -13,30 +13,36 @@ struct TaskRowView: View {
                 Text(task.title)
                     .font(FocusTypography.body)
                     .strikethrough(task.status == .completed)
-                Text(sessionCountLabel)
+                Text(sessionCountCopy)
                     .font(FocusTypography.footnote)
                     .foregroundStyle(.secondary)
             }
             Spacer()
             if let onStart, task.status != .completed {
-                Button("Start", action: onStart)
+                Button(TaskCopy.start, action: onStart)
                     .disabled(!isStartEnabled)
                     .frame(
                         minWidth: FocusSpacing.minimumTapTarget,
                         minHeight: FocusSpacing.minimumTapTarget
                     )
-                    .accessibilityLabel("Start focus")
+                    .accessibilityLabel(TaskCopy.startFocus)
             }
         }
         .frame(minHeight: FocusSpacing.minimumTapTarget)
     }
 
-    private var sessionCountLabel: String {
-        var label = "\(task.completedSessionCount)/\(task.estimatedPomodoros) sessions"
+    private var sessionCountCopy: LocalizedCopy {
         if task.brokenSessionCount > 0 {
-            label += " · \(task.brokenSessionCount) broken"
+            return TaskCopy.sessionCountWithBroken(
+                completed: task.completedSessionCount,
+                estimated: task.estimatedPomodoros,
+                broken: task.brokenSessionCount
+            )
         }
-        return label
+        return TaskCopy.sessionCount(
+            completed: task.completedSessionCount,
+            estimated: task.estimatedPomodoros
+        )
     }
 
     @ViewBuilder
@@ -50,11 +56,15 @@ struct TaskRowView: View {
                 icon
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(task.status == .completed ? "Mark as not completed" : "Mark completed")
+            .accessibilityLabel(
+                task.status == .completed ? TaskCopy.markNotCompleted : TaskCopy.markCompleted
+            )
             .accessibilityIdentifier("markTaskCompleted")
         } else {
             icon
-                .accessibilityLabel(task.status == .completed ? "Completed" : "Not completed")
+                .accessibilityLabel(
+                    task.status == .completed ? TaskCopy.completed : TaskCopy.notCompleted
+                )
         }
     }
 }
@@ -67,16 +77,16 @@ extension View {
     ) -> some View {
         swipeActions(edge: .trailing, allowsFullSwipe: false) {
             if canStart {
-                Button("Start focus", action: onStart)
+                Button(TaskCopy.startFocus, action: onStart)
                     .tint(Color.focusAccent)
             }
-            Button("Remove", role: .destructive, action: onRemove)
+            Button(TaskCopy.remove, role: .destructive, action: onRemove)
         }
         .contextMenu {
             if canStart {
-                Button("Start focus", action: onStart)
+                Button(TaskCopy.startFocus, action: onStart)
             }
-            Button("Remove", role: .destructive, action: onRemove)
+            Button(TaskCopy.remove, role: .destructive, action: onRemove)
         }
     }
 }

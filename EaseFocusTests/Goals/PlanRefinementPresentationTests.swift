@@ -319,7 +319,7 @@ struct PlanRefinementPresentationTests {
             !PlanRefinementPresentation.canConfirm(
                 hasPreview: true,
                 isGenerating: false,
-                generationError: "Couldn't generate a refinement.",
+                generationError: LocalizedCopy("Couldn't generate a refinement."),
                 isStale: false
             )
         )

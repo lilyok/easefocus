@@ -24,37 +24,37 @@ nonisolated enum CompactTimerAction: String, Equatable, Sendable, Identifiable, 
         }
     }
 
-    var compactTitle: String {
+    var compactTitle: LocalizedCopy {
         switch self {
         case .pause:
-            "Pause"
+            LocalizedCopy("Pause")
         case .resume:
-            "Resume"
+            LocalizedCopy("Resume")
         case .cancel:
-            "Cancel"
+            AppCopy.cancel
         case .startBreak:
-            "Break"
+            LocalizedCopy("Break")
         case .skipBreak:
-            "Skip"
+            LocalizedCopy("Skip")
         }
     }
 
-    var title: String {
+    var title: LocalizedCopy {
         switch self {
         case .pause:
-            "Pause"
+            LocalizedCopy("Pause")
         case .resume:
-            "Resume"
+            LocalizedCopy("Resume")
         case .cancel:
-            "Cancel"
+            AppCopy.cancel
         case .startBreak:
-            "Start break"
+            LocalizedCopy("Start break")
         case .skipBreak:
-            "Skip break"
+            LocalizedCopy("Skip break")
         }
     }
 
-    var accessibilityLabel: String { title }
+    var accessibilityLabel: LocalizedCopy { title }
 }
 
 nonisolated enum TimerAccessibilityIdentifier {
@@ -70,21 +70,37 @@ nonisolated enum TimerAccessibilityIdentifier {
 }
 
 nonisolated enum TimerAccessibilityCopy {
-    static let remainingTime = "Remaining time"
-    static let openTimerHint = "Opens the full timer"
-    static let idle = "Idle"
-    static let focus = "Focus"
-    static let focusPaused = "Focus paused"
-    static let breakStatus = "Break"
-    static let longBreak = "Long break"
-    static let breakPaused = "Break paused"
-    static let focusComplete = "Focus complete"
-    static let startFromTask = "Start a focus session from a task."
-    static let startFocus = "Start focus"
+    static let remainingTime = LocalizedCopy("Remaining time")
+    static let openTimerHint = LocalizedCopy("Opens the full timer")
+    static let idle = LocalizedCopy("Idle")
+    static let focus = LocalizedCopy("Focus")
+    static let focusPaused = LocalizedCopy("Focus paused")
+    static let breakStatus = LocalizedCopy("Break")
+    static let longBreak = LocalizedCopy("Long break")
+    static let breakPaused = LocalizedCopy("Break paused")
+    static let focusComplete = LocalizedCopy("Focus complete")
+    static let startFromTask = LocalizedCopy("Start a focus session from a task.")
+    static let startFocus = AppCopy.startFocus
+
+    static func hours(_ count: Int) -> LocalizedCopy {
+        LocalizedCopy(format: "\(count) hours", english: "\(count) hours")
+    }
+
+    static func minutes(_ count: Int) -> LocalizedCopy {
+        LocalizedCopy(format: "\(count) minutes", english: "\(count) minutes")
+    }
+
+    static func seconds(_ count: Int) -> LocalizedCopy {
+        LocalizedCopy(format: "\(count) seconds", english: "\(count) seconds")
+    }
+
+    static func remaining(_ duration: String) -> LocalizedCopy {
+        LocalizedCopy(format: "\(duration) remaining", english: "\(duration) remaining")
+    }
 }
 
 nonisolated enum TimerAccessibilityPresentation {
-    static func statusTitle(phase: FocusTimerPhase, isLongBreak: Bool) -> String {
+    static func statusTitle(phase: FocusTimerPhase, isLongBreak: Bool) -> LocalizedCopy {
         switch phase {
         case .idle:
             TimerAccessibilityCopy.idle
@@ -101,22 +117,25 @@ nonisolated enum TimerAccessibilityPresentation {
         }
     }
 
-    static func spokenRemaining(seconds: Int) -> String {
+    static func spokenRemaining(
+        seconds: Int,
+        locale: Locale = .autoupdatingCurrent
+    ) -> String {
         let clamped = max(0, seconds)
         let hours = clamped / 3600
         let minutes = (clamped % 3600) / 60
         let remainder = clamped % 60
         var parts: [String] = []
         if hours > 0 {
-            parts.append(unitPhrase(hours, singular: "hour", plural: "hours"))
+            parts.append(TimerAccessibilityCopy.hours(hours).localized(locale))
         }
         if minutes > 0 {
-            parts.append(unitPhrase(minutes, singular: "minute", plural: "minutes"))
+            parts.append(TimerAccessibilityCopy.minutes(minutes).localized(locale))
         }
         if remainder > 0 || parts.isEmpty {
-            parts.append(unitPhrase(remainder, singular: "second", plural: "seconds"))
+            parts.append(TimerAccessibilityCopy.seconds(remainder).localized(locale))
         }
-        return parts.joined(separator: " ") + " remaining"
+        return TimerAccessibilityCopy.remaining(parts.joined(separator: " ")).localized(locale)
     }
 
     static func actions(for phase: FocusTimerPhase, reduceMotion: Bool = false) -> [CompactTimerAction] {
@@ -131,9 +150,5 @@ nonisolated enum TimerAccessibilityPresentation {
         case .completed:
             return [.startBreak, .skipBreak]
         }
-    }
-
-    private static func unitPhrase(_ value: Int, singular: String, plural: String) -> String {
-        value == 1 ? "1 \(singular)" : "\(value) \(plural)"
     }
 }
