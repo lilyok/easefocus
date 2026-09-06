@@ -85,10 +85,19 @@ nonisolated enum TimerAccessibilityCopy {
     static let zeroSecondsRemaining = LocalizedCopy("0 seconds remaining")
 
     static func remaining(hours: Int, minutes: Int, seconds: Int) -> LocalizedCopy {
-        LocalizedCopy(
-            format: "\(hours) hours \(minutes) minutes \(seconds) seconds remaining",
+        let remainingCount = remainingAdjectiveCount(hours: hours, minutes: minutes, seconds: seconds)
+        return LocalizedCopy(
+            format: "\(hours) hours \(minutes) minutes \(seconds) seconds \(remainingCount) remaining",
             english: englishSpokenRemaining(hours: hours, minutes: minutes, seconds: seconds)
         )
+    }
+
+    private static func remainingAdjectiveCount(hours: Int, minutes: Int, seconds: Int) -> Int {
+        let visibleUnits = [hours, minutes, seconds].filter { $0 > 0 }
+        if visibleUnits == [1] {
+            return 1
+        }
+        return 2
     }
 
     private static func englishSpokenRemaining(hours: Int, minutes: Int, seconds: Int) -> String {

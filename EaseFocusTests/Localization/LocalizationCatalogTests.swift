@@ -59,7 +59,15 @@ struct LocalizationCatalogTests {
         )
         #expect(
             TimerAccessibilityPresentation.spokenRemaining(seconds: 1, locale: L10n.spanish)
-                == "1 segundo restantes"
+                == "1 segundo restante"
+        )
+        #expect(
+            TimerAccessibilityPresentation.spokenRemaining(seconds: 2, locale: L10n.spanish)
+                == "2 segundos restantes"
+        )
+        #expect(
+            TimerAccessibilityPresentation.spokenRemaining(seconds: 60, locale: L10n.spanish)
+                == "1 minuto restante"
         )
         #expect(ProgressCopy.weekRange(start: "A", end: "B").localized(L10n.english) == "A – B")
         #expect(ProgressCopy.weekRange(start: "A", end: "B").localized(L10n.spanish) == "A a B")
