@@ -21,6 +21,11 @@ struct TaskRowView: View {
             if let onStart, task.status != .completed {
                 Button("Start", action: onStart)
                     .disabled(!isStartEnabled)
+                    .frame(
+                        minWidth: FocusSpacing.minimumTapTarget,
+                        minHeight: FocusSpacing.minimumTapTarget
+                    )
+                    .accessibilityLabel("Start focus")
             }
         }
         .frame(minHeight: FocusSpacing.minimumTapTarget)

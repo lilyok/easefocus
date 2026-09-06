@@ -198,10 +198,11 @@ nonisolated enum ProgressPresentation {
     }
 
     static func momentumAccessibilityLabel(_ day: ProgressMomentumDay) -> String {
-        if day.hasCompletedFocus {
-            return "\(day.weekdaySymbol), completed focus"
+        let focusState = day.hasCompletedFocus ? "completed focus" : "no completed focus"
+        if day.isToday {
+            return "\(day.weekdaySymbol), \(focusState), today"
         }
-        return "\(day.weekdaySymbol), no completed focus"
+        return "\(day.weekdaySymbol), \(focusState)"
     }
 
     private static func counts(in sessions: [ProgressSessionRecord]) -> ProgressCountSummary {

@@ -6,61 +6,90 @@ struct CompactTimerBar: View {
     var onOpenTimer: () -> Void
 
     var body: some View {
-        HStack(spacing: FocusSpacing.medium) {
-            Button(action: onOpenTimer) {
-                Text(statusTitle)
-                    .font(FocusTypography.footnote)
+        VStack(alignment: .leading, spacing: FocusSpacing.small) {
+            HStack(alignment: .center, spacing: FocusSpacing.small) {
+                openTimerButton
+                Spacer(minLength: 0)
+                remainingTimeControl
             }
-            .accessibilityIdentifier("openTimer")
-            Spacer()
-            Button(action: onOpenTimer) {
-                Text(FocusDurationFormat.clock(timer.engine.remainingSeconds(at: .now)))
-                    .font(FocusTypography.timer)
-                    .monospacedDigit()
-                    .animation(reduceMotion ? nil : .linear(duration: 0.25), value: timer.engine.remainingSeconds)
+            if !actions.isEmpty {
+                HStack(spacing: FocusSpacing.small) {
+                    ForEach(actions) { action in
+                        TimerPhaseControlButton(action: action, usesCompactTitle: true) {
+                            timer.perform(action)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                }
             }
-            .buttonStyle(.plain)
-            controls
         }
         .padding(.horizontal, FocusSpacing.medium)
         .padding(.vertical, FocusSpacing.small)
-        .frame(minHeight: FocusSpacing.minimumTapTarget)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.focusSurface)
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("compactTimer")
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(TimerAccessibilityIdentifier.compactTimer)
     }
 
-    @ViewBuilder
-    private var controls: some View {
-        switch timer.engine.phase {
-        case .runningFocus, .runningBreak:
-            Button("Pause") { timer.pause() }
-            Button("Cancel", role: .destructive) { timer.cancel() }
-        case .pausedFocus, .pausedBreak:
-            Button("Resume") { timer.resume() }
-            Button("Cancel", role: .destructive) { timer.cancel() }
-        case .completed:
-            Button("Break") { timer.startBreak() }
-            Button("Skip") { timer.skipBreak() }
-        case .idle:
-            EmptyView()
+    private var actions: [CompactTimerAction] {
+        TimerAccessibilityPresentation.actions(
+            for: timer.engine.phase,
+            reduceMotion: reduceMotion
+        )
+    }
+
+    private var remainingSeconds: Int {
+        timer.engine.remainingSeconds(at: .now)
+    }
+
+    private var openTimerButton: some View {
+        Button(action: onOpenTimer) {
+            Text(statusTitle)
+                .font(FocusTypography.footnote)
+                .foregroundStyle(Color.focusPrimary)
+                .multilineTextAlignment(.leading)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(
+                    minWidth: FocusSpacing.minimumTapTarget,
+                    minHeight: FocusSpacing.minimumTapTarget,
+                    alignment: .leading
+                )
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(statusTitle)
+        .accessibilityHint(TimerAccessibilityCopy.openTimerHint)
+        .accessibilityIdentifier(TimerAccessibilityIdentifier.openTimer)
+    }
+
+    private var remainingTimeControl: some View {
+        Button(action: onOpenTimer) {
+            Text(FocusDurationFormat.clock(remainingSeconds))
+                .font(FocusTypography.compactTimer)
+                .monospacedDigit()
+                .foregroundStyle(Color.focusPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(
+                    minWidth: FocusSpacing.minimumTapTarget,
+                    minHeight: FocusSpacing.minimumTapTarget
+                )
+                .animation(
+                    reduceMotion ? nil : .linear(duration: 0.25),
+                    value: timer.engine.remainingSeconds
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(TimerAccessibilityCopy.remainingTime)
+        .accessibilityValue(TimerAccessibilityPresentation.spokenRemaining(seconds: remainingSeconds))
+        .accessibilityHint(TimerAccessibilityCopy.openTimerHint)
+        .accessibilityIdentifier(TimerAccessibilityIdentifier.remainingTime)
     }
 
     private var statusTitle: String {
-        switch timer.engine.phase {
-        case .idle:
-            return "Idle"
-        case .runningFocus:
-            return "Focus"
-        case .pausedFocus:
-            return "Focus paused"
-        case .runningBreak:
-            return timer.engine.isLongBreak ? "Long break" : "Break"
-        case .pausedBreak:
-            return "Break paused"
-        case .completed:
-            return "Focus complete"
-        }
+        TimerAccessibilityPresentation.statusTitle(
+            phase: timer.engine.phase,
+            isLongBreak: timer.engine.isLongBreak
+        )
     }
 }

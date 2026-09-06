@@ -297,6 +297,24 @@ struct ProgressPresentationTests {
     }
 
     @Test
+    func momentumAccessibilityLabelDoesNotRelyOnColorAlone() {
+        let today = ProgressMomentumDay(
+            date: Date(timeIntervalSince1970: 1),
+            weekdaySymbol: "W",
+            hasCompletedFocus: false,
+            isToday: true
+        )
+        let other = ProgressMomentumDay(
+            date: Date(timeIntervalSince1970: 2),
+            weekdaySymbol: "T",
+            hasCompletedFocus: true,
+            isToday: false
+        )
+        #expect(ProgressPresentation.momentumAccessibilityLabel(today) == "W, no completed focus, today")
+        #expect(ProgressPresentation.momentumAccessibilityLabel(other) == "T, completed focus")
+    }
+
+    @Test
     func exposesProgressAccessibilityIdentifiers() {
         #expect(ProgressAccessibilityIdentifier.weekSummary == "progressWeekSummary")
         #expect(ProgressAccessibilityIdentifier.momentum == "progressMomentum")

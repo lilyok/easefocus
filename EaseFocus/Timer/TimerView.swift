@@ -6,13 +6,12 @@ struct TimerView: View {
 
     var body: some View {
         VStack(spacing: FocusSpacing.large) {
-            Text(FocusDurationFormat.clock(timer.engine.remainingSeconds(at: .now)))
-                .font(FocusTypography.timer)
-                .monospacedDigit()
-                .animation(reduceMotion ? nil : .linear(duration: 0.2), value: timer.engine.remainingSeconds)
+            remainingTimeDisplay
             Text(statusTitle)
                 .font(FocusTypography.title)
                 .foregroundStyle(Color.focusPrimary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
             controls
         }
         .padding(FocusSpacing.large)
@@ -21,43 +20,64 @@ struct TimerView: View {
         .navigationTitle("Timer")
     }
 
+    private var remainingTimeDisplay: some View {
+        ViewThatFits(in: .horizontal) {
+            remainingClockText(font: FocusTypography.timer)
+            remainingClockText(font: FocusTypography.timerFitted)
+            remainingClockText(font: FocusTypography.compactTimer)
+        }
+        .frame(maxWidth: .infinity)
+        .animation(
+            reduceMotion ? nil : .linear(duration: 0.2),
+            value: timer.engine.remainingSeconds
+        )
+        .accessibilityLabel(TimerAccessibilityCopy.remainingTime)
+        .accessibilityValue(TimerAccessibilityPresentation.spokenRemaining(seconds: remainingSeconds))
+        .accessibilityIdentifier(TimerAccessibilityIdentifier.timerRemainingTime)
+    }
+
+    private func remainingClockText(font: Font) -> some View {
+        Text(FocusDurationFormat.clock(remainingSeconds))
+            .font(font)
+            .monospacedDigit()
+            .foregroundStyle(Color.focusPrimary)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
+    }
+
     @ViewBuilder
     private var controls: some View {
-        switch timer.engine.phase {
-        case .idle:
-            Text("Start a focus session from a task.")
+        if actions.isEmpty {
+            Text(TimerAccessibilityCopy.startFromTask)
                 .font(FocusTypography.body)
                 .foregroundStyle(.secondary)
-        case .runningFocus, .runningBreak:
-            Button("Pause") { timer.pause() }
-                .frame(minHeight: FocusSpacing.minimumTapTarget)
-            Button("Cancel", role: .destructive) { timer.cancel() }
-        case .pausedFocus, .pausedBreak:
-            Button("Resume") { timer.resume() }
-                .frame(minHeight: FocusSpacing.minimumTapTarget)
-            Button("Cancel", role: .destructive) { timer.cancel() }
-        case .completed:
-            Button("Start break") { timer.startBreak() }
-                .frame(minHeight: FocusSpacing.minimumTapTarget)
-            Button("Skip break") { timer.skipBreak() }
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        } else {
+            ForEach(actions) { action in
+                TimerPhaseControlButton(action: action, usesCompactTitle: false) {
+                    timer.perform(action)
+                }
+            }
         }
     }
 
+    private var actions: [CompactTimerAction] {
+        TimerAccessibilityPresentation.actions(
+            for: timer.engine.phase,
+            reduceMotion: reduceMotion
+        )
+    }
+
+    private var remainingSeconds: Int {
+        timer.engine.remainingSeconds(at: .now)
+    }
+
     private var statusTitle: String {
-        switch timer.engine.phase {
-        case .idle:
-            return "Idle"
-        case .runningFocus:
-            return "Focus"
-        case .pausedFocus:
-            return "Paused"
-        case .runningBreak:
-            return timer.engine.isLongBreak ? "Long break" : "Break"
-        case .pausedBreak:
-            return "Break paused"
-        case .completed:
-            return "Session complete"
-        }
+        TimerAccessibilityPresentation.statusTitle(
+            phase: timer.engine.phase,
+            isLongBreak: timer.engine.isLongBreak
+        )
     }
 }
 
