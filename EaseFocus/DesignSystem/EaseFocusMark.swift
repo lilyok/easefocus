@@ -1,20 +1,25 @@
 import SwiftUI
 
-/// In-app silhouette matching the App Icon: open focus ring + completion check.
+/// In-app silhouette matching the App Icon: thick sun / timer dial.
 struct EaseFocusMark: View {
     var size: CGFloat = 72
 
     var body: some View {
         ZStack {
+            EaseFocusMarkTicksShape()
+                .stroke(
+                    Color.focusPrimary,
+                    style: StrokeStyle(lineWidth: size * 0.055, lineCap: .round)
+                )
             EaseFocusMarkRingShape()
                 .stroke(
                     Color.focusPrimary,
-                    style: StrokeStyle(lineWidth: size * 0.10, lineCap: .round)
+                    style: StrokeStyle(lineWidth: size * 0.078, lineCap: .round)
                 )
-            EaseFocusMarkCheckShape()
+            EaseFocusMarkArcShape()
                 .stroke(
                     Color.focusAccent,
-                    style: StrokeStyle(lineWidth: size * 0.095, lineCap: .round, lineJoin: .round)
+                    style: StrokeStyle(lineWidth: size * 0.078, lineCap: .round)
                 )
         }
         .frame(width: size, height: size)
@@ -24,32 +29,51 @@ struct EaseFocusMark: View {
 
 struct EaseFocusMarkRingShape: Shape {
     func path(in rect: CGRect) -> Path {
-        let inset = rect.width * 0.17
-        let ringRect = rect.insetBy(dx: inset, dy: inset)
+        let radius = rect.width * 0.22
+        let center = CGPoint(x: rect.midX, y: rect.midY)
         var path = Path()
-        // SwiftUI y grows downward; keep the gap at the top-right like the App Icon.
-        path.addArc(
-            center: CGPoint(x: ringRect.midX, y: ringRect.midY),
-            radius: ringRect.width / 2,
-            startAngle: .degrees(-40),
-            endAngle: .degrees(35),
-            clockwise: true
-        )
+        path.addEllipse(in: CGRect(
+            x: center.x - radius,
+            y: center.y - radius,
+            width: radius * 2,
+            height: radius * 2
+        ))
         return path
     }
 }
 
-struct EaseFocusMarkCheckShape: Shape {
+struct EaseFocusMarkTicksShape: Shape {
     func path(in rect: CGRect) -> Path {
-        let w = rect.width
-        let h = rect.height
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let tickInner = rect.width * 0.295
+        let tickOuter = rect.width * 0.37
         var path = Path()
-        let start = CGPoint(x: rect.minX + w * 0.62, y: rect.minY + h * 0.30)
-        let mid = CGPoint(x: rect.minX + w * 0.72, y: rect.minY + h * 0.42)
-        let end = CGPoint(x: rect.minX + w * 0.88, y: rect.minY + h * 0.22)
-        path.move(to: start)
-        path.addLine(to: mid)
-        path.addLine(to: end)
+        for index in 0..<12 {
+            // SwiftUI angles: 0 = east, y grows down — put a tick at 12 o'clock.
+            let degrees = -90.0 + Double(index) * 30.0
+            let radians = degrees * .pi / 180
+            let dx = CGFloat(cos(radians))
+            let dy = CGFloat(sin(radians))
+            path.move(to: CGPoint(x: center.x + dx * tickInner, y: center.y + dy * tickInner))
+            path.addLine(to: CGPoint(x: center.x + dx * tickOuter, y: center.y + dy * tickOuter))
+        }
+        return path
+    }
+}
+
+struct EaseFocusMarkArcShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = rect.width * 0.295
+        var path = Path()
+        // Match App Icon: ~1 o'clock to ~7:30, clockwise in screen space.
+        path.addArc(
+            center: center,
+            radius: radius,
+            startAngle: .degrees(-60),
+            endAngle: .degrees(135),
+            clockwise: false
+        )
         return path
     }
 }
