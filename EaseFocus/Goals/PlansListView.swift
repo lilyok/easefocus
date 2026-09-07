@@ -30,7 +30,12 @@ struct PlansListView: View {
                                 .padding(.horizontal)
                         }
                         ContentUnavailableView {
-                            Label(PlansCopy.emptyTitle, systemImage: "list.bullet.rectangle")
+                            VStack(spacing: FocusSpacing.medium) {
+                                EaseFocusMark(size: 64)
+                                Text(PlansCopy.emptyTitle)
+                                    .font(FocusTypography.title)
+                                    .foregroundStyle(Color.focusPrimary)
+                            }
                         } description: {
                             Text(PlansCopy.emptyDescription)
                         } actions: {
