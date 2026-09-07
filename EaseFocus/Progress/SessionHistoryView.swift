@@ -87,22 +87,24 @@ struct SessionHistoryView: View {
 
     private var progressList: some View {
         List {
-            Section(ProgressCopy.thisWeek) {
+            Section {
                 VStack(alignment: .leading, spacing: FocusSpacing.small) {
                     Text(ProgressPresentation.weekTitle(week: week, calendar: calendar, locale: locale))
                         .font(FocusTypography.footnote)
                         .foregroundStyle(.secondary)
-                    Text(ProgressPresentation.countLine(weekSummary))
+                    Text(ProgressPresentation.countLine(weekSummary, locale: locale))
                         .font(FocusTypography.body)
                         .foregroundStyle(Color.focusPrimary)
                         .accessibilityIdentifier(ProgressAccessibilityIdentifier.weekSummary)
                     momentumRow
                 }
                 .padding(.vertical, 4)
+            } header: {
+                Text(ProgressCopy.thisWeek)
             }
 
             if !planRows.isEmpty {
-                Section(ProgressCopy.plans) {
+                Section {
                     ForEach(planRows) { row in
                         if let plan = plans.first(where: { $0.id == row.id }) {
                             NavigationLink(value: plan) {
@@ -111,14 +113,18 @@ struct SessionHistoryView: View {
                             .accessibilityIdentifier(ProgressAccessibilityIdentifier.planRow(for: row.id))
                         }
                     }
+                } header: {
+                    Text(ProgressCopy.plans)
                 }
             }
 
-            Section(ProgressCopy.today) {
-                Text(ProgressPresentation.countLine(todaySummary))
+            Section {
+                Text(ProgressPresentation.countLine(todaySummary, locale: locale))
                     .font(FocusTypography.body)
+            } header: {
+                Text(ProgressCopy.today)
             }
-            Section(ProgressCopy.history) {
+            Section {
                 ForEach(historyItems) { item in
                     VStack(alignment: .leading, spacing: 4) {
                         Text(item.title)
@@ -129,6 +135,8 @@ struct SessionHistoryView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+            } header: {
+                Text(ProgressCopy.history)
             }
         }
         .scrollContentBackground(.hidden)
@@ -148,7 +156,7 @@ struct SessionHistoryView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel(ProgressPresentation.momentumAccessibilityLabel(day))
+                .accessibilityLabel(ProgressPresentation.momentumAccessibilityLabel(day, locale: locale))
             }
         }
         .padding(.top, 4)
@@ -168,12 +176,13 @@ struct SessionHistoryView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            Text(ProgressPresentation.planTaskLine(open: row.openTaskCount, done: row.doneTaskCount))
+            Text(ProgressPresentation.planTaskLine(open: row.openTaskCount, done: row.doneTaskCount, locale: locale))
                 .font(FocusTypography.footnote)
                 .foregroundStyle(.secondary)
             Text(ProgressPresentation.planWeekLine(
                 completed: row.completedSessionCount,
-                focusedSeconds: row.focusedSeconds
+                focusedSeconds: row.focusedSeconds,
+                locale: locale
             ))
             .font(FocusTypography.footnote)
             .foregroundStyle(.secondary)

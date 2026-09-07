@@ -11,7 +11,7 @@ struct AvailabilityNotice: View {
             Text(FoundationModelAvailabilityCopy.message(for: availability))
                 .font(FocusTypography.body)
             if availability.canOpenAppleIntelligenceSettings, let url = AppleIntelligenceSettingsURL.make() {
-                Link("Open Apple Intelligence & Siri", destination: url)
+                Link(NoticeCopy.openAppleIntelligence, destination: url)
                     .font(FocusTypography.body)
                     .accessibilityIdentifier("openAppleIntelligenceSettings")
             }

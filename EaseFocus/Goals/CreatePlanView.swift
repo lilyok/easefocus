@@ -77,13 +77,13 @@ struct CreatePlanView: View {
             } catch let error as FoundationModelClientError where error == .cancelled {
                 breakGenerating()
             } catch let error as FoundationModelClientError {
-                errorMessage = FoundationModelClientErrorCopy.message(for: error)
+                errorMessage = FoundationModelClientErrorCopy.message(for: error).localized()
                 isGenerating = false
                 generateTask = nil
             } catch is CancellationError {
                 breakGenerating()
             } catch {
-                errorMessage = FoundationModelClientErrorCopy.message(for: .generationFailed)
+                errorMessage = FoundationModelClientErrorCopy.message(for: .generationFailed).localized()
                 isGenerating = false
                 generateTask = nil
             }

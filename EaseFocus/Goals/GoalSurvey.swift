@@ -5,14 +5,14 @@ nonisolated enum ExperienceLevel: String, Codable, CaseIterable, Sendable {
     case someExperience
     case advanced
 
-    var title: String {
+    var title: LocalizedCopy {
         switch self {
         case .beginner:
-            return "Beginner"
+            return SurveyCopy.beginner
         case .someExperience:
-            return "Some experience"
+            return SurveyCopy.someExperience
         case .advanced:
-            return "Advanced"
+            return SurveyCopy.advanced
         }
     }
 }

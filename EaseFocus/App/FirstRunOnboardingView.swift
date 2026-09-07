@@ -15,27 +15,31 @@ struct FirstRunOnboardingView: View {
         NavigationStack {
             Form {
                 Section {
-                    Text("EaseFocus turns a goal into timed focus sessions. Allow these so the timer and generated plans can work fully.")
+                    Text(OnboardingCopy.introduction)
                         .font(FocusTypography.body)
                 }
 
-                Section("Notifications") {
+                Section {
                     NotificationAccessNotice(
                         access: timer.notificationAccess,
                         settingsLinkIdentifier: "onboardingOpenNotificationSettings"
                     )
+                } header: {
+                    Text(OnboardingCopy.notifications)
                 }
 
                 if availability.showsPlanSurvey {
-                    Section("Apple Intelligence") {
+                    Section {
                         AvailabilityNotice(availability: availability)
+                    } header: {
+                        Text(OnboardingCopy.appleIntelligence)
                     }
                 }
             }
-            .navigationTitle("Welcome to EaseFocus")
+            .navigationTitle(OnboardingCopy.navigationTitle)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Continue", action: onContinue)
+                    Button(OnboardingCopy.continueAction, action: onContinue)
                         .accessibilityIdentifier("onboardingContinue")
                 }
             }

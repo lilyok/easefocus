@@ -27,8 +27,8 @@ struct PlanDetailView: View {
     var body: some View {
         List {
             Section {
-                TextField("Title", text: $plan.title)
-                TextField("Details", text: Binding(
+                TextField(PlanDetailCopy.title, text: $plan.title)
+                TextField(PlanDetailCopy.details, text: Binding(
                     get: { plan.details ?? "" },
                     set: { plan.details = $0.nilIfEmpty }
                 ), axis: .vertical)
@@ -68,21 +68,21 @@ struct PlanDetailView: View {
                 .onMove(perform: moveTasks)
                 VStack(alignment: .leading, spacing: FocusSpacing.small) {
                     HStack {
-                        TextField("New task", text: $newTaskTitle)
-                        Button("Add") {
+                        TextField(PlanDetailCopy.newTask, text: $newTaskTitle)
+                        Button(PlanDetailCopy.add) {
                             addTask()
                         }
                         .disabled(newTaskTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                     Stepper(value: $newTaskEstimate, in: DraftPlanValidator.pomodoroRange) {
-                        Text("\(newTaskEstimate) estimated sessions")
+                        Text(TaskCopy.estimatedSessions(newTaskEstimate))
                             .font(FocusTypography.footnote)
                     }
                 }
             } header: {
-                Text("Tasks")
+                Text(PlanDetailCopy.tasks)
             } footer: {
-                Text("Add a resource search when a Google query would help. Search Google opens in your browser after you confirm.")
+                Text(PlanDetailCopy.resourceSearchFooter)
             }
 
             if PlanHistoryPresentation.showsHistory(revisionCount: plan.revisions.count) {
@@ -98,7 +98,7 @@ struct PlanDetailView: View {
         }
         .scrollContentBackground(.hidden)
         .background(Color.focusBackground)
-        .navigationTitle("Plan")
+        .navigationTitle(PlanDetailCopy.navigationTitle)
         .toolbar {
             if showsRefineAction {
                 ToolbarItem(placement: .primaryAction) {
@@ -109,12 +109,12 @@ struct PlanDetailView: View {
                 }
             }
             ToolbarItem(placement: .primaryAction) {
-                Menu("Plan actions") {
-                    Button("Archive") {
+                Menu {
+                    Button(PlanDetailCopy.archive) {
                         plan.status = .archived
                         plan.updatedAt = .now
                     }
-                    Button("Mark completed") {
+                    Button(PlanDetailCopy.markCompleted) {
                         plan.status = .completed
                         plan.updatedAt = .now
                     }
@@ -127,6 +127,8 @@ struct PlanDetailView: View {
                         isSessionRunningOnPlan: PlanHistorySession.isRunning(on: plan, timer: timer)
                     ))
                     .accessibilityIdentifier(PlanHistoryAccessibilityIdentifier.startOver)
+                } label: {
+                    Text(PlanDetailCopy.planActions)
                 }
             }
         }
@@ -134,7 +136,7 @@ struct PlanDetailView: View {
             plan.updatedAt = .now
         }
         .confirmationDialog(
-            "Remove this task?",
+            Text(TaskCopy.removeTaskTitle),
             isPresented: Binding(
                 get: { taskPendingRemoval != nil },
                 set: { if !$0 { taskPendingRemoval = nil } }
@@ -142,16 +144,16 @@ struct PlanDetailView: View {
             titleVisibility: .visible,
             presenting: taskPendingRemoval
         ) { task in
-            Button("Remove", role: .destructive) {
+            Button(TaskCopy.remove, role: .destructive) {
                 remove(task)
                 taskPendingRemoval = nil
             }
-            Button("Cancel", role: .cancel) {}
+            Button(AppCopy.cancel, role: .cancel) {}
         } message: { task in
-            Text("“\(task.title)” will be deleted from the plan.")
+            Text(TaskCopy.deleteMessage(taskTitle: task.title))
         }
         .confirmationDialog(
-            PlanHistoryCopy.startOverConfirmTitle,
+            Text(PlanHistoryCopy.startOverConfirmTitle),
             isPresented: $historyCoordinator.isStartOverConfirmPresented,
             titleVisibility: .visible
         ) {
@@ -357,7 +359,7 @@ private struct EditableTaskRow: View {
             )
             if task.status != .completed {
                 Stepper(value: $task.estimatedPomodoros, in: DraftPlanValidator.pomodoroRange) {
-                    Text("\(task.estimatedPomodoros) estimated sessions")
+                    Text(TaskCopy.estimatedSessions(task.estimatedPomodoros))
                         .font(FocusTypography.footnote)
                 }
             }
@@ -394,7 +396,7 @@ private struct EditableTaskRow: View {
                 }
             }
             HStack {
-                Text("Order")
+                Text(PlanDetailCopy.order)
                     .font(FocusTypography.footnote)
                     .foregroundStyle(.secondary)
                 Spacer()

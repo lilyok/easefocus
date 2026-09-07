@@ -9,7 +9,7 @@ final class PlanRefinementCoordinator {
     var hasAttemptedGenerate = false
     private(set) var preview: PlanRefinementPreview?
     private(set) var isGenerating = false
-    private(set) var generationError: String?
+    private(set) var generationError: LocalizedCopy?
     private(set) var saveErrorMessage: String?
     var isSaveAlertPresented = false
     private(set) var didApply = false
@@ -18,7 +18,7 @@ final class PlanRefinementCoordinator {
     private var generationID = UUID()
     private var pendingSaveRetry: (() -> Void)?
 
-    var requestError: String? {
+    var requestError: LocalizedCopy? {
         PlanRefinementPresentation.requestError(
             for: request,
             hasAttemptedGenerate: hasAttemptedGenerate
@@ -37,7 +37,7 @@ final class PlanRefinementCoordinator {
 
     func showsPreviousPreviewNotice(plan: GoalPlan) -> Bool {
         preview != nil && (
-            isGenerating || (!(generationError ?? "").isEmpty && !isStale(plan: plan))
+            isGenerating || (!(generationError?.isEmpty ?? true) && !isStale(plan: plan))
         )
     }
 
@@ -133,7 +133,7 @@ final class PlanRefinementCoordinator {
         guard let preview else {
             return
         }
-        guard !isGenerating, (generationError ?? "").isEmpty else {
+        guard !isGenerating, generationError?.isEmpty ?? true else {
             return
         }
         if isStale(plan: plan) {
@@ -150,7 +150,7 @@ final class PlanRefinementCoordinator {
         case .stale:
             generationError = PlanRefinementCopy.staleMessage
         case .saveFailed:
-            saveErrorMessage = PersistenceSaveCopy.message
+            saveErrorMessage = PersistenceSaveCopy.message.localized()
             isSaveAlertPresented = true
             pendingSaveRetry = { [weak self] in
                 self?.confirm(plan: plan, context: context, save: save)

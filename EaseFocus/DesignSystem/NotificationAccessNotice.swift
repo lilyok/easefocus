@@ -12,7 +12,7 @@ struct NotificationAccessNotice: View {
             Text(NotificationAccessCopy.message(for: access))
                 .font(FocusTypography.body)
             if access != .allowed, let url = NotificationSettingsURL.make() {
-                Link("Open Notifications Settings", destination: url)
+                Link(NoticeCopy.openNotifications, destination: url)
                     .font(FocusTypography.body)
                     .accessibilityIdentifier(settingsLinkIdentifier)
             }

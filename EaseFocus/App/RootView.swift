@@ -11,17 +11,25 @@ struct RootView: View {
 
     var body: some View {
         TabView {
-            Tab("Today", systemImage: "sun.max") {
+            Tab {
                 TodayView()
+            } label: {
+                Label(AppCopy.today, systemImage: "sun.max")
             }
-            Tab("Plans", systemImage: "list.bullet.rectangle") {
+            Tab {
                 PlansListView()
+            } label: {
+                Label(AppCopy.plans, systemImage: "list.bullet.rectangle")
             }
-            Tab("Progress", systemImage: "chart.line.uptrend.xyaxis") {
+            Tab {
                 SessionHistoryView()
+            } label: {
+                Label(AppCopy.progress, systemImage: "chart.line.uptrend.xyaxis")
             }
-            Tab("Settings", systemImage: "gear") {
+            Tab {
                 SettingsView()
+            } label: {
+                Label(AppCopy.settings, systemImage: "gear")
             }
         }
         .tint(Color.focusAccent)
@@ -38,7 +46,7 @@ struct RootView: View {
                 TimerView()
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) {
-                            Button("Close") { isShowingTimer = false }
+                            Button(AppCopy.close) { isShowingTimer = false }
                         }
                     }
             }

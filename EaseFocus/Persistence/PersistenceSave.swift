@@ -2,15 +2,16 @@ import SwiftData
 import SwiftUI
 
 nonisolated enum PersistenceSaveCopy {
-    static let title = "Couldn't save your data"
-    static let message =
+    static let title = LocalizedCopy("Couldn't save your data")
+    static let message = LocalizedCopy(
         "EaseFocus could not save your latest changes. Try again. If this keeps happening, quit other EaseFocus copies and restart the app."
-    static let retry = "Try again"
-    static let discard = "Discard changes"
-    static let later = "Later"
+    )
+    static let retry = LocalizedCopy("Try again")
+    static let discard = LocalizedCopy("Discard changes")
+    static let later = LocalizedCopy("Later")
 
     static func message(for error: Error) -> String {
-        "\(message)\n\n\(error.localizedDescription)"
+        "\(message.localized())\n\n\(error.localizedDescription)"
     }
 }
 
@@ -38,7 +39,7 @@ extension View {
         onDiscard: (() -> Void)? = nil,
         onDefer: (() -> Void)? = nil
     ) -> some View {
-        alert(PersistenceSaveCopy.title, isPresented: isPresented) {
+        alert(Text(PersistenceSaveCopy.title), isPresented: isPresented) {
             Button(PersistenceSaveCopy.retry, action: onRetry)
             if let onDiscard {
                 Button(PersistenceSaveCopy.discard, role: .cancel, action: onDiscard)
@@ -46,7 +47,7 @@ extension View {
                 Button(PersistenceSaveCopy.later, role: .cancel, action: onDefer)
             }
         } message: {
-            Text(message ?? PersistenceSaveCopy.message)
+            Text(message ?? PersistenceSaveCopy.message.localized())
         }
         .accessibilityIdentifier("persistenceSaveError")
     }

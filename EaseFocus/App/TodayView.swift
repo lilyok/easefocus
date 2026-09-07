@@ -49,11 +49,11 @@ struct TodayView: View {
                         accessNotices
                             .padding(.horizontal)
                         ContentUnavailableView {
-                            Label("Ready to focus", systemImage: "timer")
+                            Label(TodayCopy.readyToFocus, systemImage: "timer")
                         } description: {
-                            Text("Create a plan to start a focus session. Apple Intelligence is optional.")
+                            Text(TodayCopy.emptyDescription)
                         } actions: {
-                            Button("Create a plan", systemImage: "plus") {
+                            Button(TodayCopy.createPlan, systemImage: "plus") {
                                 isCreatingPlan = true
                             }
                             .accessibilityIdentifier("createPlan")
@@ -69,7 +69,7 @@ struct TodayView: View {
                         }
 
                         if let nextTask {
-                            Section("Up next") {
+                            Section {
                                 VStack(alignment: .leading, spacing: FocusSpacing.small) {
                                     if let plan = nextTask.plan {
                                         Text(plan.title)
@@ -78,7 +78,7 @@ struct TodayView: View {
                                     }
                                     todayTaskRow(nextTask)
                                 }
-                                Button("Start focus") {
+                                Button(TodayCopy.startFocus) {
                                     startFocus(on: nextTask)
                                 }
                                 .accessibilityIdentifier("startFocus")
@@ -87,11 +87,13 @@ struct TodayView: View {
                                     minHeight: FocusSpacing.minimumTapTarget
                                 )
                                 .disabled(!timer.engine.canStartFocus)
+                            } header: {
+                                Text(TodayCopy.upNext)
                             }
                         }
 
                         if !plansWithLaterTasks.isEmpty {
-                            Section("Plans") {
+                            Section {
                                 ForEach(plansWithLaterTasks) { plan in
                                     DisclosureGroup(
                                         isExpanded: expansionBinding(for: plan)
@@ -101,10 +103,10 @@ struct TodayView: View {
                                                 .padding(.leading, FocusSpacing.small)
                                         }
                                         NavigationLink(value: plan) {
-                                            Label("Open plan", systemImage: "arrow.right.circle")
+                                            Label(TodayCopy.openPlan, systemImage: "arrow.right.circle")
                                                 .font(FocusTypography.footnote)
                                         }
-                                        .accessibilityLabel("Open \(plan.title) plan")
+                                        .accessibilityLabel(TodayCopy.openPlan(named: plan.title))
                                     } label: {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(plan.title)
@@ -115,14 +117,18 @@ struct TodayView: View {
                                         }
                                     }
                                 }
+                            } header: {
+                                Text(AppCopy.plans)
                             }
                         }
 
                         if !completedTasks.isEmpty {
-                            Section("Done") {
+                            Section {
                                 ForEach(completedTasks) { task in
                                     todayTaskRow(task, canStart: false)
                                 }
+                            } header: {
+                                Text(TodayCopy.done)
                             }
                         }
                     }
@@ -130,10 +136,10 @@ struct TodayView: View {
                 }
             }
             .background(Color.focusBackground)
-            .navigationTitle("Today")
+            .navigationTitle(TodayCopy.navigationTitle)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Create a plan", systemImage: "plus") {
+                    Button(TodayCopy.createPlan, systemImage: "plus") {
                         isCreatingPlan = true
                     }
                 }
@@ -147,7 +153,7 @@ struct TodayView: View {
                 PlanDetailView(plan: plan)
             }
             .confirmationDialog(
-                "Remove this task?",
+                Text(TaskCopy.removeTaskTitle),
                 isPresented: Binding(
                     get: { taskPendingRemoval != nil },
                     set: { if !$0 { taskPendingRemoval = nil } }
@@ -155,12 +161,12 @@ struct TodayView: View {
                 titleVisibility: .visible,
                 presenting: taskPendingRemoval
             ) { task in
-                Button("Remove", role: .destructive) {
+                Button(TaskCopy.remove, role: .destructive) {
                     remove(task)
                 }
-                Button("Cancel", role: .cancel) {}
+                Button(AppCopy.cancel, role: .cancel) {}
             } message: { task in
-                Text("“\(task.title)” will be deleted from the plan.")
+                Text(TaskCopy.deleteMessage(taskTitle: task.title))
             }
             .onAppear {
                 if expandedPlanIDs.isEmpty, let firstPlan = plansWithLaterTasks.first {
@@ -184,7 +190,7 @@ struct TodayView: View {
             }
             if let query = task.searchQuery,
                case .success(let validated) = SearchQueryValidator.validate(query) {
-                Button("Search Google") {
+                Button(TodayCopy.searchGoogle) {
                     pendingSearch = ExternalSearchOpening.request(from: validated)
                 }
                 .accessibilityIdentifier("searchGoogle-\(task.id)")
@@ -280,7 +286,7 @@ struct TodayView: View {
     private func planProgressLabel(_ plan: GoalPlan) -> String {
         let openCount = plan.pendingTasks.count
         let doneCount = plan.completedTasks.count
-        return "\(openCount) open · \(doneCount) done"
+        return ProgressPresentation.planTaskLine(open: openCount, done: doneCount, locale: locale)
     }
 
     private var showsAccessNotices: Bool {

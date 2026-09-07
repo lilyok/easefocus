@@ -33,12 +33,12 @@ nonisolated enum SessionOutcome: String, Codable, CaseIterable, Sendable {
         self == .cancelled || self == .interrupted
     }
 
-    var progressTitle: String {
+    var progressTitle: LocalizedCopy {
         switch self {
         case .completed:
-            return "completed"
+            return LocalizedCopy("completed")
         case .cancelled, .interrupted:
-            return "broken"
+            return LocalizedCopy("broken")
         }
     }
 }
