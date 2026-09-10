@@ -22,16 +22,26 @@ struct TimerView: View {
     }
 
     private var remainingTimeDisplay: some View {
-        ViewThatFits(in: .horizontal) {
-            remainingClockText(font: FocusTypography.timer)
-            remainingClockText(font: FocusTypography.timerFitted)
-            remainingClockText(font: FocusTypography.compactTimer)
+        ZStack {
+            FocusTimerProgressRing(progress: progressFraction)
+                .frame(width: ringSize, height: ringSize)
+                .animation(
+                    reduceMotion ? nil : .linear(duration: 0.2),
+                    value: progressFraction
+                )
+            ViewThatFits(in: .horizontal) {
+                remainingClockText(font: FocusTypography.timer)
+                remainingClockText(font: FocusTypography.timerFitted)
+                remainingClockText(font: FocusTypography.compactTimer)
+            }
+            .padding(FocusSpacing.large)
         }
         .frame(maxWidth: .infinity)
         .animation(
             reduceMotion ? nil : .linear(duration: 0.2),
             value: timer.engine.remainingSeconds
         )
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel(TimerAccessibilityCopy.remainingTime)
         .accessibilityValue(TimerAccessibilityPresentation.spokenRemaining(seconds: remainingSeconds, locale: locale))
         .accessibilityIdentifier(TimerAccessibilityIdentifier.timerRemainingTime)
@@ -72,6 +82,17 @@ struct TimerView: View {
 
     private var remainingSeconds: Int {
         timer.engine.remainingSeconds(at: .now)
+    }
+
+    private var progressFraction: CGFloat {
+        let planned = timer.engine.plannedDurationSeconds
+        guard planned > 0 else { return 0 }
+        let elapsed = max(0, planned - remainingSeconds)
+        return CGFloat(elapsed) / CGFloat(planned)
+    }
+
+    private var ringSize: CGFloat {
+        220
     }
 
     private var statusTitle: LocalizedCopy {

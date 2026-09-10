@@ -29,20 +29,15 @@ struct PlansListView: View {
                             AvailabilityNotice(availability: availability)
                                 .padding(.horizontal)
                         }
-                        ContentUnavailableView {
-                            VStack(spacing: FocusSpacing.medium) {
-                                EaseFocusMark(size: 64)
-                                Text(PlansCopy.emptyTitle)
-                                    .font(FocusTypography.title)
-                                    .foregroundStyle(Color.focusPrimary)
-                            }
-                        } description: {
-                            Text(PlansCopy.emptyDescription)
-                        } actions: {
+                        FocusEmptyState(
+                            title: PlansCopy.emptyTitle,
+                            description: PlansCopy.emptyDescription
+                        ) {
                             Button(PlansCopy.createPlan, systemImage: "plus") {
                                 isCreatingPlan = true
                             }
                             .accessibilityIdentifier("createPlanFromPlans")
+                            .focusPrimaryActionStyle()
                         }
                     }
                 } else {
@@ -94,21 +89,14 @@ struct PlansListView: View {
 }
 
 private struct PlanRowView: View {
-    @Environment(\.locale) private var locale
     let plan: GoalPlan
 
     var body: some View {
-        VStack(alignment: .leading, spacing: FocusSpacing.small) {
-            Text(plan.title)
-                .font(FocusTypography.body)
-            Text(ProgressPresentation.planTaskLine(
-                open: plan.pendingTasks.count,
-                done: plan.orderedTasks.filter { $0.status == .completed }.count,
-                locale: locale
-            ))
-                .font(FocusTypography.footnote)
-                .foregroundStyle(.secondary)
-        }
+        FocusPlanRowContent(
+            title: plan.title,
+            openCount: plan.pendingTasks.count,
+            doneCount: plan.orderedTasks.filter { $0.status == .completed }.count
+        )
         .padding(.vertical, 4)
     }
 }

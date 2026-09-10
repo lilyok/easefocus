@@ -48,21 +48,15 @@ struct TodayView: View {
                     VStack(spacing: FocusSpacing.large) {
                         accessNotices
                             .padding(.horizontal)
-                        ContentUnavailableView {
-                            VStack(spacing: FocusSpacing.medium) {
-                                EaseFocusMark(size: 64)
-                                Text(TodayCopy.readyToFocus)
-                                    .font(FocusTypography.title)
-                                    .foregroundStyle(Color.focusPrimary)
-                            }
-                        } description: {
-                            Text(TodayCopy.emptyDescription)
-                        } actions: {
+                        FocusEmptyState(
+                            title: TodayCopy.readyToFocus,
+                            description: TodayCopy.emptyDescription
+                        ) {
                             Button(TodayCopy.createPlan, systemImage: "plus") {
                                 isCreatingPlan = true
                             }
                             .accessibilityIdentifier("createPlan")
-                            .frame(minWidth: FocusSpacing.minimumTapTarget, minHeight: FocusSpacing.minimumTapTarget)
+                            .focusPrimaryActionStyle()
                         }
                     }
                 } else {
@@ -87,10 +81,7 @@ struct TodayView: View {
                                     startFocus(on: nextTask)
                                 }
                                 .accessibilityIdentifier("startFocus")
-                                .frame(
-                                    minWidth: FocusSpacing.minimumTapTarget,
-                                    minHeight: FocusSpacing.minimumTapTarget
-                                )
+                                .focusPrimaryActionStyle()
                                 .disabled(!timer.engine.canStartFocus)
                             } header: {
                                 Text(TodayCopy.upNext)
@@ -113,13 +104,11 @@ struct TodayView: View {
                                         }
                                         .accessibilityLabel(TodayCopy.openPlan(named: plan.title))
                                     } label: {
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(plan.title)
-                                                .font(FocusTypography.body)
-                                            Text(planProgressLabel(plan))
-                                                .font(FocusTypography.footnote)
-                                                .foregroundStyle(.secondary)
-                                        }
+                                        FocusPlanRowContent(
+                                            title: plan.title,
+                                            openCount: plan.pendingTasks.count,
+                                            doneCount: plan.completedTasks.count
+                                        )
                                     }
                                 }
                             } header: {
@@ -286,12 +275,6 @@ struct TodayView: View {
                 }
             }
         )
-    }
-
-    private func planProgressLabel(_ plan: GoalPlan) -> String {
-        let openCount = plan.pendingTasks.count
-        let doneCount = plan.completedTasks.count
-        return ProgressPresentation.planTaskLine(open: openCount, done: doneCount, locale: locale)
     }
 
     private var showsAccessNotices: Bool {
