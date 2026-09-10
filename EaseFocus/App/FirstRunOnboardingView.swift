@@ -15,6 +15,12 @@ struct FirstRunOnboardingView: View {
         NavigationStack {
             Form {
                 Section {
+                    HStack {
+                        Spacer(minLength: 0)
+                        EaseFocusMark(size: 72)
+                        Spacer(minLength: 0)
+                    }
+                    .listRowBackground(Color.clear)
                     Text(OnboardingCopy.introduction)
                         .font(FocusTypography.body)
                 }

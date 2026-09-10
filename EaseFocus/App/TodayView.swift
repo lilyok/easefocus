@@ -49,7 +49,12 @@ struct TodayView: View {
                         accessNotices
                             .padding(.horizontal)
                         ContentUnavailableView {
-                            Label(TodayCopy.readyToFocus, systemImage: "timer")
+                            VStack(spacing: FocusSpacing.medium) {
+                                EaseFocusMark(size: 64)
+                                Text(TodayCopy.readyToFocus)
+                                    .font(FocusTypography.title)
+                                    .foregroundStyle(Color.focusPrimary)
+                            }
                         } description: {
                             Text(TodayCopy.emptyDescription)
                         } actions: {
