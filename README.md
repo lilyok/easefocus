@@ -6,7 +6,7 @@ The app uses Apple’s Foundation Models framework to create personalized plans 
 
 ## Status
 
-Phase 2: survey, on-device generated drafts with review before save, plus the Phase 1 manual planner and timer. Apple Intelligence remains optional.
+First-release candidate / App Store listing (`lil.pomodoro`). Paste kit and screenshot shot list live in `AppStore/App-Store-Connect.md`.
 
 ## Platform
 

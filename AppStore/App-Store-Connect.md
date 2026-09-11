@@ -30,7 +30,7 @@ EaseFocus replaces the previous Pomodoro app experience on this listing.
 
 This update starts fresh: EaseFocus does not import `pomodoro.sqlite`. Existing users will not see historical goals, tasks, or Pomodoro counts from the old app. New plans and sessions are stored in `easefocus.store`. The bundle ID remains `lil.pomodoro`.
 
-Also in this update: on-device plan generation when Apple Intelligence is available, plan refine and history, weekly progress, Spanish UI chrome, App Icon, and clearer privacy explanations in Settings.
+Also in this update: on-device plan generation when Apple Intelligence is available, plan refine and history, weekly progress, Spanish UI chrome, App Icon, clearer privacy explanations in Settings, sessions-before-long-break in Settings, and Play timer sounds (the scheduled timer-finished notification follows that toggle).
 
 ## App Review notes
 
