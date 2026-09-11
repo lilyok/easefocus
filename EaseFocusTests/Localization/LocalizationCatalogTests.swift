@@ -49,6 +49,10 @@ struct LocalizationCatalogTests {
         #expect(AppCopy.plans.localized(L10n.spanish) == "Planes")
         #expect(AppCopy.progress.localized(L10n.spanish) == "Progreso")
         #expect(AppCopy.settings.localized(L10n.spanish) == "Ajustes")
+        #expect(SettingsCopy.privacy.localized(L10n.spanish) == "Privacidad")
+        #expect(
+            SettingsCopy.privacyOverview.localized(L10n.spanish).contains("no te rastrea ni usa analítica")
+        )
         #expect(AppCopy.startFocus.localized(L10n.spanish) == "Empezar enfoque")
         #expect(AppCopy.cancel.localized(L10n.spanish) == "Cancelar")
         #expect(AppCopy.confirm.localized(L10n.spanish) == "Confirmar")
