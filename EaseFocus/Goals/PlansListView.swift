@@ -95,7 +95,7 @@ private struct PlanRowView: View {
         FocusPlanRowContent(
             title: plan.title,
             openCount: plan.pendingTasks.count,
-            doneCount: plan.orderedTasks.filter { $0.status == .completed }.count
+            doneCount: plan.completedTasks.count
         )
         .padding(.vertical, 4)
     }

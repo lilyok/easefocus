@@ -95,7 +95,7 @@ struct RefinePlanView: View {
                 }
                 .disabled(!coordinator.canConfirm(plan: plan))
                 .accessibilityIdentifier(PlanRefinementAccessibilityIdentifier.confirm)
-                .focusPrimaryActionStyle()
+                .focusPrimaryToolbarActionStyle()
             }
         }
     }

@@ -24,11 +24,12 @@ struct TimerView: View {
     private var remainingTimeDisplay: some View {
         ZStack {
             FocusTimerProgressRing(progress: progressFraction)
-                .frame(width: ringSize, height: ringSize)
                 .animation(
                     reduceMotion ? nil : .linear(duration: 0.2),
                     value: progressFraction
                 )
+            // Propose the ring’s inner width so ViewThatFits steps down before digits
+            // spill past the arc (especially at larger Dynamic Type).
             ViewThatFits(in: .horizontal) {
                 remainingClockText(font: FocusTypography.timer)
                 remainingClockText(font: FocusTypography.timerFitted)
@@ -36,6 +37,7 @@ struct TimerView: View {
             }
             .padding(FocusSpacing.large)
         }
+        .frame(width: ringSize, height: ringSize)
         .frame(maxWidth: .infinity)
         .animation(
             reduceMotion ? nil : .linear(duration: 0.2),

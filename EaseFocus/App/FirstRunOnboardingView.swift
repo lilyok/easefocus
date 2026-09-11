@@ -47,7 +47,7 @@ struct FirstRunOnboardingView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(OnboardingCopy.continueAction, action: onContinue)
                         .accessibilityIdentifier("onboardingContinue")
-                        .focusPrimaryActionStyle()
+                        .focusPrimaryToolbarActionStyle()
                 }
             }
             .task {

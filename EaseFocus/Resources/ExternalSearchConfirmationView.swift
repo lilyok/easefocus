@@ -33,7 +33,7 @@ struct ExternalSearchConfirmationView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(ExternalSearchPrivacyCopy.confirmAction, action: onConfirm)
                         .accessibilityIdentifier("confirmSearchGoogle")
-                        .focusPrimaryActionStyle()
+                        .focusPrimaryToolbarActionStyle()
                 }
             }
         }
