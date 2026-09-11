@@ -9,7 +9,7 @@ import AudioToolbox
 protocol NotificationScheduling: Sendable {
     func currentAccess() async -> NotificationAccess
     func requestAuthorization() async -> Bool
-    func scheduleTimerFinished(at date: Date) async
+    func scheduleTimerFinished(at date: Date, playsSound: Bool) async
     func cancelTimerFinished()
     func announcePeriodFinished(isBreak: Bool, playsSound: Bool)
 }
@@ -37,11 +37,11 @@ struct UserNotificationScheduler: NotificationScheduling {
         return NotificationAccess.from(authorizationStatus: settings.authorizationStatus)
     }
 
-    func scheduleTimerFinished(at date: Date) async {
+    func scheduleTimerFinished(at date: Date, playsSound: Bool) async {
         cancelTimerFinished()
         let request = UNNotificationRequest(
             identifier: Self.timerFinishedIdentifier,
-            content: makeContent(body: TimerNotificationCopy.finished.localized(), playsSound: true),
+            content: makeContent(body: TimerNotificationCopy.finished.localized(), playsSound: playsSound),
             trigger: UNTimeIntervalNotificationTrigger(
                 timeInterval: max(1, date.timeIntervalSinceNow),
                 repeats: false
@@ -113,10 +113,16 @@ final class EaseFocusNotificationDelegate: NSObject, UNUserNotificationCenterDel
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
+        // Immediate announce banners stay silent so foreground completion does not stack
+        // a second sound on top of TimerCompletionFeedback.
         if notification.request.identifier == UserNotificationScheduler.timerFinishedNowIdentifier {
             return [.banner, .list]
         }
-        return [.banner, .list, .sound]
+        var options: UNNotificationPresentationOptions = [.banner, .list]
+        if notification.request.content.sound != nil {
+            options.insert(.sound)
+        }
+        return options
     }
 
     func userNotificationCenter(

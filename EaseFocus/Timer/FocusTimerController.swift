@@ -34,8 +34,12 @@ final class FocusTimerController {
     var settings: FocusTimerSettings {
         get { engine.settings }
         set {
+            let previousSound = engine.settings.playsCompletionSound
             engine.settings = newValue
             persistEngine()
+            if previousSound != newValue.playsCompletionSound {
+                Task { await rescheduleRunningNotificationIfNeeded() }
+            }
         }
     }
 
@@ -107,10 +111,17 @@ final class FocusTimerController {
             _ = await notifications.requestAuthorization()
             await refreshNotificationAccess()
         }
+        await rescheduleRunningNotificationIfNeeded()
+    }
+
+    private func rescheduleRunningNotificationIfNeeded() async {
         guard engine.isRunning, let periodEndsAt = engine.periodEndsAt else {
             return
         }
-        await notifications.scheduleTimerFinished(at: periodEndsAt)
+        await notifications.scheduleTimerFinished(
+            at: periodEndsAt,
+            playsSound: engine.settings.playsCompletionSound
+        )
     }
 
     private func apply(
@@ -159,7 +170,12 @@ final class FocusTimerController {
                     playsSound: engine.settings.playsCompletionSound
                 )
             case .shouldScheduleNotification(let date):
-                Task { await notifications.scheduleTimerFinished(at: date) }
+                Task {
+                    await notifications.scheduleTimerFinished(
+                        at: date,
+                        playsSound: engine.settings.playsCompletionSound
+                    )
+                }
             case .shouldCancelNotification:
                 notifications.cancelTimerFinished()
             }
