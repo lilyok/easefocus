@@ -36,6 +36,7 @@ nonisolated enum SettingsCopy {
     static let appleIntelligence = AppCopy.appleIntelligence
     static let privacy = LocalizedCopy("Privacy")
     static let startBreaksAutomatically = LocalizedCopy("Start breaks automatically")
+    static let playTimerSounds = LocalizedCopy("Play timer sounds")
     static let generatedPlansHint = LocalizedCopy(
         "Generated plans start from Today or Plans, and you review every draft before it is saved."
     )
@@ -57,6 +58,13 @@ nonisolated enum SettingsCopy {
 
     static func longBreak(_ minutes: Int) -> LocalizedCopy {
         LocalizedCopy(format: "Long break: \(minutes)", english: "Long break: \(minutes)")
+    }
+
+    static func sessionsBeforeLongBreak(_ count: Int) -> LocalizedCopy {
+        LocalizedCopy(
+            format: "Sessions before long break: \(count)",
+            english: "Sessions before long break: \(count)"
+        )
     }
 }
 

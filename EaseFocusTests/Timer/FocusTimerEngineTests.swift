@@ -142,6 +142,62 @@ struct FocusTimerEngineTests {
     }
 
     @Test
+    func changingSessionsBeforeLongBreakChangesWhenLongBreakStarts() {
+        var engine = FocusTimerEngine(
+            settings: FocusTimerSettings(
+                focusSeconds: 10,
+                shortBreakSeconds: 5,
+                longBreakSeconds: 20,
+                sessionsBeforeLongBreak: 4,
+                startBreaksAutomatically: true
+            )
+        )
+
+        _ = engine.startFocus(taskID: nil, now: start)
+        let first = engine.tick(now: start.addingTimeInterval(10))
+        #expect(first.contains(.didStartBreak(isLong: false, plannedDurationSeconds: 5)))
+        #expect(!engine.isLongBreak)
+        _ = engine.tick(now: start.addingTimeInterval(15))
+
+        engine.settings.sessionsBeforeLongBreak = 2
+        _ = engine.startFocus(taskID: nil, now: start.addingTimeInterval(15))
+        let second = engine.tick(now: start.addingTimeInterval(25))
+        #expect(second.contains(.didStartBreak(isLong: true, plannedDurationSeconds: 20)))
+        #expect(engine.isLongBreak)
+        #expect(engine.completedFocusCount == 2)
+    }
+
+    @Test
+    func manualBreakUsesUpdatedSessionsBeforeLongBreak() {
+        var engine = FocusTimerEngine(
+            settings: FocusTimerSettings(
+                focusSeconds: 10,
+                shortBreakSeconds: 5,
+                longBreakSeconds: 20,
+                sessionsBeforeLongBreak: 2
+            )
+        )
+
+        _ = engine.startFocus(taskID: nil, now: start)
+        _ = engine.tick(now: start.addingTimeInterval(10))
+        _ = engine.skipBreak()
+        _ = engine.startFocus(taskID: nil, now: start.addingTimeInterval(11))
+        _ = engine.tick(now: start.addingTimeInterval(21))
+        let breakEvents = engine.startBreak(now: start.addingTimeInterval(21))
+
+        #expect(engine.isLongBreak)
+        #expect(breakEvents.contains(.didStartBreak(isLong: true, plannedDurationSeconds: 20)))
+
+        _ = engine.tick(now: start.addingTimeInterval(41))
+        engine.settings.sessionsBeforeLongBreak = 4
+        _ = engine.startFocus(taskID: nil, now: start.addingTimeInterval(42))
+        _ = engine.tick(now: start.addingTimeInterval(52))
+        let shortBreakEvents = engine.startBreak(now: start.addingTimeInterval(52))
+        #expect(!engine.isLongBreak)
+        #expect(shortBreakEvents.contains(.didStartBreak(isLong: false, plannedDurationSeconds: 5)))
+    }
+
+    @Test
     func cancelingFocusRecordsABrokenTomatoAndDoesNotStartBreakOrNextFocus() {
         var engine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 60, shortBreakSeconds: 5))
         _ = engine.startFocus(taskID: UUID(), now: start)

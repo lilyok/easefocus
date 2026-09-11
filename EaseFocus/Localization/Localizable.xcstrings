@@ -4486,6 +4486,40 @@
           }
         }
       }
+    },
+    "Play timer sounds": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play timer sounds"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproducir sonidos del temporizador"
+          }
+        }
+      }
+    },
+    "Sessions before long break: %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessions before long break: %lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesiones antes del descanso largo: %lld"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

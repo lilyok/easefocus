@@ -6,35 +6,43 @@ import Testing
 private struct SilentNotifications: NotificationScheduling {
     func currentAccess() async -> NotificationAccess { .denied }
     func requestAuthorization() async -> Bool { false }
-    func scheduleTimerFinished(at date: Date) async {}
+    func scheduleTimerFinished(at date: Date, playsSound: Bool) async {}
     func cancelTimerFinished() {}
-    func announcePeriodFinished(isBreak: Bool) {}
+    func announcePeriodFinished(isBreak: Bool, playsSound: Bool) {}
 }
 
 private final class RecordingNotifications: NotificationScheduling, @unchecked Sendable {
     private let lock = NSLock()
-    private var scheduled: [Date] = []
-    private var announcements: [Bool] = []
+    private var scheduled: [(date: Date, playsSound: Bool)] = []
+    private var announcements: [(isBreak: Bool, playsSound: Bool)] = []
 
     var scheduledDates: [Date] {
-        lock.withLock { scheduled }
+        lock.withLock { scheduled.map(\.date) }
+    }
+
+    var scheduledPlaySounds: [Bool] {
+        lock.withLock { scheduled.map(\.playsSound) }
     }
 
     var announcementIsBreaks: [Bool] {
-        lock.withLock { announcements }
+        lock.withLock { announcements.map(\.isBreak) }
+    }
+
+    var announcementPlaySounds: [Bool] {
+        lock.withLock { announcements.map(\.playsSound) }
     }
 
     func currentAccess() async -> NotificationAccess { .allowed }
     func requestAuthorization() async -> Bool { false }
 
-    func scheduleTimerFinished(at date: Date) async {
-        lock.withLock { scheduled.append(date) }
+    func scheduleTimerFinished(at date: Date, playsSound: Bool) async {
+        lock.withLock { scheduled.append((date, playsSound)) }
     }
 
     func cancelTimerFinished() {}
 
-    func announcePeriodFinished(isBreak: Bool) {
-        lock.withLock { announcements.append(isBreak) }
+    func announcePeriodFinished(isBreak: Bool, playsSound: Bool) {
+        lock.withLock { announcements.append((isBreak, playsSound)) }
     }
 }
 
@@ -52,7 +60,9 @@ struct FocusTimerControllerTests {
         )
         first.settings.focusSeconds = 15 * 60
         first.settings.shortBreakSeconds = 3 * 60
+        first.settings.sessionsBeforeLongBreak = 3
         first.settings.startBreaksAutomatically = true
+        first.settings.playsCompletionSound = false
 
         let relaunched = FocusTimerController(
             settings: FocusTimerSettings(focusSeconds: 99 * 60),
@@ -62,7 +72,9 @@ struct FocusTimerControllerTests {
 
         #expect(relaunched.settings.focusSeconds == 15 * 60)
         #expect(relaunched.settings.shortBreakSeconds == 3 * 60)
+        #expect(relaunched.settings.sessionsBeforeLongBreak == 3)
         #expect(relaunched.settings.startBreaksAutomatically)
+        #expect(!relaunched.settings.playsCompletionSound)
     }
 
     @Test
@@ -243,7 +255,7 @@ struct FocusTimerControllerTests {
         defer { defaults.removePersistentDomain(forName: suiteName) }
         let recorder = RecordingNotifications()
         let controller = FocusTimerController(
-            settings: FocusTimerSettings(focusSeconds: 60),
+            settings: FocusTimerSettings(focusSeconds: 60, playsCompletionSound: false),
             notifications: recorder,
             defaults: defaults
         )
@@ -252,6 +264,39 @@ struct FocusTimerControllerTests {
         controller.tick(now: start.addingTimeInterval(60))
 
         #expect(recorder.announcementIsBreaks == [false])
+        #expect(recorder.announcementPlaySounds == [false])
+    }
+
+    @Test
+    @MainActor
+    func reschedulesRunningNotificationWhenSoundToggleChanges() async throws {
+        let container = try EaseFocusStore.inMemoryContainer()
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let (defaults, suiteName) = uniqueDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let recorder = RecordingNotifications()
+        let controller = FocusTimerController(
+            settings: FocusTimerSettings(focusSeconds: 60, playsCompletionSound: true),
+            notifications: recorder,
+            defaults: defaults
+        )
+        controller.attach(modelContext: container.mainContext, now: start)
+        controller.startFocus(task: nil, now: start)
+
+        let first = try await waitForScheduled(in: recorder, playsSound: true)
+        #expect(first.date == start.addingTimeInterval(60))
+
+        let countBeforeMute = recorder.scheduledDates.count
+        var muted = controller.settings
+        muted.playsCompletionSound = false
+        controller.settings = muted
+
+        let second = try await waitForScheduled(
+            in: recorder,
+            playsSound: false,
+            afterCount: countBeforeMute
+        )
+        #expect(second.date == first.date)
     }
 
     @Test
@@ -285,6 +330,7 @@ struct FocusTimerControllerTests {
         let scheduled = try await waitForScheduledDate(in: recorder)
         #expect(relaunched.engine.phase == .runningFocus)
         #expect(scheduled == start.addingTimeInterval(TimeInterval(focusSeconds)))
+        #expect(recorder.scheduledPlaySounds.last == true)
     }
 
     private func uniqueDefaults() -> (UserDefaults, String) {
@@ -296,14 +342,29 @@ struct FocusTimerControllerTests {
         in recorder: RecordingNotifications,
         timeout: Duration = .seconds(5)
     ) async throws -> Date {
+        try await waitForScheduled(in: recorder, playsSound: true, timeout: timeout).date
+    }
+
+    private func waitForScheduled(
+        in recorder: RecordingNotifications,
+        playsSound: Bool,
+        afterCount: Int = 0,
+        timeout: Duration = .seconds(5)
+    ) async throws -> (date: Date, playsSound: Bool) {
         let deadline = ContinuousClock.now.advanced(by: timeout)
         while ContinuousClock.now < deadline {
-            if let date = recorder.scheduledDates.last {
-                return date
+            let dates = recorder.scheduledDates
+            let sounds = recorder.scheduledPlaySounds
+            if dates.count > afterCount {
+                for index in stride(from: dates.count - 1, through: afterCount, by: -1) {
+                    if sounds[index] == playsSound {
+                        return (dates[index], sounds[index])
+                    }
+                }
             }
             try await Task.sleep(for: .milliseconds(20))
         }
-        Issue.record("Timed out waiting for a restored timer notification")
-        return .distantPast
+        Issue.record("Timed out waiting for scheduled notification playsSound=\(playsSound)")
+        return (.distantPast, playsSound)
     }
 }

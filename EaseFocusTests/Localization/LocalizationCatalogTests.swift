@@ -50,6 +50,11 @@ struct LocalizationCatalogTests {
         #expect(AppCopy.progress.localized(L10n.spanish) == "Progreso")
         #expect(AppCopy.settings.localized(L10n.spanish) == "Ajustes")
         #expect(SettingsCopy.privacy.localized(L10n.spanish) == "Privacidad")
+        #expect(SettingsCopy.playTimerSounds.localized(L10n.spanish) == "Reproducir sonidos del temporizador")
+        #expect(
+            SettingsCopy.sessionsBeforeLongBreak(4).localized(L10n.spanish)
+                == "Sesiones antes del descanso largo: 4"
+        )
         #expect(
             SettingsCopy.privacyOverview.localized(L10n.spanish).contains("no te rastrea ni usa analítica")
         )

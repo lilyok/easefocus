@@ -34,8 +34,12 @@ final class FocusTimerController {
     var settings: FocusTimerSettings {
         get { engine.settings }
         set {
+            let previousSound = engine.settings.playsCompletionSound
             engine.settings = newValue
             persistEngine()
+            if previousSound != newValue.playsCompletionSound {
+                Task { await rescheduleRunningNotificationIfNeeded() }
+            }
         }
     }
 
@@ -107,10 +111,17 @@ final class FocusTimerController {
             _ = await notifications.requestAuthorization()
             await refreshNotificationAccess()
         }
+        await rescheduleRunningNotificationIfNeeded()
+    }
+
+    private func rescheduleRunningNotificationIfNeeded() async {
         guard engine.isRunning, let periodEndsAt = engine.periodEndsAt else {
             return
         }
-        await notifications.scheduleTimerFinished(at: periodEndsAt)
+        await notifications.scheduleTimerFinished(
+            at: periodEndsAt,
+            playsSound: engine.settings.playsCompletionSound
+        )
     }
 
     private func apply(
@@ -138,11 +149,15 @@ final class FocusTimerController {
                 revertActiveTask(at: endedAt)
                 openSession?.finish(outcome: .completed, at: endedAt, elapsedSeconds: elapsed)
                 openSession = nil
-                notifications.announcePeriodFinished(isBreak: false)
+                notifications.announcePeriodFinished(
+                    isBreak: false,
+                    playsSound: engine.settings.playsCompletionSound
+                )
             case .didCancelFocus(let elapsed, let endedAt):
                 revertActiveTask(at: endedAt)
                 openSession?.finish(outcome: .cancelled, at: endedAt, elapsedSeconds: elapsed)
                 openSession = nil
+                TimerCompletionFeedback.play(.cancelled, playsSound: false)
             case .didInterruptFocus(let elapsed, let endedAt):
                 revertActiveTask(at: endedAt)
                 openSession?.finish(outcome: .interrupted, at: endedAt, elapsedSeconds: elapsed)
@@ -150,9 +165,17 @@ final class FocusTimerController {
             case .didStartBreak:
                 break
             case .didCompleteBreak:
-                notifications.announcePeriodFinished(isBreak: true)
+                notifications.announcePeriodFinished(
+                    isBreak: true,
+                    playsSound: engine.settings.playsCompletionSound
+                )
             case .shouldScheduleNotification(let date):
-                Task { await notifications.scheduleTimerFinished(at: date) }
+                Task {
+                    await notifications.scheduleTimerFinished(
+                        at: date,
+                        playsSound: engine.settings.playsCompletionSound
+                    )
+                }
             case .shouldCancelNotification:
                 notifications.cancelTimerFinished()
             }
