@@ -63,11 +63,10 @@ struct SessionHistoryView: View {
                     sessionCount: sessions.count,
                     planRowCount: planRows.count
                 ) {
-                    ContentUnavailableView {
-                        Label(ProgressCopy.emptyTitle, systemImage: "chart.line.uptrend.xyaxis")
-                    } description: {
-                        Text(ProgressCopy.emptyDescription)
-                    }
+                    FocusEmptyState(
+                        title: ProgressCopy.emptyTitle,
+                        description: ProgressCopy.emptyDescription
+                    )
                 } else {
                     progressList
                 }
@@ -165,20 +164,13 @@ struct SessionHistoryView: View {
     }
 
     private func planRowView(_ row: ProgressPlanRow) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: FocusSpacing.small) {
-                Text(row.title)
-                    .font(FocusTypography.body)
-                    .foregroundStyle(Color.focusPrimary)
-                if row.isCompletedPlan {
-                    Text(ProgressCopy.completedPlan)
-                        .font(FocusTypography.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            Text(ProgressPresentation.planTaskLine(open: row.openTaskCount, done: row.doneTaskCount, locale: locale))
-                .font(FocusTypography.footnote)
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: FocusSpacing.small) {
+            FocusPlanRowContent(
+                title: row.title,
+                openCount: row.openTaskCount,
+                doneCount: row.doneTaskCount,
+                showsCompletedBadge: row.isCompletedPlan
+            )
             Text(ProgressPresentation.planWeekLine(
                 completed: row.completedSessionCount,
                 focusedSeconds: row.focusedSeconds,

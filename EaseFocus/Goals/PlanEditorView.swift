@@ -131,6 +131,7 @@ struct PlanEditorView: View {
                     Button(PlanEditorCopy.save, action: save)
                         .disabled(!canSave)
                         .accessibilityIdentifier("savePlan")
+                        .focusPrimaryToolbarActionStyle()
                 }
             }
             .persistenceSaveAlert(

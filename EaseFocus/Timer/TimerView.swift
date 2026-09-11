@@ -22,16 +22,28 @@ struct TimerView: View {
     }
 
     private var remainingTimeDisplay: some View {
-        ViewThatFits(in: .horizontal) {
-            remainingClockText(font: FocusTypography.timer)
-            remainingClockText(font: FocusTypography.timerFitted)
-            remainingClockText(font: FocusTypography.compactTimer)
+        ZStack {
+            FocusTimerProgressRing(progress: progressFraction)
+                .animation(
+                    reduceMotion ? nil : .linear(duration: 0.2),
+                    value: progressFraction
+                )
+            // Propose the ring’s inner width so ViewThatFits steps down before digits
+            // spill past the arc (especially at larger Dynamic Type).
+            ViewThatFits(in: .horizontal) {
+                remainingClockText(font: FocusTypography.timer)
+                remainingClockText(font: FocusTypography.timerFitted)
+                remainingClockText(font: FocusTypography.compactTimer)
+            }
+            .padding(FocusSpacing.large)
         }
+        .frame(width: ringSize, height: ringSize)
         .frame(maxWidth: .infinity)
         .animation(
             reduceMotion ? nil : .linear(duration: 0.2),
             value: timer.engine.remainingSeconds
         )
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel(TimerAccessibilityCopy.remainingTime)
         .accessibilityValue(TimerAccessibilityPresentation.spokenRemaining(seconds: remainingSeconds, locale: locale))
         .accessibilityIdentifier(TimerAccessibilityIdentifier.timerRemainingTime)
@@ -72,6 +84,17 @@ struct TimerView: View {
 
     private var remainingSeconds: Int {
         timer.engine.remainingSeconds(at: .now)
+    }
+
+    private var progressFraction: CGFloat {
+        let planned = timer.engine.plannedDurationSeconds
+        guard planned > 0 else { return 0 }
+        let elapsed = max(0, planned - remainingSeconds)
+        return CGFloat(elapsed) / CGFloat(planned)
+    }
+
+    private var ringSize: CGFloat {
+        220
     }
 
     private var statusTitle: LocalizedCopy {
