@@ -40,6 +40,13 @@ nonisolated enum SettingsCopy {
     static let generatedPlansHint = LocalizedCopy(
         "Generated plans start from Today or Plans, and you review every draft before it is saved."
     )
+    static let privacyOverview = LocalizedCopy(
+        """
+        Goals, survey answers, generated plans, and focus history stay on this device. EaseFocus does not track you or use analytics.
+
+        When Apple Intelligence is available, plan generation runs on device.
+        """
+    )
 
     static func focusMinutes(_ minutes: Int) -> LocalizedCopy {
         LocalizedCopy(format: "Focus minutes: \(minutes)", english: "Focus minutes: \(minutes)")

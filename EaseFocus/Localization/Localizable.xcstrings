@@ -4470,6 +4470,23 @@
         }
       }
     },
+    "Goals, survey answers, generated plans, and focus history stay on this device. EaseFocus does not track you or use analytics.\n\nWhen Apple Intelligence is available, plan generation runs on device.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goals, survey answers, generated plans, and focus history stay on this device. EaseFocus does not track you or use analytics.\n\nWhen Apple Intelligence is available, plan generation runs on device."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los objetivos, las respuestas de la encuesta, los planes generados y el historial de enfoque se quedan en este dispositivo. EaseFocus no te rastrea ni usa analítica.\n\nCuando Apple Intelligence está disponible, la generación de planes se ejecuta en el dispositivo."
+          }
+        }
+      }
+    },
     "Play timer sounds": {
       "extractionState": "manual",
       "localizations": {

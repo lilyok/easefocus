@@ -55,6 +55,9 @@ struct LocalizationCatalogTests {
             SettingsCopy.sessionsBeforeLongBreak(4).localized(L10n.spanish)
                 == "Sesiones antes del descanso largo: 4"
         )
+        #expect(
+            SettingsCopy.privacyOverview.localized(L10n.spanish).contains("no te rastrea ni usa analítica")
+        )
         #expect(AppCopy.startFocus.localized(L10n.spanish) == "Empezar enfoque")
         #expect(AppCopy.cancel.localized(L10n.spanish) == "Cancelar")
         #expect(AppCopy.confirm.localized(L10n.spanish) == "Confirmar")

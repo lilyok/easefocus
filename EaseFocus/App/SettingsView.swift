@@ -41,6 +41,8 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Text(SettingsCopy.privacyOverview)
+                        .font(FocusTypography.footnote)
                     Text(ExternalSearchPrivacyCopy.body)
                         .font(FocusTypography.footnote)
                 } header: {
