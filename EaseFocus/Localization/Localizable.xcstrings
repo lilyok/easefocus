@@ -3107,23 +3107,6 @@
         }
       }
     },
-    "Search happens in your browser": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search happens in your browser"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La búsqueda ocurre en tu navegador"
-          }
-        }
-      }
-    },
     "Search Google?": {
       "extractionState": "manual",
       "localizations": {
