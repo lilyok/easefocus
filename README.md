@@ -26,7 +26,7 @@ EaseFocus starts fresh and does not import historical goals or Pomodoro counts f
 
 ## Privacy
 
-Plan generation runs on device when Apple Intelligence is available. Optional Google search sends only the search query, and only after an explicit tap on Search Google. Generated plans and survey answers stay local.
+Goals, survey answers, generated plans, and focus history stay on this device. EaseFocus does not track you or use analytics. Plan generation runs on device when Apple Intelligence is available. Optional Google search sends only the search query, and only after an explicit tap on Search Google.
 
 ## Live Foundation Models evaluations
 

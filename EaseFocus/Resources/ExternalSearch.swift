@@ -59,7 +59,6 @@ nonisolated enum SearchQueryValidationCopy {
 }
 
 nonisolated enum ExternalSearchPrivacyCopy {
-    static let title = LocalizedCopy("Search happens in your browser")
     static let confirmationTitle = LocalizedCopy("Search Google?")
     static let confirmAction = AppCopy.searchGoogle
     static let cancelAction = AppCopy.cancel
