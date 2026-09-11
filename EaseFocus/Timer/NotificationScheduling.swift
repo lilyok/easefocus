@@ -11,7 +11,7 @@ protocol NotificationScheduling: Sendable {
     func requestAuthorization() async -> Bool
     func scheduleTimerFinished(at date: Date) async
     func cancelTimerFinished()
-    func announcePeriodFinished(isBreak: Bool)
+    func announcePeriodFinished(isBreak: Bool, playsSound: Bool)
 }
 
 struct UserNotificationScheduler: NotificationScheduling {
@@ -55,8 +55,8 @@ struct UserNotificationScheduler: NotificationScheduling {
             .removePendingNotificationRequests(withIdentifiers: [Self.timerFinishedIdentifier])
     }
 
-    func announcePeriodFinished(isBreak: Bool) {
-        TimerAlertSound.play()
+    func announcePeriodFinished(isBreak: Bool, playsSound: Bool) {
+        TimerCompletionFeedback.play(.completed, playsSound: playsSound)
         Task {
             await deliverImmediateNotification(isBreak: isBreak)
         }

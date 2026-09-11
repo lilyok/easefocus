@@ -16,7 +16,11 @@ struct SettingsView: View {
                     durationStepper(minutes: focusSecondsBinding, label: SettingsCopy.focusMinutes)
                     durationStepper(minutes: shortBreakBinding, label: SettingsCopy.shortBreak)
                     durationStepper(minutes: longBreakBinding, label: SettingsCopy.longBreak)
+                    Stepper(value: sessionsBeforeLongBreakBinding, in: 2...8) {
+                        Text(SettingsCopy.sessionsBeforeLongBreak(timer.settings.sessionsBeforeLongBreak))
+                    }
                     Toggle(SettingsCopy.startBreaksAutomatically, isOn: automaticBreakBinding)
+                    Toggle(SettingsCopy.playTimerSounds, isOn: playTimerSoundsBinding)
                 } header: {
                     Text(SettingsCopy.timer)
                 }
@@ -40,7 +44,7 @@ struct SettingsView: View {
                     Text(ExternalSearchPrivacyCopy.body)
                         .font(FocusTypography.footnote)
                 } header: {
-                    Text(ExternalSearchPrivacyCopy.title)
+                    Text(SettingsCopy.privacy)
                 }
             }
             .scrollContentBackground(.hidden)
@@ -77,6 +81,20 @@ struct SettingsView: View {
         Binding(
             get: { timer.settings.startBreaksAutomatically },
             set: { timer.settings.startBreaksAutomatically = $0 }
+        )
+    }
+
+    private var sessionsBeforeLongBreakBinding: Binding<Int> {
+        Binding(
+            get: { timer.settings.sessionsBeforeLongBreak },
+            set: { timer.settings.sessionsBeforeLongBreak = min(8, max(2, $0)) }
+        )
+    }
+
+    private var playTimerSoundsBinding: Binding<Bool> {
+        Binding(
+            get: { timer.settings.playsCompletionSound },
+            set: { timer.settings.playsCompletionSound = $0 }
         )
     }
 

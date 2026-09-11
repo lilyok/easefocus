@@ -8,7 +8,7 @@ private struct SilentNotifications: NotificationScheduling {
     func requestAuthorization() async -> Bool { false }
     func scheduleTimerFinished(at date: Date) async {}
     func cancelTimerFinished() {}
-    func announcePeriodFinished(isBreak: Bool) {}
+    func announcePeriodFinished(isBreak: Bool, playsSound: Bool) {}
 }
 
 private final class RecordingNotifications: NotificationScheduling, @unchecked Sendable {
@@ -33,7 +33,7 @@ private final class RecordingNotifications: NotificationScheduling, @unchecked S
 
     func cancelTimerFinished() {}
 
-    func announcePeriodFinished(isBreak: Bool) {
+    func announcePeriodFinished(isBreak: Bool, playsSound: Bool) {
         lock.withLock { announcements.append(isBreak) }
     }
 }
@@ -52,7 +52,9 @@ struct FocusTimerControllerTests {
         )
         first.settings.focusSeconds = 15 * 60
         first.settings.shortBreakSeconds = 3 * 60
+        first.settings.sessionsBeforeLongBreak = 3
         first.settings.startBreaksAutomatically = true
+        first.settings.playsCompletionSound = false
 
         let relaunched = FocusTimerController(
             settings: FocusTimerSettings(focusSeconds: 99 * 60),
@@ -62,7 +64,9 @@ struct FocusTimerControllerTests {
 
         #expect(relaunched.settings.focusSeconds == 15 * 60)
         #expect(relaunched.settings.shortBreakSeconds == 3 * 60)
+        #expect(relaunched.settings.sessionsBeforeLongBreak == 3)
         #expect(relaunched.settings.startBreaksAutomatically)
+        #expect(!relaunched.settings.playsCompletionSound)
     }
 
     @Test

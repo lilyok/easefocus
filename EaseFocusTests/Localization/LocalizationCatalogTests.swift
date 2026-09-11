@@ -49,6 +49,12 @@ struct LocalizationCatalogTests {
         #expect(AppCopy.plans.localized(L10n.spanish) == "Planes")
         #expect(AppCopy.progress.localized(L10n.spanish) == "Progreso")
         #expect(AppCopy.settings.localized(L10n.spanish) == "Ajustes")
+        #expect(SettingsCopy.privacy.localized(L10n.spanish) == "Privacidad")
+        #expect(SettingsCopy.playTimerSounds.localized(L10n.spanish) == "Reproducir sonidos del temporizador")
+        #expect(
+            SettingsCopy.sessionsBeforeLongBreak(4).localized(L10n.spanish)
+                == "Sesiones antes del descanso largo: 4"
+        )
         #expect(AppCopy.startFocus.localized(L10n.spanish) == "Empezar enfoque")
         #expect(AppCopy.cancel.localized(L10n.spanish) == "Cancelar")
         #expect(AppCopy.confirm.localized(L10n.spanish) == "Confirmar")

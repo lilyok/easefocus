@@ -6,6 +6,34 @@ nonisolated struct FocusTimerSettings: Equatable, Codable, Sendable {
     var longBreakSeconds: Int = 15 * 60
     var sessionsBeforeLongBreak: Int = 4
     var startBreaksAutomatically: Bool = false
+    /// Short system completion sound with the existing local notification. Default on.
+    var playsCompletionSound: Bool = true
+
+    init(
+        focusSeconds: Int = 25 * 60,
+        shortBreakSeconds: Int = 5 * 60,
+        longBreakSeconds: Int = 15 * 60,
+        sessionsBeforeLongBreak: Int = 4,
+        startBreaksAutomatically: Bool = false,
+        playsCompletionSound: Bool = true
+    ) {
+        self.focusSeconds = focusSeconds
+        self.shortBreakSeconds = shortBreakSeconds
+        self.longBreakSeconds = longBreakSeconds
+        self.sessionsBeforeLongBreak = sessionsBeforeLongBreak
+        self.startBreaksAutomatically = startBreaksAutomatically
+        self.playsCompletionSound = playsCompletionSound
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        focusSeconds = try container.decode(Int.self, forKey: .focusSeconds)
+        shortBreakSeconds = try container.decode(Int.self, forKey: .shortBreakSeconds)
+        longBreakSeconds = try container.decode(Int.self, forKey: .longBreakSeconds)
+        sessionsBeforeLongBreak = try container.decode(Int.self, forKey: .sessionsBeforeLongBreak)
+        startBreaksAutomatically = try container.decode(Bool.self, forKey: .startBreaksAutomatically)
+        playsCompletionSound = try container.decodeIfPresent(Bool.self, forKey: .playsCompletionSound) ?? true
+    }
 }
 
 nonisolated enum FocusTimerPhase: String, Equatable, Codable, Sendable {
