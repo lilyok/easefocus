@@ -26,12 +26,14 @@ struct PlanHistoryView: View {
                         .font(FocusTypography.footnote)
                         .foregroundStyle(Color.focusError)
                 }
+                .listRowBackground(Color.focusSurface)
             } else if let message = PlanHistoryCopy.message(for: undoAvailability), undoAvailability != .available {
                 Section {
                     Text(message)
                         .font(FocusTypography.footnote)
                         .foregroundStyle(.secondary)
                 }
+                .listRowBackground(Color.focusSurface)
             }
 
             ForEach(items) { item in
@@ -54,6 +56,7 @@ struct PlanHistoryView: View {
                     }
                     .padding(.vertical, 4)
                 }
+                .listRowBackground(Color.focusSurface)
             }
         }
         .scrollContentBackground(.hidden)

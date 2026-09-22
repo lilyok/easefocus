@@ -13,43 +13,37 @@ struct FirstRunOnboardingView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    HStack {
-                        Spacer(minLength: 0)
-                        EaseFocusMark(size: 72)
-                        Spacer(minLength: 0)
-                    }
-                    .listRowBackground(Color.clear)
+            FocusScreenStack {
+                VStack(spacing: FocusSpacing.medium) {
+                    EaseFocusMark(size: 72)
                     Text(OnboardingCopy.introduction)
                         .font(FocusTypography.body)
+                        .foregroundStyle(Color.focusPrimary)
+                        .multilineTextAlignment(.center)
                 }
+                .frame(maxWidth: .infinity)
+                .focusCard()
 
-                Section {
-                    NotificationAccessNotice(
-                        access: timer.notificationAccess,
-                        settingsLinkIdentifier: "onboardingOpenNotificationSettings"
-                    )
-                } header: {
-                    Text(OnboardingCopy.notifications)
-                }
+                FocusSectionHeader(title: OnboardingCopy.notifications)
+                NotificationAccessNotice(
+                    access: timer.notificationAccess,
+                    settingsLinkIdentifier: "onboardingOpenNotificationSettings"
+                )
+                .focusCard()
 
                 if availability.showsPlanSurvey {
-                    Section {
-                        AvailabilityNotice(availability: availability)
-                    } header: {
-                        Text(OnboardingCopy.appleIntelligence)
-                    }
+                    FocusSectionHeader(title: OnboardingCopy.appleIntelligence)
+                    AvailabilityNotice(availability: availability)
+                        .focusCard()
                 }
+
+                FocusCapsuleButton(
+                    title: OnboardingCopy.continueAction,
+                    identifier: "onboardingContinue",
+                    action: onContinue
+                )
             }
             .navigationTitle(OnboardingCopy.navigationTitle)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(OnboardingCopy.continueAction, action: onContinue)
-                        .accessibilityIdentifier("onboardingContinue")
-                        .focusPrimaryToolbarActionStyle()
-                }
-            }
             .task {
                 await timer.refreshNotificationAccess()
                 if timer.notificationAccess == .notDetermined {
@@ -58,6 +52,7 @@ struct FirstRunOnboardingView: View {
                 }
             }
         }
+        .focusScreen()
         #if os(macOS)
         .frame(minWidth: 440, minHeight: 520)
         #endif

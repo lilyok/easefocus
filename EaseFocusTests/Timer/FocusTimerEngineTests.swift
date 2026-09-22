@@ -7,7 +7,7 @@ struct FocusTimerEngineTests {
 
     @Test
     func startsAFocusPeriodAndCompletesFromTheEndDate() {
-        var engine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 60))
+        var engine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 60, startBreaksAutomatically: false))
 
         let startEvents = engine.startFocus(taskID: nil, now: start)
         #expect(engine.phase == .runningFocus)
@@ -72,7 +72,7 @@ struct FocusTimerEngineTests {
 
     @Test
     func clockJumpCompletesUsingThePlannedEndDate() {
-        var engine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 25 * 60))
+        var engine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 25 * 60, startBreaksAutomatically: false))
         _ = engine.startFocus(taskID: nil, now: start)
         let jumped = start.addingTimeInterval(60 * 60)
         #expect(engine.elapsedSeconds(at: jumped) == 25 * 60)
@@ -100,7 +100,7 @@ struct FocusTimerEngineTests {
     @Test
     func manualBreakCanStartOrBeSkippedAfterFocus() {
         var engine = FocusTimerEngine(
-            settings: FocusTimerSettings(focusSeconds: 10, shortBreakSeconds: 5)
+            settings: FocusTimerSettings(focusSeconds: 10, shortBreakSeconds: 5, startBreaksAutomatically: false)
         )
         _ = engine.startFocus(taskID: nil, now: start)
         let focusEvents = engine.tick(now: start.addingTimeInterval(10))
@@ -112,7 +112,7 @@ struct FocusTimerEngineTests {
         #expect(engine.phase == .runningBreak)
         #expect(breakEvents.contains(.didStartBreak(isLong: false, plannedDurationSeconds: 5)))
 
-        var skippedEngine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 10))
+        var skippedEngine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 10, startBreaksAutomatically: false))
         _ = skippedEngine.startFocus(taskID: nil, now: start)
         _ = skippedEngine.tick(now: start.addingTimeInterval(10))
         _ = skippedEngine.skipBreak()
@@ -174,7 +174,8 @@ struct FocusTimerEngineTests {
                 focusSeconds: 10,
                 shortBreakSeconds: 5,
                 longBreakSeconds: 20,
-                sessionsBeforeLongBreak: 2
+                sessionsBeforeLongBreak: 2,
+                startBreaksAutomatically: false
             )
         )
 
@@ -208,5 +209,34 @@ struct FocusTimerEngineTests {
         #expect(events.contains(.didCancelFocus(elapsedSeconds: 10, endedAt: start.addingTimeInterval(10))))
         #expect(!events.contains(where: { if case .didStartBreak = $0 { return true }; return false }))
         #expect(!events.contains(where: { if case .didStartFocus = $0 { return true }; return false }))
+    }
+
+    @Test
+    func cancelingABreakDoesNotRecordABrokenTomato() {
+        var settings = FocusTimerSettings(focusSeconds: 10, shortBreakSeconds: 5)
+        settings.startBreaksAutomatically = true
+        var engine = FocusTimerEngine(settings: settings)
+        _ = engine.startFocus(taskID: UUID(), now: start)
+        _ = engine.tick(now: start.addingTimeInterval(10))
+        #expect(engine.phase == .runningBreak)
+
+        let events = engine.cancel(now: start.addingTimeInterval(12))
+        #expect(engine.phase == .idle)
+        #expect(engine.completedFocusCount == 1)
+        #expect(!events.contains(where: { if case .didCancelFocus = $0 { return true }; return false }))
+    }
+
+    @Test
+    func startingAnotherTaskReplacesTheCurrentFocus() {
+        var engine = FocusTimerEngine(settings: FocusTimerSettings(focusSeconds: 60))
+        let first = UUID()
+        let second = UUID()
+        _ = engine.startFocus(taskID: first, now: start)
+        let events = engine.startFocus(taskID: second, now: start.addingTimeInterval(8))
+
+        #expect(engine.phase == .runningFocus)
+        #expect(engine.taskID == second)
+        #expect(events.contains(.didCancelFocus(elapsedSeconds: 8, endedAt: start.addingTimeInterval(8))))
+        #expect(events.contains(.didStartFocus(taskID: second, plannedDurationSeconds: 60, startedAt: start.addingTimeInterval(8))))
     }
 }

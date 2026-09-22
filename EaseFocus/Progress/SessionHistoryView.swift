@@ -1,5 +1,10 @@
 import SwiftData
 import SwiftUI
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 struct SessionHistoryView: View {
     @Query(sort: \FocusSession.startedAt, order: .reverse) private var sessions: [FocusSession]
@@ -7,6 +12,7 @@ struct SessionHistoryView: View {
     @Environment(\.calendar) private var calendar
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var sharePNG: Data?
 
     private var sessionRecords: [ProgressSessionRecord] {
         sessions.map { session in
@@ -44,10 +50,6 @@ struct SessionHistoryView: View {
         ProgressPresentation.todaySummary(sessions: sessionRecords, now: .now, calendar: calendar)
     }
 
-    private var momentumDays: [ProgressMomentumDay] {
-        ProgressPresentation.momentumDays(sessions: sessionRecords, now: .now, calendar: calendar)
-    }
-
     private var planRows: [ProgressPlanRow] {
         ProgressPresentation.planRows(plans: planRecords, sessions: sessionRecords, week: week)
     }
@@ -72,6 +74,7 @@ struct SessionHistoryView: View {
                 }
             }
             .background(Color.focusBackground)
+            .focusScreen()
             .navigationTitle(ProgressCopy.navigationTitle)
             .navigationDestination(for: GoalPlan.self) { plan in
                 PlanDetailView(plan: plan)
@@ -81,86 +84,253 @@ struct SessionHistoryView: View {
                     transaction.disablesAnimations = true
                 }
             }
+            .task(id: shareFingerprint) {
+                await renderShareImage()
+            }
         }
     }
 
+    private var weekdayBars: [ProgressUsageBar] {
+        ProgressPresentation.weekdayUsage(
+            sessions: sessionRecords,
+            now: .now,
+            calendar: calendar
+        )
+    }
+
+    private var timeOfDayBars: [ProgressUsageBar] {
+        ProgressPresentation.timeOfDayUsage(
+            sessions: sessionRecords,
+            in: week,
+            calendar: calendar
+        ).map { bar in
+            var localized = bar
+            if let bucket = ProgressTimeOfDay(rawValue: bar.id) {
+                let title = bucket.title.localized(locale)
+                localized.label = title
+                localized.insightLabel = title
+            }
+            return localized
+        }
+    }
+
+    private var weekTitle: String {
+        ProgressPresentation.weekTitle(week: week, calendar: calendar, locale: locale)
+    }
+
+    private var weekShareText: String {
+        var lines = [
+            ProgressCopy.thisWeek.localized(locale),
+            weekTitle,
+            ProgressPresentation.countLine(weekSummary, locale: locale),
+        ]
+        if let weekday = ProgressPresentation.peakUsageLabel(in: weekdayBars) {
+            lines.append(ProgressCopy.mostProductiveDay(weekday).localized(locale))
+        }
+        if let timeOfDay = ProgressPresentation.peakUsageLabel(in: timeOfDayBars) {
+            lines.append(ProgressCopy.mostProductiveTime(timeOfDay).localized(locale))
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    private var shareFingerprint: String {
+        weekdayBars.map { "\($0.id):\($0.focusedSeconds)" }.joined(separator: "|")
+            + "|"
+            + timeOfDayBars.map { "\($0.id):\($0.focusedSeconds)" }.joined(separator: "|")
+            + "|\(weekSummary.completedCount)-\(weekSummary.brokenCount)-\(weekSummary.focusedSeconds)"
+    }
+
     private var progressList: some View {
-        List {
-            Section {
-                VStack(alignment: .leading, spacing: FocusSpacing.small) {
-                    Text(ProgressPresentation.weekTitle(week: week, calendar: calendar, locale: locale))
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: FocusSpacing.medium) {
+                weekCard
+
+                if !planRows.isEmpty {
+                    Text(ProgressCopy.plans)
                         .font(FocusTypography.footnote)
                         .foregroundStyle(.secondary)
-                    Text(ProgressPresentation.countLine(weekSummary, locale: locale))
-                        .font(FocusTypography.body)
-                        .foregroundStyle(Color.focusPrimary)
-                        .accessibilityIdentifier(ProgressAccessibilityIdentifier.weekSummary)
-                    momentumRow
-                }
-                .padding(.vertical, 4)
-            } header: {
-                Text(ProgressCopy.thisWeek)
-            }
-
-            if !planRows.isEmpty {
-                Section {
+                        .padding(.horizontal, 4)
                     ForEach(planRows) { row in
                         if let plan = plans.first(where: { $0.id == row.id }) {
                             NavigationLink(value: plan) {
                                 planRowView(row)
                             }
+                            .buttonStyle(.plain)
                             .accessibilityIdentifier(ProgressAccessibilityIdentifier.planRow(for: row.id))
                         }
                     }
-                } header: {
-                    Text(ProgressCopy.plans)
                 }
-            }
 
-            Section {
-                Text(ProgressPresentation.countLine(todaySummary, locale: locale))
-                    .font(FocusTypography.body)
-            } header: {
-                Text(ProgressCopy.today)
-            }
-            Section {
-                ForEach(historyItems) { item in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(item.title)
-                            .font(FocusTypography.body)
-                            .foregroundStyle(Color.focusPrimary)
-                        Text(item.detail)
-                            .font(FocusTypography.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            } header: {
-                Text(ProgressCopy.history)
-            }
-        }
-        .scrollContentBackground(.hidden)
-    }
-
-    private var momentumRow: some View {
-        HStack(spacing: FocusSpacing.small) {
-            ForEach(momentumDays) { day in
-                VStack(spacing: 4) {
-                    Text(day.weekdaySymbol)
+                VStack(alignment: .leading, spacing: FocusSpacing.small) {
+                    Text(ProgressCopy.today)
                         .font(FocusTypography.footnote)
                         .foregroundStyle(.secondary)
-                    Image(systemName: day.hasCompletedFocus ? "checkmark.circle.fill" : "circle")
-                        .font(FocusTypography.body)
-                        .foregroundStyle(momentumColor(day))
-                        .accessibilityHidden(true)
+                    ProgressWeekStatTiles(summary: todaySummary)
+                    Text(ProgressPresentation.countLine(todaySummary, locale: locale))
+                        .font(FocusTypography.footnote)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("progressTodaySummary")
                 }
-                .frame(maxWidth: .infinity)
+                .focusCard()
+
+                VStack(alignment: .leading, spacing: FocusSpacing.small) {
+                    Text(ProgressCopy.history)
+                        .font(FocusTypography.footnote)
+                        .foregroundStyle(.secondary)
+                    ForEach(historyItems) { item in
+                        HStack(alignment: .top, spacing: FocusSpacing.small) {
+                            Circle()
+                                .fill(FocusChrome.gradient(for: .accent))
+                                .frame(width: 8, height: 8)
+                                .padding(.top, 6)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(item.title)
+                                    .font(FocusTypography.body)
+                                    .foregroundStyle(Color.focusPrimary)
+                                Text(item.detail)
+                                    .font(FocusTypography.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+                .focusCard()
+            }
+            .padding(.horizontal, FocusSpacing.medium)
+            .padding(.vertical, FocusSpacing.small)
+        }
+    }
+
+    private var weekCard: some View {
+        VStack(alignment: .leading, spacing: FocusSpacing.medium) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(ProgressCopy.thisWeek)
+                        .font(FocusTypography.title)
+                        .foregroundStyle(Color.focusPrimary)
+                    Text(weekTitle)
+                        .font(FocusTypography.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: FocusSpacing.small)
+                shareControl
+            }
+            ProgressWeekStatTiles(summary: weekSummary)
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel(ProgressPresentation.momentumAccessibilityLabel(day, locale: locale))
+                .accessibilityLabel(
+                    ProgressPresentation.countLine(weekSummary, locale: locale)
+                )
+                .accessibilityIdentifier(ProgressAccessibilityIdentifier.weekSummary)
+            chartBlock(
+                title: ProgressCopy.byDay,
+                bars: weekdayBars,
+                kind: .weekday,
+                identifier: ProgressAccessibilityIdentifier.momentum
+            )
+            if let weekday = ProgressPresentation.peakUsageLabel(in: weekdayBars) {
+                insightRow(
+                    systemImage: "sun.max.fill",
+                    text: ProgressCopy.mostProductiveDay(weekday)
+                )
+            }
+            chartBlock(
+                title: ProgressCopy.byTimeOfDay,
+                bars: timeOfDayBars,
+                kind: .timeOfDay,
+                identifier: "progressTimeOfDay"
+            )
+            if let timeOfDay = ProgressPresentation.peakUsageLabel(in: timeOfDayBars) {
+                insightRow(
+                    systemImage: "clock.fill",
+                    text: ProgressCopy.mostProductiveTime(timeOfDay)
+                )
             }
         }
-        .padding(.top, 4)
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier(ProgressAccessibilityIdentifier.momentum)
+        .focusCard()
+    }
+
+    @ViewBuilder
+    private var shareControl: some View {
+        if let sharePNG, !sharePNG.isEmpty {
+            ShareLink(
+                item: StatisticsShareItem(pngData: sharePNG),
+                subject: Text(AppCopy.appName),
+                message: Text(weekShareText),
+                preview: SharePreview(
+                    Text(ProgressCopy.thisWeek),
+                    image: sharePreviewImage(sharePNG)
+                )
+            ) {
+                Text(ProgressCopy.share)
+                    .focusCapsuleFill()
+            }
+            .buttonStyle(FocusCapsuleButtonStyle())
+            .frame(minWidth: 108)
+            .accessibilityIdentifier("shareStatistics")
+        } else {
+            ShareLink(item: weekShareText) {
+                Text(ProgressCopy.share)
+                    .focusCapsuleFill()
+            }
+            .buttonStyle(FocusCapsuleButtonStyle())
+            .frame(minWidth: 108)
+            .accessibilityIdentifier("shareStatistics")
+        }
+    }
+
+    private func sharePreviewImage(_ data: Data) -> Image {
+        #if os(macOS)
+        Image(nsImage: NSImage(data: data) ?? NSImage())
+        #else
+        Image(uiImage: UIImage(data: data) ?? UIImage())
+        #endif
+    }
+
+    private func chartBlock(
+        title: LocalizedCopy,
+        bars: [ProgressUsageBar],
+        kind: ProgressChartKind,
+        identifier: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: FocusSpacing.small) {
+            Text(title)
+                .font(FocusTypography.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+            ProgressUsageChart(
+                bars: bars,
+                kind: kind,
+                accessibilityIdentifier: identifier
+            )
+        }
+        .padding(FocusSpacing.small)
+        .background(
+            Color.focusBackground.opacity(0.65),
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
+    }
+
+    private func insightRow(systemImage: String, text: LocalizedCopy) -> some View {
+        HStack(alignment: .top, spacing: FocusSpacing.small) {
+            Image(systemName: systemImage)
+                .foregroundStyle(FocusChrome.gradient(for: .accent))
+            Text(text)
+                .font(FocusTypography.footnote)
+                .foregroundStyle(Color.focusPrimary)
+        }
+    }
+
+    @MainActor
+    private func renderShareImage() async {
+        let png = StatisticsShareRendering.pngData(
+            weekTitle: weekTitle,
+            summary: weekSummary,
+            weekdayBars: weekdayBars,
+            timeOfDayBars: timeOfDayBars,
+            peakDay: ProgressPresentation.peakUsageLabel(in: weekdayBars),
+            peakTime: ProgressPresentation.peakUsageLabel(in: timeOfDayBars),
+            locale: locale
+        )
+        sharePNG = png
     }
 
     private func planRowView(_ row: ProgressPlanRow) -> some View {
@@ -179,17 +349,7 @@ struct SessionHistoryView: View {
             .font(FocusTypography.footnote)
             .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 4)
-    }
-
-    private func momentumColor(_ day: ProgressMomentumDay) -> Color {
-        if day.hasCompletedFocus {
-            return Color.focusSuccess
-        }
-        if day.isToday {
-            return Color.focusAccent
-        }
-        return Color.secondary
+        .focusCard()
     }
 }
 

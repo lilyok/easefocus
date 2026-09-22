@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.foundationModelClient) private var foundationModelClient
     @Environment(\.locale) private var locale
     @Environment(FocusTimerController.self) private var timer
@@ -11,51 +12,57 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    durationStepper(minutes: focusSecondsBinding, label: SettingsCopy.focusMinutes)
-                    durationStepper(minutes: shortBreakBinding, label: SettingsCopy.shortBreak)
-                    durationStepper(minutes: longBreakBinding, label: SettingsCopy.longBreak)
-                    Stepper(value: sessionsBeforeLongBreakBinding, in: 2...8) {
-                        Text(SettingsCopy.sessionsBeforeLongBreak(timer.settings.sessionsBeforeLongBreak))
-                    }
+            FocusScreenStack {
+                FocusSectionHeader(title: SettingsCopy.timer)
+                VStack(alignment: .leading, spacing: FocusSpacing.small) {
+                    durationStepper(seconds: focusSecondsBinding, label: SettingsCopy.focusMinutes)
+                    durationStepper(seconds: shortBreakBinding, label: SettingsCopy.shortBreak)
+                    durationStepper(seconds: longBreakBinding, label: SettingsCopy.longBreak)
+                    integerStepper(
+                        value: sessionsBeforeLongBreakBinding,
+                        range: 2...8,
+                        label: SettingsCopy.sessionsBeforeLongBreak
+                    )
                     Toggle(SettingsCopy.startBreaksAutomatically, isOn: automaticBreakBinding)
                     Toggle(SettingsCopy.playTimerSounds, isOn: playTimerSoundsBinding)
-                } header: {
-                    Text(SettingsCopy.timer)
                 }
+                .focusCard()
 
-                Section {
-                    NotificationAccessNotice(access: timer.notificationAccess)
-                } header: {
-                    Text(SettingsCopy.notifications)
-                }
+                FocusSectionHeader(title: SettingsCopy.notifications)
+                NotificationAccessNotice(access: timer.notificationAccess)
+                    .focusCard()
 
-                Section {
+                FocusSectionHeader(title: SettingsCopy.appleIntelligence)
+                VStack(alignment: .leading, spacing: FocusSpacing.small) {
                     AvailabilityNotice(availability: availability)
                     Text(SettingsCopy.generatedPlansHint)
                         .font(FocusTypography.footnote)
                         .foregroundStyle(.secondary)
-                } header: {
-                    Text(SettingsCopy.appleIntelligence)
                 }
+                .focusCard()
 
-                Section {
-                    Text(SettingsCopy.privacyOverview)
-                        .font(FocusTypography.footnote)
-                    Text(ExternalSearchPrivacyCopy.body)
-                        .font(FocusTypography.footnote)
-                } header: {
-                    Text(SettingsCopy.privacy)
-                }
+                FocusSectionHeader(title: SettingsCopy.privacy)
+                Text(SettingsCopy.privacyOverview)
+                    .font(FocusTypography.footnote)
+                    .foregroundStyle(Color.focusPrimary)
+                    .focusCard()
             }
-            .scrollContentBackground(.hidden)
-            .background(Color.focusBackground)
             .navigationTitle(SettingsCopy.navigationTitle)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                FocusCapsuleButton(
+                    title: AppCopy.close,
+                    identifier: "closeSettings",
+                    action: { dismiss() }
+                )
+                .padding(.horizontal, FocusSpacing.medium)
+                .padding(.vertical, FocusSpacing.small)
+                .background(Color.focusBackground)
+            }
             .task {
                 await timer.refreshNotificationAccess()
             }
         }
+        .focusScreen()
     }
 
     private var focusSecondsBinding: Binding<Int> {
@@ -101,15 +108,42 @@ struct SettingsView: View {
     }
 
     private func durationStepper(
-        minutes seconds: Binding<Int>,
-        label: (Int) -> LocalizedCopy
+        seconds: Binding<Int>,
+        label: LocalizedCopy
     ) -> some View {
-        Stepper(value: Binding(
-            get: { seconds.wrappedValue / 60 },
-            set: { seconds.wrappedValue = max(60, $0 * 60) }
-        ), in: 1...60) {
-            Text(label(seconds.wrappedValue / 60))
+        integerStepper(
+            value: Binding(
+                get: { seconds.wrappedValue / 60 },
+                set: { seconds.wrappedValue = max(60, $0 * 60) }
+            ),
+            range: 1...60,
+            label: label
+        )
+    }
+
+    private func integerStepper(
+        value: Binding<Int>,
+        range: ClosedRange<Int>,
+        label: LocalizedCopy
+    ) -> some View {
+        HStack(alignment: .center, spacing: FocusSpacing.medium) {
+            Text(label)
+                .font(FocusTypography.body)
+                .foregroundStyle(Color.focusPrimary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text("\(value.wrappedValue)")
+                .font(FocusTypography.body.monospacedDigit())
+                .foregroundStyle(Color.focusPrimary)
+                .frame(width: 36, alignment: .trailing)
+            Stepper(value: value, in: range) {
+                Text(label)
+            }
+            .labelsHidden()
+            .fixedSize()
+            .accessibilityLabel(label)
+            .accessibilityValue("\(value.wrappedValue)")
         }
+        .frame(minHeight: FocusSpacing.minimumTapTarget)
     }
 }
 

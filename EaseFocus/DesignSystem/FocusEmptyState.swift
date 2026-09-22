@@ -52,7 +52,7 @@ extension FocusEmptyState where Actions == EmptyView {
         title: TodayCopy.readyToFocus,
         description: TodayCopy.emptyDescription
     ) {
-        Button(TodayCopy.createPlan, systemImage: "plus") {}
+        Button(TodayCopy.addTask, systemImage: "plus") {}
             .focusPrimaryActionStyle()
     }
     .background(Color.focusBackground)

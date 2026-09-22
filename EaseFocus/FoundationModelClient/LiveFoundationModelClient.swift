@@ -87,6 +87,64 @@ nonisolated struct LiveFoundationModelClient: FoundationModelGenerating {
             throw FoundationModelClientError.validation(error)
         }
     }
+
+    func selectMotivationalQuote(
+        taskTitles: [String],
+        candidates: [LocalQuote],
+        locale: Locale
+    ) async throws -> LocalQuote {
+        guard !Task.isCancelled else {
+            throw FoundationModelClientError.cancelled
+        }
+
+        let availability = currentAvailability(locale: locale)
+        guard availability.allowsGeneration else {
+            throw FoundationModelClientError.unavailable(availability)
+        }
+
+        guard !candidates.isEmpty else {
+            throw FoundationModelClientError.generationFailed
+        }
+
+        let session = LanguageModelSession {
+            MotivationalQuotePrompt.instructions(locale: locale)
+        }
+
+        let generated: GenerableQuoteSelection
+        do {
+            generated = try await session.respond(
+                to: MotivationalQuotePrompt.userMessage(
+                    taskTitles: taskTitles,
+                    candidates: candidates
+                ),
+                generating: GenerableQuoteSelection.self
+            ).content
+        } catch is CancellationError {
+            throw FoundationModelClientError.cancelled
+        } catch let error as LanguageModelSession.GenerationError {
+            if Task.isCancelled {
+                throw FoundationModelClientError.cancelled
+            }
+            throw FoundationModelGenerationErrorMapper.map(error)
+        } catch {
+            if Task.isCancelled {
+                throw FoundationModelClientError.cancelled
+            }
+            throw FoundationModelClientError.generationFailed
+        }
+
+        guard !Task.isCancelled else {
+            throw FoundationModelClientError.cancelled
+        }
+
+        guard let quote = QuoteSelecting.quote(
+            atOneBasedIndex: generated.index,
+            in: candidates
+        ) else {
+            throw FoundationModelClientError.generationFailed
+        }
+        return quote
+    }
 }
 
 nonisolated enum FoundationModelGenerationErrorMapper {
@@ -124,6 +182,12 @@ nonisolated struct GenerableDraftPlan {
 
     @Guide(description: "Between 3 and 6 concrete tasks", .count(3...6))
     var tasks: [GenerableDraftTask]
+}
+
+@Generable
+nonisolated struct GenerableQuoteSelection {
+    @Guide(description: "1-based index of the chosen quote from the provided numbered list")
+    var index: Int
 }
 
 @Generable

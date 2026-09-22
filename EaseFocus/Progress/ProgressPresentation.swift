@@ -34,6 +34,7 @@ nonisolated struct ProgressCountSummary: Equatable, Sendable {
 nonisolated struct ProgressMomentumDay: Equatable, Identifiable, Sendable {
     var date: Date
     var weekdaySymbol: String
+    var weekdayName: String
     var hasCompletedFocus: Bool
     var isToday: Bool
 
@@ -51,6 +52,53 @@ nonisolated struct ProgressPlanRow: Equatable, Identifiable, Sendable {
 
     var isCompletedPlan: Bool {
         status == .completed
+    }
+}
+
+nonisolated struct ProgressUsageBar: Equatable, Identifiable, Sendable {
+    var id: String
+    var label: String
+    var insightLabel: String
+    var focusedSeconds: Int
+
+    init(id: String, label: String, insightLabel: String? = nil, focusedSeconds: Int) {
+        self.id = id
+        self.label = label
+        self.insightLabel = insightLabel ?? label
+        self.focusedSeconds = focusedSeconds
+    }
+}
+
+nonisolated enum ProgressTimeOfDay: String, CaseIterable, Sendable {
+    case morning
+    case afternoon
+    case evening
+    case night
+
+    var title: LocalizedCopy {
+        switch self {
+        case .morning:
+            ProgressCopy.morning
+        case .afternoon:
+            ProgressCopy.afternoon
+        case .evening:
+            ProgressCopy.evening
+        case .night:
+            ProgressCopy.night
+        }
+    }
+
+    static func bucket(hour: Int) -> ProgressTimeOfDay {
+        switch hour {
+        case 5..<12:
+            .morning
+        case 12..<17:
+            .afternoon
+        case 17..<22:
+            .evening
+        default:
+            .night
+        }
     }
 }
 
@@ -106,14 +154,16 @@ nonisolated enum ProgressPresentation {
         calendar: Calendar
     ) -> [ProgressMomentumDay] {
         let week = weekInterval(containing: now, calendar: calendar)
-        let symbols = calendar.veryShortStandaloneWeekdaySymbols
+        let shortSymbols = calendar.veryShortStandaloneWeekdaySymbols
+        let names = calendar.standaloneWeekdaySymbols
         return (0..<7).compactMap { offset in
             guard let date = calendar.date(byAdding: .day, value: offset, to: week.start) else {
                 return nil
             }
             let dayStart = calendar.startOfDay(for: date)
             let weekdayIndex = calendar.component(.weekday, from: dayStart) - 1
-            let symbol = symbols.indices.contains(weekdayIndex) ? symbols[weekdayIndex] : ""
+            let symbol = shortSymbols.indices.contains(weekdayIndex) ? shortSymbols[weekdayIndex] : ""
+            let name = names.indices.contains(weekdayIndex) ? names[weekdayIndex] : symbol
             let hasCompletedFocus = sessions.contains { session in
                 session.outcome == .completed
                     && calendar.isDate(session.startedAt, inSameDayAs: dayStart)
@@ -121,10 +171,68 @@ nonisolated enum ProgressPresentation {
             return ProgressMomentumDay(
                 date: dayStart,
                 weekdaySymbol: symbol,
+                weekdayName: name,
                 hasCompletedFocus: hasCompletedFocus,
                 isToday: calendar.isDate(dayStart, inSameDayAs: now)
             )
         }
+    }
+
+    static func weekdayUsage(
+        sessions: [ProgressSessionRecord],
+        now: Date,
+        calendar: Calendar
+    ) -> [ProgressUsageBar] {
+        let days = momentumDays(sessions: sessions, now: now, calendar: calendar)
+        return days.map { day in
+            let focusedSeconds = sessions.reduce(into: 0) { total, session in
+                guard session.outcome == .completed,
+                      calendar.isDate(session.startedAt, inSameDayAs: day.date)
+                else {
+                    return
+                }
+                total += max(0, session.elapsedSeconds)
+            }
+            return ProgressUsageBar(
+                id: day.date.ISO8601Format(),
+                label: day.weekdaySymbol,
+                insightLabel: day.weekdayName,
+                focusedSeconds: focusedSeconds
+            )
+        }
+    }
+
+    static func timeOfDayUsage(
+        sessions: [ProgressSessionRecord],
+        in interval: ProgressWeekInterval,
+        calendar: Calendar
+    ) -> [ProgressUsageBar] {
+        let weekSessions = sessions.filter {
+            $0.outcome == .completed && interval.contains($0.startedAt)
+        }
+        return ProgressTimeOfDay.allCases.map { bucket in
+            let focusedSeconds = weekSessions.reduce(into: 0) { total, session in
+                let hour = calendar.component(.hour, from: session.startedAt)
+                guard ProgressTimeOfDay.bucket(hour: hour) == bucket else {
+                    return
+                }
+                total += max(0, session.elapsedSeconds)
+            }
+            return ProgressUsageBar(
+                id: bucket.rawValue,
+                label: bucket.title.english,
+                focusedSeconds: focusedSeconds
+            )
+        }
+    }
+
+    static func peakUsageLabel(in bars: [ProgressUsageBar]) -> String? {
+        guard let peak = bars.max(by: { $0.focusedSeconds < $1.focusedSeconds }),
+              peak.focusedSeconds > 0
+        else {
+            return nil
+        }
+        return peak.insightLabel
     }
 
     static func planRows(
@@ -263,7 +371,7 @@ nonisolated enum ProgressAccessibilityIdentifier {
 }
 
 nonisolated enum ProgressCopy {
-    static let navigationTitle = AppCopy.progress
+    static let navigationTitle = AppCopy.statistics
     static let thisWeek = LocalizedCopy("This week")
     static let today = AppCopy.today
     static let history = LocalizedCopy("History")
@@ -272,6 +380,17 @@ nonisolated enum ProgressCopy {
     static let emptyDescription = LocalizedCopy(
         "Completed and broken focus sessions will show up here."
     )
+    static let share = LocalizedCopy("Share")
+    static let byDay = LocalizedCopy("Focus by day")
+    static let byTimeOfDay = LocalizedCopy("Focus by time of day")
+    static let completedCount = LocalizedCopy("completed")
+    static let brokenCount = LocalizedCopy("broken")
+    static let focusedTime = LocalizedCopy("focused")
+    static let usage = LocalizedCopy("Focus this week")
+    static let morning = LocalizedCopy("morning")
+    static let afternoon = LocalizedCopy("afternoon")
+    static let evening = LocalizedCopy("evening")
+    static let night = LocalizedCopy("night")
     static let completedPlan = LocalizedCopy("Completed")
     static let quickFocusTitle = LocalizedCopy("Quick focus")
     static let openSession = LocalizedCopy("open")
@@ -324,6 +443,20 @@ nonisolated enum ProgressCopy {
 
     static func weekRange(start: String, end: String) -> LocalizedCopy {
         LocalizedCopy(format: "\(start) – \(end)", english: "\(start) – \(end)")
+    }
+
+    static func mostProductiveDay(_ weekday: String) -> LocalizedCopy {
+        LocalizedCopy(
+            format: "Your most focused day this week is \(weekday).",
+            english: "Your most focused day this week is \(weekday)."
+        )
+    }
+
+    static func mostProductiveTime(_ timeOfDay: String) -> LocalizedCopy {
+        LocalizedCopy(
+            format: "The most productive time to work for you is the \(timeOfDay).",
+            english: "The most productive time to work for you is the \(timeOfDay)."
+        )
     }
 
     static func historyDetail(outcome: String, duration: String, when: String) -> LocalizedCopy {

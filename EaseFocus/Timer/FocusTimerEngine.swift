@@ -5,7 +5,7 @@ nonisolated struct FocusTimerSettings: Equatable, Codable, Sendable {
     var shortBreakSeconds: Int = 5 * 60
     var longBreakSeconds: Int = 15 * 60
     var sessionsBeforeLongBreak: Int = 4
-    var startBreaksAutomatically: Bool = false
+    var startBreaksAutomatically: Bool = true
     /// Short system completion sound with the existing local notification. Default on.
     var playsCompletionSound: Bool = true
 
@@ -14,7 +14,7 @@ nonisolated struct FocusTimerSettings: Equatable, Codable, Sendable {
         shortBreakSeconds: Int = 5 * 60,
         longBreakSeconds: Int = 15 * 60,
         sessionsBeforeLongBreak: Int = 4,
-        startBreaksAutomatically: Bool = false,
+        startBreaksAutomatically: Bool = true,
         playsCompletionSound: Bool = true
     ) {
         self.focusSeconds = focusSeconds
@@ -31,7 +31,7 @@ nonisolated struct FocusTimerSettings: Equatable, Codable, Sendable {
         shortBreakSeconds = try container.decode(Int.self, forKey: .shortBreakSeconds)
         longBreakSeconds = try container.decode(Int.self, forKey: .longBreakSeconds)
         sessionsBeforeLongBreak = try container.decode(Int.self, forKey: .sessionsBeforeLongBreak)
-        startBreaksAutomatically = try container.decode(Bool.self, forKey: .startBreaksAutomatically)
+        startBreaksAutomatically = try container.decodeIfPresent(Bool.self, forKey: .startBreaksAutomatically) ?? true
         playsCompletionSound = try container.decodeIfPresent(Bool.self, forKey: .playsCompletionSound) ?? true
     }
 }
@@ -116,18 +116,29 @@ nonisolated struct FocusTimerEngine: Equatable, Codable, Sendable {
     }
 
     mutating func startFocus(taskID: UUID?, now: Date) -> [FocusTimerEvent] {
-        guard phase == .idle || phase == .completed else {
+        if (phase == .runningFocus || phase == .pausedFocus), taskID == self.taskID {
             return []
+        }
+
+        var events: [FocusTimerEvent] = []
+        switch phase {
+        case .idle:
+            break
+        case .runningFocus, .pausedFocus:
+            events.append(contentsOf: cancel(now: now))
+        case .runningBreak, .pausedBreak, .completed:
+            events.append(contentsOf: resetToIdle())
         }
 
         self.taskID = taskID
         beginPeriod(duration: settings.focusSeconds, now: now)
         phase = .runningFocus
         isLongBreak = false
-        return [
+        events.append(contentsOf: [
             .didStartFocus(taskID: taskID, plannedDurationSeconds: plannedDurationSeconds, startedAt: now),
             .shouldScheduleNotification(now.addingTimeInterval(TimeInterval(plannedDurationSeconds))),
-        ]
+        ])
+        return events
     }
 
     mutating func pause(now: Date) -> [FocusTimerEvent] {
@@ -155,17 +166,20 @@ nonisolated struct FocusTimerEngine: Equatable, Codable, Sendable {
     }
 
     mutating func cancel(now: Date) -> [FocusTimerEvent] {
-        guard phase == .runningFocus || phase == .pausedFocus else {
+        switch phase {
+        case .runningFocus, .pausedFocus:
+            let elapsed = elapsedSeconds(at: now)
+            let events: [FocusTimerEvent] = [
+                .didCancelFocus(elapsedSeconds: elapsed, endedAt: now),
+                .shouldCancelNotification,
+            ]
+            _ = resetToIdle()
+            return events
+        case .runningBreak, .pausedBreak, .completed:
             return resetToIdle()
+        case .idle:
+            return []
         }
-
-        let elapsed = elapsedSeconds(at: now)
-        let events: [FocusTimerEvent] = [
-            .didCancelFocus(elapsedSeconds: elapsed, endedAt: now),
-            .shouldCancelNotification,
-        ]
-        _ = resetToIdle()
-        return events
     }
 
     mutating func startBreak(now: Date) -> [FocusTimerEvent] {

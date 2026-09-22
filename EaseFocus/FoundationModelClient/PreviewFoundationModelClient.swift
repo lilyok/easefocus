@@ -47,4 +47,40 @@ nonisolated struct PreviewFoundationModelClient: FoundationModelGenerating {
             includesResourceSuggestions: survey.includesResourceSuggestions
         )
     }
+
+    func selectMotivationalQuote(
+        taskTitles: [String],
+        candidates: [LocalQuote],
+        locale: Locale
+    ) async throws -> LocalQuote {
+        _ = locale
+
+        let availability = currentAvailability(locale: .current)
+        guard availability.allowsGeneration else {
+            throw FoundationModelClientError.unavailable(availability)
+        }
+
+        guard !Task.isCancelled else {
+            throw FoundationModelClientError.cancelled
+        }
+
+        guard !candidates.isEmpty else {
+            throw FoundationModelClientError.generationFailed
+        }
+
+        let haystack = MotivationalQuotePrompt.truncatedTitles(taskTitles)
+            .joined(separator: " ")
+            .lowercased()
+
+        if !haystack.isEmpty,
+           let themed = candidates.first(where: { quote in
+               let blob = "\(quote.text) \(quote.author)".lowercased()
+               return haystack.split(separator: " ").contains { token in
+                   token.count > 3 && blob.contains(token)
+               }
+           }) {
+            return themed
+        }
+        return candidates[0]
+    }
 }

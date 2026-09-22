@@ -4,7 +4,7 @@ import SwiftUI
 nonisolated enum PersistenceSaveCopy {
     static let title = LocalizedCopy("Couldn't save your data")
     static let message = LocalizedCopy(
-        "EaseFocus could not save your latest changes. Try again. If this keeps happening, quit other EaseFocus copies and restart the app."
+        "Pomodoro Planner could not save your latest changes. Try again. If this keeps happening, quit other Pomodoro Planner copies and restart the app."
     )
     static let retry = LocalizedCopy("Try again")
     static let discard = LocalizedCopy("Discard changes")

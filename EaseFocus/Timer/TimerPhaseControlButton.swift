@@ -6,35 +6,17 @@ struct TimerPhaseControlButton: View {
     let perform: () -> Void
 
     var body: some View {
-        Group {
-            if action == .cancel {
-                Button(role: .destructive, action: perform) {
-                    label
-                }
-            } else if usesCompactTitle {
-                Button(action: perform) {
-                    label
-                }
-            } else {
-                Button(action: perform) {
-                    label
-                }
-                .buttonStyle(.borderedProminent)
-            }
+        Button(action: perform) {
+            Text(usesCompactTitle ? action.compactTitle : action.title)
+                .lineLimit(2)
+                .focusCapsuleFill(
+                    action == .cancel ? Color.focusError : Color.focusAccent,
+                    enabled: true
+                )
         }
+        .buttonStyle(FocusCapsuleButtonStyle())
         .accessibilityLabel(action.accessibilityLabel)
         .accessibilityIdentifier(action.identifier)
-    }
-
-    private var label: some View {
-        Text(usesCompactTitle ? action.compactTitle : action.title)
-            .multilineTextAlignment(.center)
-            .lineLimit(2)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(
-                minWidth: FocusSpacing.minimumTapTarget,
-                minHeight: FocusSpacing.minimumTapTarget
-            )
     }
 }
 

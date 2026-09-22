@@ -12,7 +12,7 @@ struct FocusTimerProgressRing: View {
             Circle()
                 .trim(from: 0, to: min(max(progress, 0), 1))
                 .stroke(
-                    Color.focusAccent,
+                    FocusChrome.gradient(for: .accent),
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))

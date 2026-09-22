@@ -13,22 +13,22 @@ private struct SilentNotifications: NotificationScheduling {
 
 private final class RecordingNotifications: NotificationScheduling, @unchecked Sendable {
     private let lock = NSLock()
-    private var scheduled: [(date: Date, playsSound: Bool)] = []
-    private var announcements: [(isBreak: Bool, playsSound: Bool)] = []
+    nonisolated(unsafe) private var scheduled: [(date: Date, playsSound: Bool)] = []
+    nonisolated(unsafe) private var announcements: [(isBreak: Bool, playsSound: Bool)] = []
 
-    var scheduledDates: [Date] {
+    nonisolated var scheduledDates: [Date] {
         lock.withLock { scheduled.map(\.date) }
     }
 
-    var scheduledPlaySounds: [Bool] {
+    nonisolated var scheduledPlaySounds: [Bool] {
         lock.withLock { scheduled.map(\.playsSound) }
     }
 
-    var announcementIsBreaks: [Bool] {
+    nonisolated var announcementIsBreaks: [Bool] {
         lock.withLock { announcements.map(\.isBreak) }
     }
 
-    var announcementPlaySounds: [Bool] {
+    nonisolated var announcementPlaySounds: [Bool] {
         lock.withLock { announcements.map(\.playsSound) }
     }
 
@@ -79,7 +79,28 @@ struct FocusTimerControllerTests {
 
     @Test
     @MainActor
-    func marksOnlyTheStartedTaskActive() throws {
+    func turnsOnAutomaticBreaksWhenRestoringOlderSavedState() {
+        let (defaults, suiteName) = uniqueDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        var settings = FocusTimerSettings(focusSeconds: 25 * 60)
+        settings.startBreaksAutomatically = false
+        let first = FocusTimerController(
+            settings: settings,
+            notifications: SilentNotifications(),
+            defaults: defaults
+        )
+        first.settings.startBreaksAutomatically = false
+
+        let relaunched = FocusTimerController(
+            notifications: SilentNotifications(),
+            defaults: defaults
+        )
+        #expect(relaunched.settings.startBreaksAutomatically)
+    }
+
+    @Test
+    @MainActor
+    func switchingTasksStartsTheNewTaskAndRevertsThePrevious() throws {
         let container = try EaseFocusStore.inMemoryContainer()
         let context = container.mainContext
         let first = PlanTask(title: "One", position: 0)
@@ -100,9 +121,11 @@ struct FocusTimerControllerTests {
         #expect(second.status == .pending)
 
         controller.startFocus(task: second)
-        #expect(first.status == .active)
-        #expect(second.status == .pending)
-        #expect(controller.engine.taskID == first.id)
+        #expect(first.status == .pending)
+        #expect(second.status == .active)
+        #expect(controller.engine.taskID == second.id)
+        #expect(first.brokenSessionCount == 1)
+        #expect(second.completedSessionCount == 0)
     }
 
     @Test
@@ -168,7 +191,7 @@ struct FocusTimerControllerTests {
         let (defaults, suiteName) = uniqueDefaults()
         defer { defaults.removePersistentDomain(forName: suiteName) }
         let controller = FocusTimerController(
-            settings: FocusTimerSettings(focusSeconds: 60),
+            settings: FocusTimerSettings(focusSeconds: 60, startBreaksAutomatically: false),
             notifications: SilentNotifications(),
             defaults: defaults
         )
@@ -220,7 +243,7 @@ struct FocusTimerControllerTests {
         let start = Date(timeIntervalSince1970: 1_700_000_000)
         let firstContainer = try EaseFocusStore.inMemoryContainer()
         let first = FocusTimerController(
-            settings: FocusTimerSettings(focusSeconds: 60, shortBreakSeconds: 5),
+            settings: FocusTimerSettings(focusSeconds: 60, shortBreakSeconds: 5, startBreaksAutomatically: false),
             notifications: SilentNotifications(),
             defaults: defaults
         )
@@ -229,6 +252,7 @@ struct FocusTimerControllerTests {
         first.tick(now: start.addingTimeInterval(60))
         #expect(first.engine.phase == .completed)
 
+        defaults.set(true, forKey: FocusTimerController.autoBreakMigrationKey)
         let restoredContainer = try EaseFocusStore.inMemoryContainer()
         let relaunched = FocusTimerController(
             notifications: SilentNotifications(),

@@ -133,13 +133,42 @@ enum EaseFocusWindow {
     }
 }
 
+enum EaseFocusDockIcon {
+    @MainActor
+    static func apply() {
+        guard let url = Bundle.main.url(forResource: "AppIcon", withExtension: "icns"),
+              let image = NSImage(contentsOf: url)
+        else {
+            return
+        }
+        NSApp.applicationIconImage = squircleMasked(image)
+    }
+
+    private static func squircleMasked(_ image: NSImage) -> NSImage {
+        let size = image.size.width > 0 ? image.size : NSSize(width: 1024, height: 1024)
+        return NSImage(size: size, flipped: false) { rect in
+            let radius = min(rect.width, rect.height) * 0.2237
+            NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius).addClip()
+            image.draw(
+                in: rect,
+                from: NSRect(origin: .zero, size: image.size),
+                operation: .sourceOver,
+                fraction: 1
+            )
+            return true
+        }
+    }
+}
+
 @MainActor
 final class EaseFocusAppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
+        EaseFocusDockIcon.apply()
         EaseFocusWindow.handoffToRunningInstanceIfNeeded()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        EaseFocusDockIcon.apply()
         UNUserNotificationCenter.current().delegate = EaseFocusNotificationDelegate.shared
         EaseFocusWindow.startGuarding()
     }

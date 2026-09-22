@@ -52,6 +52,24 @@ struct GoalPlanTests {
 
     @Test
     @MainActor
+    func insertingATaskAtFrontPutsItFirstAndShiftsTheRest() throws {
+        let container = try EaseFocusStore.inMemoryContainer()
+        let context = container.mainContext
+        let first = PlanTask(title: "Practice hola", position: 0)
+        let second = PlanTask(title: "Record a greeting", position: 1)
+        let plan = GoalPlan(title: "Spanish greetings", tasks: [first, second])
+        context.insert(plan)
+
+        let added = PlanTask(title: "New task", position: 99)
+        plan.insertTaskAtFront(added)
+
+        #expect(plan.orderedTasks.map(\.title) == ["New task", "Practice hola", "Record a greeting"])
+        #expect(plan.orderedTasks.map(\.position) == [0, 1, 2])
+        #expect(added.plan?.id == plan.id)
+    }
+
+    @Test
+    @MainActor
     func movesTasksWithVisibleReorderActionsAndUpdatesPositions() throws {
         let container = try EaseFocusStore.inMemoryContainer()
         let context = container.mainContext

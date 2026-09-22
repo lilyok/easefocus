@@ -45,16 +45,18 @@ struct LocalizationCatalogTests {
 
     @Test
     func catalogContainsSpanishForHighTrafficChrome() {
+        #expect(AppCopy.pomodoro.localized(L10n.spanish) == "Pomodoro")
+        #expect(AppCopy.statistics.localized(L10n.spanish) == "Estadísticas")
+        #expect(AppCopy.taskAdviser.localized(L10n.spanish) == "Asesor de tareas")
+        #expect(QuoteCopy.quoteOfTheDay.localized(L10n.spanish) == "Frase del día")
+        #expect(QuoteCopy.gotIt.localized(L10n.spanish) == "Entendido")
         #expect(AppCopy.today.localized(L10n.spanish) == "Hoy")
         #expect(AppCopy.plans.localized(L10n.spanish) == "Planes")
         #expect(AppCopy.progress.localized(L10n.spanish) == "Progreso")
         #expect(AppCopy.settings.localized(L10n.spanish) == "Ajustes")
         #expect(SettingsCopy.privacy.localized(L10n.spanish) == "Privacidad")
         #expect(SettingsCopy.playTimerSounds.localized(L10n.spanish) == "Reproducir sonidos del temporizador")
-        #expect(
-            SettingsCopy.sessionsBeforeLongBreak(4).localized(L10n.spanish)
-                == "Sesiones antes del descanso largo: 4"
-        )
+        #expect(SettingsCopy.sessionsBeforeLongBreak.localized(L10n.spanish) == "Sesiones antes del descanso largo")
         #expect(
             SettingsCopy.privacyOverview.localized(L10n.spanish).contains("no te rastrea ni usa analítica")
         )

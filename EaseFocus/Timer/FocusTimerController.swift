@@ -15,6 +15,8 @@ final class FocusTimerController {
     private let defaults: UserDefaults
     private let stateKey = "easefocus.timer.engine"
 
+    static let autoBreakMigrationKey = "easefocus.autoBreakDefault.v1"
+
     init(
         settings: FocusTimerSettings = FocusTimerSettings(),
         notifications: any NotificationScheduling = UserNotificationScheduler(),
@@ -26,9 +28,11 @@ final class FocusTimerController {
            let saved = try? JSONDecoder().decode(FocusTimerEngine.self, from: data) {
             // Keep saved durations and phase. Initializer defaults are first-launch only.
             engine = saved
+            Self.migrateAutomaticBreaksIfNeeded(engine: &engine, defaults: defaults)
         } else {
             engine = FocusTimerEngine(settings: settings)
         }
+        Self.persistEngineState(engine, defaults: defaults, key: stateKey)
     }
 
     var settings: FocusTimerSettings {
@@ -234,9 +238,31 @@ final class FocusTimerController {
     }
 
     private func persistEngine() {
+        Self.persistEngineState(engine, defaults: defaults, key: stateKey)
+    }
+
+    private static func persistEngineState(
+        _ engine: FocusTimerEngine,
+        defaults: UserDefaults,
+        key: String
+    ) {
         if let data = try? JSONEncoder().encode(engine) {
-            defaults.set(data, forKey: stateKey)
+            defaults.set(data, forKey: key)
         }
+    }
+
+    private static func migrateAutomaticBreaksIfNeeded(
+        engine: inout FocusTimerEngine,
+        defaults: UserDefaults
+    ) {
+        guard !defaults.bool(forKey: autoBreakMigrationKey) else {
+            return
+        }
+        defaults.set(true, forKey: autoBreakMigrationKey)
+        guard !engine.settings.startBreaksAutomatically else {
+            return
+        }
+        engine.settings.startBreaksAutomatically = true
     }
 
     private func save() {

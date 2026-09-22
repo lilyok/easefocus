@@ -9,6 +9,7 @@ struct PlanEditorView: View {
     private let source: PlanSource
     private let survey: GoalSurvey?
     private let onRegenerate: (() -> Void)?
+    private let onClose: (() -> Void)?
 
     @State private var title: String
     @State private var details: String
@@ -17,21 +18,18 @@ struct PlanEditorView: View {
     @State private var saveErrorMessage: String?
     @State private var isSaveAlertPresented = false
     @State private var pendingSaveRetry: (() -> Void)?
-    @State private var pendingSearch: ExternalSearchRequest?
-
-    private var showsResourceSearch: Bool {
-        source == .generated && survey?.includesResourceSuggestions == true
-    }
 
     init(
         draft: DraftPlanBlueprint? = nil,
         source: PlanSource = .manual,
         survey: GoalSurvey? = nil,
-        onRegenerate: (() -> Void)? = nil
+        onRegenerate: (() -> Void)? = nil,
+        onClose: (() -> Void)? = nil
     ) {
         self.source = source
         self.survey = survey
         self.onRegenerate = onRegenerate
+        self.onClose = onClose
         _title = State(initialValue: draft?.title ?? "")
         _details = State(initialValue: draft?.summary ?? "")
         _tasks = State(
@@ -47,41 +45,30 @@ struct PlanEditorView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            List {
                 Section {
-                    TextField(PlanEditorCopy.title, text: $title)
-                    TextField(PlanEditorCopy.details, text: $details, axis: .vertical)
+                    VStack(alignment: .leading, spacing: FocusSpacing.small) {
+                        TextField(PlanEditorCopy.title, text: $title)
+                            .focusField()
+                        TextField(PlanEditorCopy.details, text: $details, axis: .vertical)
+                            .focusField()
+                    }
+                    .focusCard()
+                    .focusListRow()
                 } header: {
-                    Text(PlanEditorCopy.plan)
+                    FocusSectionHeader(title: PlanEditorCopy.plan)
                 }
+
                 Section {
                     ForEach($tasks) { $task in
                         VStack(alignment: .leading, spacing: FocusSpacing.small) {
                             TextField(PlanEditorCopy.taskTitle, text: $task.title)
+                                .focusField()
                             Stepper(value: $task.estimatedPomodoros, in: DraftPlanValidator.pomodoroRange) {
                                 Text(TaskCopy.estimatedSessions(task.estimatedPomodoros))
                                     .font(FocusTypography.footnote)
+                                    .foregroundStyle(Color.focusPrimary)
                             }
-                            TaskResourceSearchControls(
-                                taskID: task.id,
-                                state: ResourceSearchControlPolicy.draftCreation(
-                                    source: source,
-                                    includesResourceSuggestions: survey?.includesResourceSuggestions == true,
-                                    hasQuery: ResourceSearchControlPolicy.hasQuery(task.searchQuery),
-                                    isAdding: task.isAddingResourceSearch
-                                ),
-                                query: $task.searchQuery,
-                                onAdd: {
-                                    task.isAddingResourceSearch = true
-                                },
-                                onRemove: {
-                                    task.searchQuery = ""
-                                    task.isAddingResourceSearch = false
-                                },
-                                onSearch: { query in
-                                    pendingSearch = ExternalSearchOpening.request(from: query)
-                                }
-                            )
                             HStack {
                                 Spacer()
                                 let index = tasks.firstIndex(where: { $0.id == task.id }) ?? 0
@@ -93,63 +80,73 @@ struct PlanEditorView: View {
                                 )
                             }
                         }
-                    }
-                    .onDelete { offsets in
-                        tasks.remove(atOffsets: offsets)
-                        if tasks.isEmpty {
-                            tasks = [DraftTask()]
+                        .focusCard()
+                        .focusListRow()
+                        .swipeToRemove {
+                            tasks.removeAll { $0.id == task.id }
+                            if tasks.isEmpty {
+                                tasks = [DraftTask()]
+                            }
+                        }
+                        .contextMenu {
+                            Button(TaskCopy.remove, role: .destructive) {
+                                tasks.removeAll { $0.id == task.id }
+                                if tasks.isEmpty {
+                                    tasks = [DraftTask()]
+                                }
+                            }
                         }
                     }
-                    .onMove { offsets, destination in
-                        tasks.move(fromOffsets: offsets, toOffset: destination)
+                    VStack(alignment: .leading, spacing: FocusSpacing.medium) {
+                        FocusCapsuleButton(title: PlanEditorCopy.addTask) {
+                            tasks.append(DraftTask())
+                        }
+                        if source == .manual {
+                            Text(PlanEditorCopy.reorderFooter)
+                                .font(FocusTypography.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                        if let onRegenerate {
+                            FocusCapsuleButton(
+                                title: PlanEditorCopy.regenerate,
+                                identifier: "regenerateDraft",
+                                action: onRegenerate
+                            )
+                        }
+                        FocusCapsuleButton(
+                            title: PlanEditorCopy.save,
+                            enabled: canSave,
+                            identifier: "savePlan",
+                            action: save
+                        )
+                        FocusCapsuleButton(
+                            title: PlanEditorCopy.cancel,
+                            fill: Color.focusError,
+                            action: cancel
+                        )
                     }
-                    Button(PlanEditorCopy.addTask) {
-                        tasks.append(DraftTask())
-                    }
+                    .focusListRow()
                 } header: {
-                    Text(PlanEditorCopy.tasks)
-                } footer: {
-                    if showsResourceSearch {
-                        Text(PlanEditorCopy.resourceSearchFooter)
-                    } else if source == .manual {
-                        Text(PlanEditorCopy.reorderFooter)
-                    }
+                    FocusSectionHeader(title: PlanEditorCopy.tasks)
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .focusScreen()
             .navigationTitle(source == .generated ? PlanEditorCopy.reviewDraft : PlanEditorCopy.newPlan)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(PlanEditorCopy.cancel, action: cancel)
-                }
-                if let onRegenerate {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button(PlanEditorCopy.regenerate, action: onRegenerate)
-                            .accessibilityIdentifier("regenerateDraft")
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(PlanEditorCopy.save, action: save)
-                        .disabled(!canSave)
-                        .accessibilityIdentifier("savePlan")
-                        .focusPrimaryToolbarActionStyle()
-                }
-            }
             .persistenceSaveAlert(
                 isPresented: $isSaveAlertPresented,
                 message: saveErrorMessage,
                 onRetry: { pendingSaveRetry?() },
                 onDiscard: discardFailedSave
             )
-            .externalSearchConfirmation($pendingSearch)
         }
+        .focusScreen()
     }
 
     private var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && tasks.contains { !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            && tasks.allSatisfy {
-                searchQueryError(for: showsResourceSearch ? $0.searchQuery : "") == nil
-            }
     }
 
     private func save() {
@@ -158,9 +155,7 @@ struct PlanEditorView: View {
             guard !taskTitle.isEmpty else {
                 return nil
             }
-            guard case .success(let searchQuery) = SearchQueryValidator.validateOptional(
-                showsResourceSearch ? task.searchQuery : ""
-            ) else {
+            guard case .success(let searchQuery) = SearchQueryValidator.validateOptional("") else {
                 return nil
             }
             return (taskTitle, task.estimatedPomodoros, searchQuery)
@@ -195,7 +190,7 @@ struct PlanEditorView: View {
             saveErrorMessage = nil
             isSaveAlertPresented = false
             pendingSaveRetry = nil
-            dismiss()
+            close()
         case .failed(let message):
             saveErrorMessage = message
             isSaveAlertPresented = true
@@ -216,18 +211,19 @@ struct PlanEditorView: View {
             modelContext.rollback()
             insertedPlan = nil
         }
-        dismiss()
+        close()
+    }
+
+    private func close() {
+        if let onClose {
+            onClose()
+        } else {
+            dismiss()
+        }
     }
 
     private func moveTask(_ id: UUID, direction: TaskMoveDirection) {
         tasks = TaskOrdering.reordered(tasks, moving: id, direction: direction)
-    }
-
-    private func searchQueryError(for query: String) -> SearchQueryValidationError? {
-        guard case .failure(let error) = SearchQueryValidator.validateOptional(query) else {
-            return nil
-        }
-        return error
     }
 }
 

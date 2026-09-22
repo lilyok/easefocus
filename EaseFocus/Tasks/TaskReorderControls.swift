@@ -8,14 +8,37 @@ struct TaskReorderControls: View {
 
     var body: some View {
         HStack(spacing: FocusSpacing.small) {
-            Button(TaskCopy.moveUp, systemImage: "chevron.up", action: onMoveUp)
-                .labelStyle(.iconOnly)
-                .disabled(!canMoveUp)
-                .accessibilityLabel(TaskCopy.moveUp)
-            Button(TaskCopy.moveDown, systemImage: "chevron.down", action: onMoveDown)
-                .labelStyle(.iconOnly)
-                .disabled(!canMoveDown)
-                .accessibilityLabel(TaskCopy.moveDown)
+            reorderButton(
+                systemImage: "chevron.up",
+                enabled: canMoveUp,
+                label: TaskCopy.moveUp,
+                action: onMoveUp
+            )
+            reorderButton(
+                systemImage: "chevron.down",
+                enabled: canMoveDown,
+                label: TaskCopy.moveDown,
+                action: onMoveDown
+            )
         }
+    }
+
+    private func reorderButton(
+        systemImage: String,
+        enabled: Bool,
+        label: LocalizedCopy,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: FocusSpacing.minimumTapTarget, height: FocusSpacing.minimumTapTarget)
+                .background(FocusChrome.gradient(for: .accent, enabled: enabled), in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(FocusCapsuleButtonStyle())
+        .disabled(!enabled)
+        .accessibilityLabel(label)
     }
 }

@@ -13,9 +13,11 @@ struct CreatePlanView: View {
     @State private var generateTask: Task<Void, Never>?
 
     private let availability: FoundationModelAvailability
+    private let isEmbedded: Bool
 
-    init(availability: FoundationModelAvailability) {
+    init(availability: FoundationModelAvailability, isEmbedded: Bool = false) {
         self.availability = availability
+        self.isEmbedded = isEmbedded
         _mode = State(initialValue: availability.showsPlanSurvey ? .survey : .manual)
     }
 
@@ -28,6 +30,7 @@ struct CreatePlanView: View {
                     availability: availability,
                     errorMessage: errorMessage,
                     isGenerating: isGenerating,
+                    isCompactRequest: true,
                     onGenerate: generate,
                     onCreateManually: {
                         cancelGeneration()
@@ -36,12 +39,16 @@ struct CreatePlanView: View {
                     onCancel: {
                         if isGenerating {
                             cancelGeneration()
+                        } else if isEmbedded {
+                            survey = GoalSurvey()
+                            errorMessage = nil
                         } else {
                             dismiss()
                         }
                     }
                 )
             }
+            .focusScreen()
         case .review(let draft):
             PlanEditorView(
                 draft: draft,
@@ -50,14 +57,23 @@ struct CreatePlanView: View {
                 onRegenerate: {
                     mode = .survey
                     generate()
-                }
+                },
+                onClose: isEmbedded ? { resetToStart() } : nil
             )
         case .manual:
-            PlanEditorView()
+            PlanEditorView(onClose: isEmbedded ? { resetToStart() } : nil)
         }
     }
 
+    private func resetToStart() {
+        cancelGeneration()
+        survey = GoalSurvey()
+        errorMessage = nil
+        mode = availability.showsPlanSurvey ? .survey : .manual
+    }
+
     private func generate() {
+        survey.includesResourceSuggestions = false
         errorMessage = nil
         isGenerating = true
         generateTask?.cancel()

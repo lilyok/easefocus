@@ -1,12 +1,25 @@
+import SwiftData
 import SwiftUI
 
 struct TimerView: View {
     @Environment(FocusTimerController.self) private var timer
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Query(sort: \GoalPlan.updatedAt, order: .reverse) private var plans: [GoalPlan]
+
+    private var currentTask: PlanTask? {
+        guard let taskID = timer.engine.taskID else {
+            return nil
+        }
+        return plans.flatMap(\.tasks).first { $0.id == taskID }
+    }
 
     var body: some View {
         VStack(spacing: FocusSpacing.large) {
+            if let currentTask {
+                PomodoroTaskCard(task: currentTask, canStart: false, showsActions: false)
+                    .padding(.horizontal, FocusSpacing.medium)
+            }
             remainingTimeDisplay
             Text(statusTitle)
                 .font(FocusTypography.title)
@@ -15,7 +28,7 @@ struct TimerView: View {
                 .fixedSize(horizontal: false, vertical: true)
             controls
         }
-        .padding(FocusSpacing.large)
+        .padding(.bottom, FocusSpacing.large)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.focusBackground)
         .navigationTitle(AppCopy.timer)
@@ -110,4 +123,5 @@ struct TimerView: View {
         TimerView()
     }
     .environment(FocusTimerController())
+    .modelContainer(try! EaseFocusStore.inMemoryContainer())
 }

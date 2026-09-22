@@ -40,16 +40,16 @@ nonisolated enum NotificationAccessCopy {
         case .notDetermined, .denied:
             #if os(macOS)
             return LocalizedCopy(
-                "Turn on EaseFocus notifications in System Settings to get an alert when a timer ends."
+                "Turn on Pomodoro Planner notifications in System Settings to get an alert when a timer ends."
             )
             #else
             return LocalizedCopy(
-                "Turn on EaseFocus notifications in Settings to get an alert when a timer ends."
+                "Turn on Pomodoro Planner notifications in Settings to get an alert when a timer ends."
             )
             #endif
         case .allowed:
             return LocalizedCopy(
-                "EaseFocus notifications are allowed. Alert style and sound follow your system settings."
+                "Pomodoro Planner notifications are allowed. Alert style and sound follow your system settings."
             )
         }
     }

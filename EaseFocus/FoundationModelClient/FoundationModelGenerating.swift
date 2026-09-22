@@ -14,4 +14,10 @@ nonisolated enum FoundationModelClientError: Equatable, Error {
 nonisolated protocol FoundationModelGenerating: Sendable {
     func currentAvailability(locale: Locale) -> FoundationModelAvailability
     func generateDraftPlan(survey: GoalSurvey, locale: Locale) async throws -> DraftPlanBlueprint
+    /// Picks one entry from `candidates` (real attributed quotes). Must not invent text.
+    func selectMotivationalQuote(
+        taskTitles: [String],
+        candidates: [LocalQuote],
+        locale: Locale
+    ) async throws -> LocalQuote
 }

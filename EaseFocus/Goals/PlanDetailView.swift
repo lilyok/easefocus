@@ -13,7 +13,6 @@ struct PlanDetailView: View {
     @State private var saveErrorMessage: String?
     @State private var isSaveAlertPresented = false
     @State private var pendingSaveRetry: (() -> Void)?
-    @State private var pendingSearch: ExternalSearchRequest?
     @State private var isRefiningPlan = false
     @State private var historyCoordinator = PlanHistoryCoordinator()
 
@@ -26,78 +25,90 @@ struct PlanDetailView: View {
 
     var body: some View {
         List {
-            Section {
+            VStack(alignment: .leading, spacing: FocusSpacing.small) {
                 TextField(PlanDetailCopy.title, text: $plan.title)
+                    .focusField()
                 TextField(PlanDetailCopy.details, text: Binding(
                     get: { plan.details ?? "" },
                     set: { plan.details = $0.nilIfEmpty }
                 ), axis: .vertical)
+                    .focusField()
             }
-            Section {
-                ForEach(plan.orderedTasks) { task in
-                    let index = plan.orderedTasks.firstIndex(where: { $0.id == task.id }) ?? 0
-                    EditableTaskRow(
-                        task: task,
-                        isStartEnabled: timer.engine.canStartFocus,
-                        canMoveUp: index > 0,
-                        canMoveDown: index < plan.orderedTasks.count - 1,
-                        onMarkCompleted: {
-                            toggleCompletion(task)
-                        },
-                        onStart: {
-                            startFocus(on: task)
-                        },
-                        onMoveUp: { moveTask(task, direction: .up) },
-                        onMoveDown: { moveTask(task, direction: .down) },
-                        onPersistQuery: { query in
-                            persistSearchQuery(query, on: task)
-                        },
-                        onSearch: { query in
-                            pendingSearch = ExternalSearchOpening.request(from: query)
-                        }
-                    )
-                    .id(task.id)
-                    .taskRowActions(
-                        canStart: timer.engine.canStartFocus && task.status != .completed,
-                        onStart: {
-                            startFocus(on: task)
-                        },
-                        onRemove: { taskPendingRemoval = task }
-                    )
+            .focusCard()
+            .focusListRow()
+
+            FocusSectionHeader(title: PlanDetailCopy.tasks)
+                .focusListRow()
+            ForEach(plan.orderedTasks) { task in
+                let index = plan.orderedTasks.firstIndex(where: { $0.id == task.id }) ?? 0
+                EditableTaskRow(
+                    task: task,
+                    isStartEnabled: timer.engine.canStartFocus,
+                    canMoveUp: index > 0,
+                    canMoveDown: index < plan.orderedTasks.count - 1,
+                    onMarkCompleted: {
+                        toggleCompletion(task)
+                    },
+                    onStart: {
+                        startFocus(on: task)
+                    },
+                    onMoveUp: { moveTask(task, direction: .up) },
+                    onMoveDown: { moveTask(task, direction: .down) }
+                )
+                .id(task.id)
+                .focusCard()
+                .focusListRow()
+                .swipeToRemove {
+                    taskPendingRemoval = task
                 }
-                .onMove(perform: moveTasks)
-                VStack(alignment: .leading, spacing: FocusSpacing.small) {
-                    HStack {
-                        TextField(PlanDetailCopy.newTask, text: $newTaskTitle)
-                        Button(PlanDetailCopy.add) {
-                            addTask()
-                        }
-                        .disabled(newTaskTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
-                    Stepper(value: $newTaskEstimate, in: DraftPlanValidator.pomodoroRange) {
-                        Text(TaskCopy.estimatedSessions(newTaskEstimate))
-                            .font(FocusTypography.footnote)
-                    }
-                }
-            } header: {
-                Text(PlanDetailCopy.tasks)
-            } footer: {
-                Text(PlanDetailCopy.resourceSearchFooter)
+                .taskRowActions(
+                    canStart: timer.engine.canStartFocus && task.status != .completed,
+                    onStart: {
+                        startFocus(on: task)
+                    },
+                    onRemove: { taskPendingRemoval = task }
+                )
             }
 
-            if PlanHistoryPresentation.showsHistory(revisionCount: plan.revisions.count) {
-                Section {
-                    NavigationLink {
-                        PlanHistoryView(plan: plan)
-                    } label: {
-                        Text(PlanHistoryCopy.historyTitle)
-                    }
-                    .accessibilityIdentifier(PlanHistoryAccessibilityIdentifier.history)
+            VStack(alignment: .leading, spacing: FocusSpacing.small) {
+                HStack {
+                    TextField(PlanDetailCopy.newTask, text: $newTaskTitle)
+                        .focusField()
+                    FocusCapsuleButton(
+                        title: PlanDetailCopy.add,
+                        enabled: !newTaskTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                        action: addTask
+                    )
+                    .frame(maxWidth: 120)
                 }
+                Stepper(value: $newTaskEstimate, in: DraftPlanValidator.pomodoroRange) {
+                    Text(TaskCopy.estimatedSessions(newTaskEstimate))
+                        .font(FocusTypography.footnote)
+                }
+                Text(PlanEditorCopy.reorderFooter)
+                    .font(FocusTypography.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            .focusCard()
+            .focusListRow()
+
+            if PlanHistoryPresentation.showsHistory(revisionCount: plan.revisions.count) {
+                NavigationLink {
+                    PlanHistoryView(plan: plan)
+                } label: {
+                    Text(PlanHistoryCopy.historyTitle)
+                        .font(FocusTypography.body)
+                        .foregroundStyle(Color.focusPrimary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .focusCard()
+                .focusListRow()
+                .accessibilityIdentifier(PlanHistoryAccessibilityIdentifier.history)
             }
         }
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Color.focusBackground)
+        .focusScreen()
         .navigationTitle(PlanDetailCopy.navigationTitle)
         .toolbar {
             if showsRefineAction {
@@ -183,7 +194,6 @@ struct PlanDetailView: View {
             onRetry: { historyCoordinator.retrySave() },
             onDiscard: { historyCoordinator.discardFailedSave() }
         )
-        .externalSearchConfirmation($pendingSearch)
         .sheet(isPresented: $isRefiningPlan) {
             RefinePlanView(plan: plan)
         }
@@ -217,16 +227,6 @@ struct PlanDetailView: View {
         commit(
             apply: {
                 task.toggleCompletion()
-                plan.updatedAt = .now
-            }
-        )
-    }
-
-    private func persistSearchQuery(_ query: String?, on task: PlanTask) {
-        commit(
-            apply: {
-                task.searchQuery = query
-                task.updatedAt = .now
                 plan.updatedAt = .now
             }
         )
@@ -317,37 +317,6 @@ private struct EditableTaskRow: View {
     var onStart: () -> Void
     var onMoveUp: () -> Void
     var onMoveDown: () -> Void
-    var onPersistQuery: (String?) -> Void
-    var onSearch: (String) -> Void
-
-    @State private var queryDraft: String
-    @State private var isAddingQuery: Bool
-
-    init(
-        task: PlanTask,
-        isStartEnabled: Bool,
-        canMoveUp: Bool,
-        canMoveDown: Bool,
-        onMarkCompleted: @escaping () -> Void,
-        onStart: @escaping () -> Void,
-        onMoveUp: @escaping () -> Void,
-        onMoveDown: @escaping () -> Void,
-        onPersistQuery: @escaping (String?) -> Void,
-        onSearch: @escaping (String) -> Void
-    ) {
-        self.task = task
-        self.isStartEnabled = isStartEnabled
-        self.canMoveUp = canMoveUp
-        self.canMoveDown = canMoveDown
-        self.onMarkCompleted = onMarkCompleted
-        self.onStart = onStart
-        self.onMoveUp = onMoveUp
-        self.onMoveDown = onMoveDown
-        self.onPersistQuery = onPersistQuery
-        self.onSearch = onSearch
-        _queryDraft = State(initialValue: task.searchQuery ?? "")
-        _isAddingQuery = State(initialValue: false)
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: FocusSpacing.small) {
@@ -363,38 +332,6 @@ private struct EditableTaskRow: View {
                         .font(FocusTypography.footnote)
                 }
             }
-            TaskResourceSearchControls(
-                taskID: task.id,
-                state: ResourceSearchControlPolicy.savedPlan(
-                    hasQuery: ResourceSearchControlPolicy.hasQuery(task.searchQuery)
-                        || ResourceSearchControlPolicy.hasQuery(queryDraft),
-                    isAdding: isAddingQuery
-                ),
-                query: $queryDraft,
-                onAdd: {
-                    isAddingQuery = true
-                },
-                onRemove: {
-                    queryDraft = ""
-                    isAddingQuery = false
-                    onPersistQuery(nil)
-                },
-                onSearch: onSearch
-            )
-            .onChange(of: queryDraft) { _, newValue in
-                persistIfValid(newValue)
-            }
-            .onChange(of: task.searchQuery) { _, newValue in
-                guard case .success(let draftValue) = SearchQueryValidator.validateOptional(queryDraft) else {
-                    return
-                }
-                if draftValue != newValue {
-                    queryDraft = newValue ?? ""
-                    if newValue == nil {
-                        isAddingQuery = false
-                    }
-                }
-            }
             HStack {
                 Text(PlanDetailCopy.order)
                     .font(FocusTypography.footnote)
@@ -407,17 +344,6 @@ private struct EditableTaskRow: View {
                     onMoveDown: onMoveDown
                 )
             }
-        }
-    }
-
-    private func persistIfValid(_ raw: String) {
-        switch SearchQueryValidator.validateOptional(raw) {
-        case .success(let query):
-            if query != task.searchQuery {
-                onPersistQuery(query)
-            }
-        case .failure:
-            break
         }
     }
 }

@@ -314,12 +314,14 @@ struct ProgressPresentationTests {
         let today = ProgressMomentumDay(
             date: Date(timeIntervalSince1970: 1),
             weekdaySymbol: "W",
+            weekdayName: "Wednesday",
             hasCompletedFocus: false,
             isToday: true
         )
         let other = ProgressMomentumDay(
             date: Date(timeIntervalSince1970: 2),
             weekdaySymbol: "T",
+            weekdayName: "Tuesday",
             hasCompletedFocus: true,
             isToday: false
         )
@@ -333,6 +335,46 @@ struct ProgressPresentationTests {
         #expect(ProgressAccessibilityIdentifier.momentum == "progressMomentum")
         #expect(ProgressAccessibilityIdentifier.planRow(for: planA) == "progressPlan-\(planA.uuidString)")
         #expect(ProgressAccessibilityIdentifier.planRow(for: planA) != ProgressAccessibilityIdentifier.planRow(for: planB))
+    }
+
+    @Test
+    func weekdayUsageSumsCompletedFocusByDayAndNamesThePeakDay() {
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let now = date(2025, 1, 8, 12, 0, calendar: calendar)
+        let sessions = [
+            session(
+                id: sessionA,
+                startedAt: date(2025, 1, 6, 9, 0, calendar: calendar),
+                elapsedSeconds: 600,
+                outcome: .completed
+            ),
+            session(
+                id: sessionB,
+                startedAt: date(2025, 1, 8, 15, 0, calendar: calendar),
+                elapsedSeconds: 1_200,
+                outcome: .completed
+            ),
+            session(
+                id: sessionC,
+                startedAt: date(2025, 1, 8, 10, 0, calendar: calendar),
+                elapsedSeconds: 300,
+                outcome: .cancelled
+            ),
+        ]
+        let bars = ProgressPresentation.weekdayUsage(sessions: sessions, now: now, calendar: calendar)
+        #expect(bars.count == 7)
+        #expect(bars.map(\.focusedSeconds).reduce(0, +) == 1_800)
+        #expect(ProgressPresentation.peakUsageLabel(in: bars) == "Wednesday")
+        #expect(bars.first { $0.focusedSeconds == 1_200 }?.label == "W")
+
+        let times = ProgressPresentation.timeOfDayUsage(
+            sessions: sessions,
+            in: ProgressPresentation.weekInterval(containing: now, calendar: calendar),
+            calendar: calendar
+        )
+        #expect(ProgressPresentation.peakUsageLabel(in: times) == "afternoon")
+        #expect(ProgressTimeOfDay.bucket(hour: 15) == .afternoon)
+        #expect(ProgressTimeOfDay.bucket(hour: 9) == .morning)
     }
 
     private func gregorianCalendar(firstWeekday: Int) -> Calendar {

@@ -101,8 +101,8 @@ struct RefinePlanView: View {
     }
 
     private var requestForm: some View {
-        Form {
-            Section {
+        FocusScreenStack {
+            VStack(alignment: .leading, spacing: FocusSpacing.small) {
                 TextField(
                     PlanRefinementCopy.requestPrompt,
                     text: $coordinator.request,
@@ -120,22 +120,20 @@ struct RefinePlanView: View {
                     .font(FocusTypography.footnote)
                     .foregroundStyle(.secondary)
             }
+            .focusCard()
 
-            Section {
-                Text(PlanRefinementCopy.protectedExplanation)
-                    .font(FocusTypography.footnote)
-                    .foregroundStyle(.secondary)
-            }
+            Text(PlanRefinementCopy.protectedExplanation)
+                .font(FocusTypography.footnote)
+                .foregroundStyle(.secondary)
+                .focusCard()
 
             if let generationError = coordinator.generationError, !generationError.isEmpty {
-                Section {
-                    Text(generationError)
-                        .font(FocusTypography.footnote)
-                        .foregroundStyle(Color.focusError)
-                }
+                Text(generationError)
+                    .font(FocusTypography.footnote)
+                    .foregroundStyle(Color.focusError)
+                    .focusCard()
             }
         }
-        .scrollContentBackground(.hidden)
     }
 
     private func previewList(_ preview: PlanRefinementPreview) -> some View {
@@ -199,7 +197,7 @@ struct RefinePlanView: View {
             .padding(FocusSpacing.medium)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .focusScreen()
     }
 }
 

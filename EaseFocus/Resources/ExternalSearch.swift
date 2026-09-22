@@ -66,11 +66,11 @@ nonisolated enum ExternalSearchPrivacyCopy {
 
     static let body = LocalizedCopy(
         """
-        EaseFocus can suggest a search query for a task. Nothing is sent until you tap Search Google.
+        Pomodoro Planner can suggest a search query for a task. Nothing is sent until you tap Search Google.
 
-        The query leaves EaseFocus and is handled under Google’s privacy terms. Generated plans, survey answers, and focus history stay on this device.
+        The query leaves Pomodoro Planner and is handled under Google’s privacy terms. Generated plans, survey answers, and focus history stay on this device.
 
-        EaseFocus does not inspect, save, or endorse the results. For health, legal, financial, or safety-sensitive goals, treat results as starting points only.
+        Pomodoro Planner does not inspect, save, or endorse the results. For health, legal, financial, or safety-sensitive goals, treat results as starting points only.
         """
     )
 

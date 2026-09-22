@@ -1,9 +1,13 @@
 import Foundation
 
 nonisolated enum AppCopy {
+    static let appName = LocalizedCopy("Pomodoro Planner")
     static let today = LocalizedCopy("Today")
     static let plans = LocalizedCopy("Plans")
     static let progress = LocalizedCopy("Progress")
+    static let pomodoro = LocalizedCopy("Pomodoro")
+    static let statistics = LocalizedCopy("Statistics")
+    static let taskAdviser = LocalizedCopy("Task Adviser")
     static let settings = LocalizedCopy("Settings")
     static let timer = LocalizedCopy("Timer")
     static let close = LocalizedCopy("Close")

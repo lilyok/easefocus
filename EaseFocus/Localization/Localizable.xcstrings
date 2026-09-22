@@ -324,23 +324,6 @@
         }
       }
     },
-    "Create a plan to start a focus session. Apple Intelligence is optional.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Create a plan to start a focus session. Apple Intelligence is optional."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Crea un plan para empezar una sesión de enfoque. Apple Intelligence es opcional."
-          }
-        }
-      }
-    },
     "Up next": {
       "extractionState": "manual",
       "localizations": {
@@ -494,23 +477,6 @@
         }
       }
     },
-    "Generated plans start from Today or Plans, and you review every draft before it is saved.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Generated plans start from Today or Plans, and you review every draft before it is saved."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Los planes generados empiezan en Hoy o Planes, y revisas cada borrador antes de guardarlo."
-          }
-        }
-      }
-    },
     "Focus minutes: %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -575,23 +541,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Te damos la bienvenida a EaseFocus"
-          }
-        }
-      }
-    },
-    "EaseFocus turns a goal into timed focus sessions. Allow these so the timer and generated plans can work fully.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "EaseFocus turns a goal into timed focus sessions. Allow these so the timer and generated plans can work fully."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "EaseFocus convierte un objetivo en sesiones de enfoque cronometradas. Activa esto para que el temporizador y los planes generados funcionen por completo."
           }
         }
       }
@@ -1452,13 +1401,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "EaseFocus"
+            "value": "Pomodoro Planner"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "EaseFocus"
+            "value": "Planificador Pomodoro"
           }
         }
       }
@@ -1527,6 +1476,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Esta semana"
+          }
+        }
+      }
+    },
+    "Share": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compartir"
           }
         }
       }
@@ -4517,6 +4483,771 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sesiones antes del descanso largo: %lld"
+          }
+        }
+      }
+    },
+    "Add a task to start a focus session. Apple Intelligence is optional.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a task to start a focus session. Apple Intelligence is optional."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añade una tarea para empezar una sesión de enfoque. Apple Intelligence es opcional."
+          }
+        }
+      }
+    },
+    "Generated plans start from Task Adviser, and you review every draft before it is saved.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generated plans start from Task Adviser, and you review every draft before it is saved."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los planes generados empiezan en Asesor de tareas, y revisas cada borrador antes de guardarlo."
+          }
+        }
+      }
+    },
+    "EaseFocus helps you focus with timed sessions. Allow notifications so the timer can work fully.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EaseFocus helps you focus with timed sessions. Allow notifications so the timer can work fully."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EaseFocus te ayuda a concentrarte con sesiones cronometradas. Permite las notificaciones para que el temporizador funcione por completo."
+          }
+        }
+      }
+    },
+    "Pomodoro": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pomodoro"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pomodoro"
+          }
+        }
+      }
+    },
+    "Statistics": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Statistics"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estadísticas"
+          }
+        }
+      }
+    },
+    "Task Adviser": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Task Adviser"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asesor de tareas"
+          }
+        }
+      }
+    },
+    "Quote of the day": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quote of the day"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frase del día"
+          }
+        }
+      }
+    },
+    "Got it": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got it"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entendido"
+          }
+        }
+      }
+    },
+    "Search": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar"
+          }
+        }
+      }
+    },
+    "My tasks": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My tasks"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mis tareas"
+          }
+        }
+      }
+    },
+    "Now focusing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Now focusing"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enfocando ahora"
+          }
+        }
+      }
+    },
+    "Describe what you want. Generate a plan, or add tasks yourself.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Describe what you want. Generate a plan, or add tasks yourself."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Describe lo que quieres. Genera un plan o añade las tareas tú."
+          }
+        }
+      }
+    },
+    "Task name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Task name"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre de la tarea"
+          }
+        }
+      }
+    },
+    "completed pomodoros": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "completed pomodoros"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pomodoros completados"
+          }
+        }
+      }
+    },
+    "spoiled pomodoros": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "spoiled pomodoros"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pomodoros perdidos"
+          }
+        }
+      }
+    },
+    "Complete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complete"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completar"
+          }
+        }
+      }
+    },
+    "COMPLETED": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "COMPLETED"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "COMPLETADA"
+          }
+        }
+      }
+    },
+    "Undo complete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo complete"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deshacer completar"
+          }
+        }
+      }
+    },
+    "Focus minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus minutes"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minutos de enfoque"
+          }
+        }
+      }
+    },
+    "Short break": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Short break"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descanso corto"
+          }
+        }
+      }
+    },
+    "Sessions before long break": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessions before long break"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesiones antes del descanso largo"
+          }
+        }
+      }
+    },
+    "Focus by day": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus by day"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enfoque por día"
+          }
+        }
+      }
+    },
+    "Focus by time of day": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus by time of day"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enfoque por momento del día"
+          }
+        }
+      }
+    },
+    "focused": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "focused"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "enfoque"
+          }
+        }
+      }
+    },
+    "Motivational quote for you": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motivational quote for you"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frase motivadora para ti"
+          }
+        }
+      }
+    },
+    "Focus this week": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus this week"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enfoque esta semana"
+          }
+        }
+      }
+    },
+    "morning": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "morning"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mañana"
+          }
+        }
+      }
+    },
+    "afternoon": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "afternoon"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tarde"
+          }
+        }
+      }
+    },
+    "evening": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "evening"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "noche"
+          }
+        }
+      }
+    },
+    "night": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "night"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "madrugada"
+          }
+        }
+      }
+    },
+    "Your most focused day this week is %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your most focused day this week is %1$@."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu día con más enfoque esta semana es %1$@."
+          }
+        }
+      }
+    },
+    "The most productive time to work for you is the %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The most productive time to work for you is the %1$@."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El momento más productivo para ti es la %1$@."
+          }
+        }
+      }
+    },
+    "Pomodoro Planner": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pomodoro Planner"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planificador Pomodoro"
+          }
+        }
+      }
+    },
+    "Welcome to Pomodoro Planner": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to Pomodoro Planner"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Te damos la bienvenida a Planificador Pomodoro"
+          }
+        }
+      }
+    },
+    "Pomodoro Planner helps you focus with timed sessions. Allow notifications so the timer can work fully.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pomodoro Planner helps you focus with timed sessions. Allow notifications so the timer can work fully."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planificador Pomodoro te ayuda a concentrarte con sesiones cronometradas. Permite las notificaciones para que el temporizador funcione por completo."
+          }
+        }
+      }
+    },
+    "Resource search suggestions can be edited or removed. A query leaves Pomodoro Planner only when you confirm Search Google.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resource search suggestions can be edited or removed. A query leaves Pomodoro Planner only when you confirm Search Google."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las sugerencias de búsqueda se pueden editar o eliminar. Una consulta sale de Planificador Pomodoro solo cuando confirmas Buscar en Google."
+          }
+        }
+      }
+    },
+    "Pomodoro Planner could not open easefocus.store. Your store files were preserved.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pomodoro Planner could not open easefocus.store. Your store files were preserved."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planificador Pomodoro no pudo abrir easefocus.store. Se conservaron los archivos del almacén."
+          }
+        }
+      }
+    },
+    "Quit any other Pomodoro Planner copies and try again. If the problem continues, keep the store files and contact support.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit any other Pomodoro Planner copies and try again. If the problem continues, keep the store files and contact support."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cierra otras copias de Planificador Pomodoro y vuelve a intentarlo. Si el problema continúa, conserva los archivos del almacén y contacta con soporte."
+          }
+        }
+      }
+    },
+    "Turn on Pomodoro Planner notifications in System Settings to get an alert when a timer ends.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn on Pomodoro Planner notifications in System Settings to get an alert when a timer ends."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activa las notificaciones de Planificador Pomodoro en Ajustes del Sistema para recibir un aviso cuando termine un temporizador."
+          }
+        }
+      }
+    },
+    "Turn on Pomodoro Planner notifications in Settings to get an alert when a timer ends.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn on Pomodoro Planner notifications in Settings to get an alert when a timer ends."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activa las notificaciones de Planificador Pomodoro en Ajustes para recibir un aviso cuando termine un temporizador."
+          }
+        }
+      }
+    },
+    "Pomodoro Planner notifications are allowed. Alert style and sound follow your system settings.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pomodoro Planner notifications are allowed. Alert style and sound follow your system settings."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las notificaciones de Planificador Pomodoro están permitidas. El estilo de aviso y el sonido siguen los ajustes del sistema."
+          }
+        }
+      }
+    },
+    "Pomodoro Planner could not save your latest changes. Try again. If this keeps happening, quit other Pomodoro Planner copies and restart the app.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pomodoro Planner could not save your latest changes. Try again. If this keeps happening, quit other Pomodoro Planner copies and restart the app."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planificador Pomodoro no pudo guardar tus últimos cambios. Inténtalo de nuevo. Si sigue ocurriendo, cierra otras copias de Planificador Pomodoro y reinicia la app."
+          }
+        }
+      }
+    },
+    "Goals, survey answers, generated plans, and focus history stay on this device. Pomodoro Planner does not track you or use analytics.\n\nWhen Apple Intelligence is available, plan generation runs on device.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goals, survey answers, generated plans, and focus history stay on this device. Pomodoro Planner does not track you or use analytics.\n\nWhen Apple Intelligence is available, plan generation runs on device."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los objetivos, las respuestas de la encuesta, los planes generados y el historial de enfoque se quedan en este dispositivo. Planificador Pomodoro no te rastrea ni usa analítica.\n\nCuando Apple Intelligence está disponible, la generación de planes se ejecuta en el dispositivo."
+          }
+        }
+      }
+    },
+    "Pomodoro Planner can suggest a search query for a task. Nothing is sent until you tap Search Google.\n\nThe query leaves Pomodoro Planner and is handled under Google’s privacy terms. Generated plans, survey answers, and focus history stay on this device.\n\nPomodoro Planner does not inspect, save, or endorse the results. For health, legal, financial, or safety-sensitive goals, treat results as starting points only.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pomodoro Planner can suggest a search query for a task. Nothing is sent until you tap Search Google.\n\nThe query leaves Pomodoro Planner and is handled under Google’s privacy terms. Generated plans, survey answers, and focus history stay on this device.\n\nPomodoro Planner does not inspect, save, or endorse the results. For health, legal, financial, or safety-sensitive goals, treat results as starting points only."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planificador Pomodoro puede sugerir una consulta de búsqueda para una tarea. No se envía nada hasta que pulses Buscar en Google.\n\nLa consulta sale de Planificador Pomodoro y se trata según las condiciones de privacidad de Google. Los planes generados, las respuestas de la encuesta y el historial de enfoque se quedan en este dispositivo.\n\nPlanificador Pomodoro no inspecciona, guarda ni respalda los resultados. En objetivos de salud, legales, financieros o sensibles para la seguridad, trata los resultados solo como punto de partida."
+          }
+        }
+      }
+    },
+    "When on, Pomodoro Planner may add optional Google search terms to tasks where they help. These are search suggestions, not links. Nothing is sent to Google during generation or when you save the plan.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When on, Pomodoro Planner may add optional Google search terms to tasks where they help. These are search suggestions, not links. Nothing is sent to Google during generation or when you save the plan."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si está activado, Planificador Pomodoro puede añadir términos de búsqueda de Google opcionales a las tareas donde ayuden. Son sugerencias de búsqueda, no enlaces. No se envía nada a Google durante la generación ni al guardar el plan."
           }
         }
       }

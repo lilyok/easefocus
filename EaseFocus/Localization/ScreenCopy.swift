@@ -4,9 +4,10 @@ nonisolated enum TodayCopy {
     static let navigationTitle = AppCopy.today
     static let readyToFocus = LocalizedCopy("Ready to focus")
     static let emptyDescription = LocalizedCopy(
-        "Create a plan to start a focus session. Apple Intelligence is optional."
+        "Add a task to start a focus session. Apple Intelligence is optional."
     )
     static let createPlan = LocalizedCopy("Create a plan")
+    static let addTask = LocalizedCopy("Add task")
     static let upNext = LocalizedCopy("Up next")
     static let done = LocalizedCopy("Done")
     static let openPlan = LocalizedCopy("Open plan")
@@ -16,6 +17,26 @@ nonisolated enum TodayCopy {
     static func openPlan(named title: String) -> LocalizedCopy {
         LocalizedCopy(format: "Open \(title) plan", english: "Open \(title) plan")
     }
+}
+
+nonisolated enum PomodoroCopy {
+    static let navigationTitle = AppCopy.pomodoro
+    static let searchPlaceholder = LocalizedCopy("Search")
+    static let inboxTitle = LocalizedCopy("My tasks")
+    static let nowFocusing = LocalizedCopy("Now focusing")
+    static let quoteOfTheDay = QuoteCopy.quoteOfTheDay
+    static let taskName = LocalizedCopy("Task name")
+    static let completedPomodoros = LocalizedCopy("completed pomodoros")
+    static let spoiledPomodoros = LocalizedCopy("spoiled pomodoros")
+    static let complete = LocalizedCopy("Complete")
+    static let completedBadge = LocalizedCopy("COMPLETED")
+    static let undoComplete = LocalizedCopy("Undo complete")
+}
+
+nonisolated enum QuoteCopy {
+    static let quoteOfTheDay = LocalizedCopy("Quote of the day")
+    static let motivationalQuoteForYou = LocalizedCopy("Motivational quote for you")
+    static let gotIt = LocalizedCopy("Got it")
 }
 
 nonisolated enum PlansCopy {
@@ -38,40 +59,26 @@ nonisolated enum SettingsCopy {
     static let startBreaksAutomatically = LocalizedCopy("Start breaks automatically")
     static let playTimerSounds = LocalizedCopy("Play timer sounds")
     static let generatedPlansHint = LocalizedCopy(
-        "Generated plans start from Today or Plans, and you review every draft before it is saved."
+        "Generated plans start from Task Adviser, and you review every draft before it is saved."
     )
     static let privacyOverview = LocalizedCopy(
         """
-        Goals, survey answers, generated plans, and focus history stay on this device. EaseFocus does not track you or use analytics.
+        Goals, survey answers, generated plans, and focus history stay on this device. Pomodoro Planner does not track you or use analytics.
 
         When Apple Intelligence is available, plan generation runs on device.
         """
     )
 
-    static func focusMinutes(_ minutes: Int) -> LocalizedCopy {
-        LocalizedCopy(format: "Focus minutes: \(minutes)", english: "Focus minutes: \(minutes)")
-    }
-
-    static func shortBreak(_ minutes: Int) -> LocalizedCopy {
-        LocalizedCopy(format: "Short break: \(minutes)", english: "Short break: \(minutes)")
-    }
-
-    static func longBreak(_ minutes: Int) -> LocalizedCopy {
-        LocalizedCopy(format: "Long break: \(minutes)", english: "Long break: \(minutes)")
-    }
-
-    static func sessionsBeforeLongBreak(_ count: Int) -> LocalizedCopy {
-        LocalizedCopy(
-            format: "Sessions before long break: \(count)",
-            english: "Sessions before long break: \(count)"
-        )
-    }
+    static let focusMinutes = LocalizedCopy("Focus minutes")
+    static let shortBreak = LocalizedCopy("Short break")
+    static let longBreak = LocalizedCopy("Long break")
+    static let sessionsBeforeLongBreak = LocalizedCopy("Sessions before long break")
 }
 
 nonisolated enum OnboardingCopy {
-    static let navigationTitle = LocalizedCopy("Welcome to EaseFocus")
+    static let navigationTitle = LocalizedCopy("Welcome to Pomodoro Planner")
     static let introduction = LocalizedCopy(
-        "EaseFocus turns a goal into timed focus sessions. Allow these so the timer and generated plans can work fully."
+        "Pomodoro Planner helps you focus with timed sessions. Allow notifications so the timer can work fully."
     )
     static let notifications = AppCopy.notifications
     static let appleIntelligence = AppCopy.appleIntelligence
@@ -131,7 +138,7 @@ nonisolated enum PlanEditorCopy {
     static let reviewDraft = LocalizedCopy("Review draft")
     static let newPlan = LocalizedCopy("New plan")
     static let resourceSearchFooter = LocalizedCopy(
-        "Resource search suggestions can be edited or removed. A query leaves EaseFocus only when you confirm Search Google."
+        "Resource search suggestions can be edited or removed. A query leaves Pomodoro Planner only when you confirm Search Google."
     )
     static let reorderFooter = LocalizedCopy("Use the arrow buttons to set the task order.")
 }
@@ -156,6 +163,9 @@ nonisolated enum SurveyCopy {
     static let navigationTitle = PlanEditorCopy.newPlan
     static let goalPlaceholder = LocalizedCopy("What do you want to achieve?")
     static let goalHint = LocalizedCopy("This becomes the plan’s focus.")
+    static let requestHint = LocalizedCopy(
+        "Describe what you want. Generate a plan, or add tasks yourself."
+    )
     static let experience = LocalizedCopy("Current experience")
     static let experienceHint = LocalizedCopy("Used to keep tasks at the right difficulty.")
     static let beginner = LocalizedCopy("Beginner")
@@ -188,10 +198,10 @@ nonisolated enum SurveyCopy {
 nonisolated enum PersistenceErrorCopy {
     static let title = LocalizedCopy("Couldn't open your data")
     static let preserved = LocalizedCopy(
-        "EaseFocus could not open easefocus.store. Your store files were preserved."
+        "Pomodoro Planner could not open easefocus.store. Your store files were preserved."
     )
     static let retryHint = LocalizedCopy(
-        "Quit any other EaseFocus copies and try again. If the problem continues, keep the store files and contact support."
+        "Quit any other Pomodoro Planner copies and try again. If the problem continues, keep the store files and contact support."
     )
 }
 
@@ -201,7 +211,7 @@ nonisolated enum NoticeCopy {
 }
 
 nonisolated enum TimerNotificationCopy {
-    static let appName = LocalizedCopy("EaseFocus")
+    static let appName = AppCopy.appName
     static let finished = LocalizedCopy("Your timer has finished.")
     static let breakFinished = LocalizedCopy("Break finished.")
     static let focusComplete = LocalizedCopy("Focus session complete.")

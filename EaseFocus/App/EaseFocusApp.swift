@@ -25,7 +25,7 @@ struct EaseFocusApp: App {
 
     var body: some Scene {
         #if os(macOS)
-        Window("EaseFocus", id: EaseFocusSceneID.main) {
+        Window(AppCopy.appName.english, id: EaseFocusSceneID.main) {
             root
         }
         .defaultSize(width: 480, height: 640)

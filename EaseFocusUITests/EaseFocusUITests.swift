@@ -12,6 +12,6 @@ final class EaseFocusUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.staticTexts["Ready to focus"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["createPlan"].exists)
+        XCTAssertTrue(app.buttons["addTask"].exists)
     }
 }

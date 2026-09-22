@@ -66,6 +66,17 @@ final class GoalPlan {
         }
     }
 
+    func insertTaskAtFront(_ task: PlanTask, at date: Date = .now) {
+        for existing in orderedTasks {
+            existing.position += 1
+            existing.updatedAt = date
+        }
+        task.position = 0
+        task.plan = self
+        tasks.append(task)
+        updatedAt = date
+    }
+
     func moveTaskToFront(_ task: PlanTask) {
         var ordered = orderedTasks
         guard let from = ordered.firstIndex(where: { $0.id == task.id }) else {

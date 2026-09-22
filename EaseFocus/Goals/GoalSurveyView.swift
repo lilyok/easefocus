@@ -5,111 +5,61 @@ struct GoalSurveyView: View {
     var availability: FoundationModelAvailability
     var errorMessage: String?
     var isGenerating: Bool
+    var isCompactRequest = false
     var onGenerate: () -> Void
     var onCreateManually: () -> Void
     var onCancel: () -> Void
 
     var body: some View {
-        Form {
+        FocusScreenStack {
             if !availability.allowsGeneration {
-                Section {
-                    AvailabilityNotice(availability: availability)
-                }
+                AvailabilityNotice(availability: availability)
+                    .focusCard()
             }
 
-            Section {
+            VStack(alignment: .leading, spacing: FocusSpacing.small) {
                 TextField(SurveyCopy.goalPlaceholder, text: $survey.goal, axis: .vertical)
-                Text(SurveyCopy.goalHint)
+                    .focusField()
+                Text(isCompactRequest ? SurveyCopy.requestHint : SurveyCopy.goalHint)
                     .font(FocusTypography.footnote)
                     .foregroundStyle(.secondary)
             }
+            .focusCard()
 
-            Section {
-                Picker(selection: $survey.experience) {
-                    ForEach(ExperienceLevel.allCases, id: \.self) { level in
-                        Text(level.title).tag(level)
-                    }
-                } label: {
-                    Text(SurveyCopy.experience)
-                }
-                Text(SurveyCopy.experienceHint)
-                    .font(FocusTypography.footnote)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section {
-                TextField(SurveyCopy.successPlaceholder, text: $survey.successOutcome, axis: .vertical)
-                Text(SurveyCopy.successHint)
-                    .font(FocusTypography.footnote)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section {
-                Stepper(value: $survey.sessionsPerWeek, in: GoalSurvey.sessionsPerWeekRange) {
-                    Text(SurveyCopy.sessionsPerWeek(survey.sessionsPerWeek))
-                }
-                Text(SurveyCopy.sessionsHint)
-                    .font(FocusTypography.footnote)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section {
-                Toggle(SurveyCopy.deadlineToggle, isOn: $survey.hasDeadline)
-                if survey.hasDeadline {
-                    DatePicker(
-                        selection: $survey.deadline,
-                        displayedComponents: .date
-                    ) {
-                        Text(SurveyCopy.deadline)
-                    }
-                }
-                Text(SurveyCopy.deadlineHint)
-                    .font(FocusTypography.footnote)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section {
-                TextField(SurveyCopy.constraintsPlaceholder, text: $survey.constraints, axis: .vertical)
-                Text(SurveyCopy.constraintsHint)
-                    .font(FocusTypography.footnote)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section {
-                Toggle(ResourceSearchSuggestionCopy.surveyToggle, isOn: $survey.includesResourceSuggestions)
-                    .accessibilityIdentifier("includeResourceSuggestions")
-                Text(ResourceSearchSuggestionCopy.surveyExplanation)
-                    .font(FocusTypography.footnote)
-                    .foregroundStyle(.secondary)
+            if !isCompactRequest {
+                detailedSurveyFields
             }
 
             if let errorMessage, !errorMessage.isEmpty {
-                Section {
-                    Text(errorMessage)
-                        .font(FocusTypography.footnote)
-                        .foregroundStyle(Color.focusError)
-                }
+                Text(errorMessage)
+                    .font(FocusTypography.footnote)
+                    .foregroundStyle(Color.focusError)
+                    .focusCard()
             }
 
-            Section {
-                Button(SurveyCopy.createManually, action: onCreateManually)
-                    .disabled(isGenerating)
-                    .accessibilityIdentifier("createManually")
-            }
+            FocusCapsuleButton(
+                title: SurveyCopy.generate,
+                enabled: survey.isReadyToGenerate && availability.allowsGeneration && !isGenerating,
+                identifier: "generatePlan",
+                action: onGenerate
+            )
+            FocusCapsuleButton(
+                title: SurveyCopy.createManually,
+                fill: Color.focusPrimary.opacity(0.75),
+                enabled: !isGenerating,
+                identifier: "createManually",
+                action: onCreateManually
+            )
         }
-        .disabled(isGenerating)
-        .navigationTitle(SurveyCopy.navigationTitle)
+        .navigationTitle(isCompactRequest ? AppCopy.taskAdviser : SurveyCopy.navigationTitle)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button(isGenerating ? SurveyCopy.stop : SurveyCopy.cancel, action: onCancel)
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                if isGenerating {
-                    ProgressView()
-                } else {
-                    Button(SurveyCopy.generate, action: onGenerate)
-                        .disabled(!survey.isReadyToGenerate || !availability.allowsGeneration)
-                        .accessibilityIdentifier("generatePlan")
+            if isGenerating {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(SurveyCopy.stop, action: onCancel)
+                }
+            } else if !isCompactRequest {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(SurveyCopy.cancel, action: onCancel)
                 }
             }
         }
@@ -117,9 +67,70 @@ struct GoalSurveyView: View {
             if isGenerating {
                 ProgressView(SurveyCopy.generating)
                     .padding(FocusSpacing.large)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    .background(Color.focusSurface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
         }
+    }
+
+    @ViewBuilder
+    private var detailedSurveyFields: some View {
+        VStack(alignment: .leading, spacing: FocusSpacing.small) {
+            Picker(selection: $survey.experience) {
+                ForEach(ExperienceLevel.allCases, id: \.self) { level in
+                    Text(level.title).tag(level)
+                }
+            } label: {
+                Text(SurveyCopy.experience)
+            }
+            Text(SurveyCopy.experienceHint)
+                .font(FocusTypography.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .focusCard()
+
+        VStack(alignment: .leading, spacing: FocusSpacing.small) {
+            TextField(SurveyCopy.successPlaceholder, text: $survey.successOutcome, axis: .vertical)
+                .focusField()
+            Text(SurveyCopy.successHint)
+                .font(FocusTypography.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .focusCard()
+
+        VStack(alignment: .leading, spacing: FocusSpacing.small) {
+            Stepper(value: $survey.sessionsPerWeek, in: GoalSurvey.sessionsPerWeekRange) {
+                Text(SurveyCopy.sessionsPerWeek(survey.sessionsPerWeek))
+            }
+            Text(SurveyCopy.sessionsHint)
+                .font(FocusTypography.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .focusCard()
+
+        VStack(alignment: .leading, spacing: FocusSpacing.small) {
+            Toggle(SurveyCopy.deadlineToggle, isOn: $survey.hasDeadline)
+            if survey.hasDeadline {
+                DatePicker(
+                    selection: $survey.deadline,
+                    displayedComponents: .date
+                ) {
+                    Text(SurveyCopy.deadline)
+                }
+            }
+            Text(SurveyCopy.deadlineHint)
+                .font(FocusTypography.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .focusCard()
+
+        VStack(alignment: .leading, spacing: FocusSpacing.small) {
+            TextField(SurveyCopy.constraintsPlaceholder, text: $survey.constraints, axis: .vertical)
+                .focusField()
+            Text(SurveyCopy.constraintsHint)
+                .font(FocusTypography.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .focusCard()
     }
 }
 
