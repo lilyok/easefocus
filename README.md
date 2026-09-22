@@ -6,7 +6,7 @@ The app uses Apple’s Foundation Models framework to create personalized plans 
 
 ## Status
 
-First-release candidate / App Store listing (`lil.pomodoro`). Paste kit and screenshot shot list live in `AppStore/App-Store-Connect.md`.
+First-release candidate / App Store listing (`lil.pomodoro`, display name **Pomodoro Planner**). Paste kit and screenshot shot list live in `AppStore/App-Store-Connect.md`.
 
 ## Platform
 
@@ -16,17 +16,17 @@ First-release candidate / App Store listing (`lil.pomodoro`). Paste kit and scre
 - SwiftData
 - Foundation Models, with a runtime availability check
 
-macOS is included as a second destination on the same app target so the project can run while an iOS Simulator runtime is unavailable. The product remains iOS-first.
+macOS is included as a second destination on the same app target. The App Store listing remains the existing `lil.pomodoro` product.
 
 ## App Store identity
 
-EaseFocus updates the existing Pomodoro App Store listing. The bundle identifier stays `lil.pomodoro`.
+Pomodoro Planner updates the existing Pomodoro App Store listing. The bundle identifier stays `lil.pomodoro`.
 
-EaseFocus starts fresh and does not import historical goals or Pomodoro counts from the previous app. New data is stored in the SwiftData file `easefocus.store`.
+The app starts fresh and does not import historical goals or Pomodoro counts from the previous app. New data is stored in the SwiftData file `easefocus.store`.
 
 ## Privacy
 
-Goals, survey answers, generated plans, and focus history stay on this device. EaseFocus does not track you or use analytics. Plan generation runs on device when Apple Intelligence is available.
+Goals, survey answers, generated plans, and focus history stay on this device. Pomodoro Planner does not track you or use analytics. Plan generation and quote selection run on device when Apple Intelligence is available. An optional public gist fetch can add more attributed quotes; no user data is sent with that request.
 
 ## Live Foundation Models evaluations
 
