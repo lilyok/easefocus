@@ -134,6 +134,10 @@ ul {
   margin-top: 28px;
 }
 
+.card.span-2 {
+  grid-column: 1 / -1;
+}
+
 .button {
   display: inline-flex;
   align-items: center;
