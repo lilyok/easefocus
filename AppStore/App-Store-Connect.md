@@ -6,9 +6,9 @@ Bundle ID stays `lil.pomodoro`. New data lives in `easefocus.store`. The app doe
 
 ## Connect URLs
 
-- Marketing: `https://lilyok.github.io/pomodoro-planner/`
-- Support: `https://lilyok.github.io/pomodoro-planner/support/`
-- Privacy Policy: `https://lilyok.github.io/pomodoro-planner/privacy/`
+- Marketing: `https://lilyok.github.io/easefocus/pomodoro-planner/`
+- Support: `https://lilyok.github.io/easefocus/pomodoro-planner/support/`
+- Privacy Policy: `https://lilyok.github.io/easefocus/pomodoro-planner/privacy/`
 
 ## Name
 
@@ -46,9 +46,9 @@ Also in this update: Pomodoro task list with sticky active session, Statistics w
 - On launch the app may fetch a public JSON quote list from a GitHub gist (`gist.githubusercontent.com`) and merge new quotes into the local library. No user data is uploaded.
 - Optional Google search: a query leaves the app only after the user taps Search Google on the confirmation sheet; the system browser opens `https://www.google.com/search?q=…`. Nothing is sent during generation or save.
 - No analytics SDKs, no ATT, no account system.
-- Support URL: `https://lilyok.github.io/pomodoro-planner/support/`
-- Marketing URL: `https://lilyok.github.io/pomodoro-planner/`
-- Privacy Policy URL (optional for Data Not Collected): `https://lilyok.github.io/pomodoro-planner/privacy/`
+- Support URL: `https://lilyok.github.io/easefocus/pomodoro-planner/support/`
+- Marketing URL: `https://lilyok.github.io/easefocus/pomodoro-planner/`
+- Privacy Policy URL (optional for Data Not Collected): `https://lilyok.github.io/easefocus/pomodoro-planner/privacy/`
 - Suggested paths: add a task on Pomodoro → Start → confirm sticky timer card → Statistics → Quote of the day → Settings → Privacy.
 
 ## Privacy nutrition labels
