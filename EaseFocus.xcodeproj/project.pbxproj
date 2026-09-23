@@ -24,7 +24,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		010000000000000000000020 /* EaseFocus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EaseFocus.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		010000000000000000000020 /* Pomodoro Planner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Pomodoro Planner.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		010000000000000000000021 /* EaseFocusTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EaseFocusTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		010000000000000000000022 /* EaseFocusUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EaseFocusUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -85,7 +85,7 @@
 		010000000000000000000003 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				010000000000000000000020 /* EaseFocus.app */,
+				010000000000000000000020 /* Pomodoro Planner.app */,
 				010000000000000000000021 /* EaseFocusTests.xctest */,
 				010000000000000000000022 /* EaseFocusUITests.xctest */,
 			);
@@ -114,7 +114,7 @@
 			packageProductDependencies = (
 			);
 			productName = EaseFocus;
-			productReference = 010000000000000000000020 /* EaseFocus.app */;
+			productReference = 010000000000000000000020 /* Pomodoro Planner.app */;
 			productType = "com.apple.product-type.application";
 		};
 		010000000000000000000011 /* EaseFocusTests */ = {
@@ -396,7 +396,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = EaseFocus/EaseFocus.entitlements;
+				CODE_SIGN_ENTITLEMENTS = EaseFocus/EaseFocusDebug.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 9;
@@ -405,14 +405,14 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = EaseFocus-Info.plist;
+				INFOPLIST_FILE = "EaseFocus-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Pomodoro Planner";
 				INFOPLIST_KEY_CFBundleName = "Pomodoro Planner";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Pomodoro Planner notifies you when a focus session or break ends.";
-				INFOPLIST_KEY_NSUserNotificationAlertStyle = banner;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSMultipleInstancesProhibited = YES;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_NSUserNotificationAlertStyle = banner;
+				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Pomodoro Planner notifies you when a focus session or break ends.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=macosx*]" = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -461,14 +461,14 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = EaseFocus-Info.plist;
+				INFOPLIST_FILE = "EaseFocus-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Pomodoro Planner";
 				INFOPLIST_KEY_CFBundleName = "Pomodoro Planner";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Pomodoro Planner notifies you when a focus session or break ends.";
-				INFOPLIST_KEY_NSUserNotificationAlertStyle = banner;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSMultipleInstancesProhibited = YES;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_NSUserNotificationAlertStyle = banner;
+				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Pomodoro Planner notifies you when a focus session or break ends.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=macosx*]" = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
