@@ -66,16 +66,12 @@ a {
 }
 
 .icon {
+  display: block;
   width: 42px;
   height: 42px;
-  border-radius: 14px;
-  background:
-    radial-gradient(circle at 50% 52%, #d94a3d 0 28%, transparent 29%),
-    radial-gradient(circle at 50% 18%, #2f8f4e 0 10%, transparent 11%),
-    linear-gradient(145deg, #1f6f6a, #143f3c);
-  box-shadow:
-    0 0 24px rgba(31, 111, 106, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 8px 20px rgba(28, 28, 26, 0.14);
 }
 
 .hero,

@@ -44,8 +44,8 @@ Also in this update: Pomodoro task list with sticky active session, Statistics w
 - Fresh start: the app never opens or migrates `pomodoro.sqlite`. Reviewers with residual old data will not see it. New SwiftData file: `easefocus.store`.
 - Apple Intelligence / Foundation Models are optional. Manual tasks and the timer work without them. When available, plan generation and quote selection run on device. Quote selection never invents text; it chooses an index from a curated attributed list.
 - On launch the app may fetch a public JSON quote list from a GitHub gist (`gist.githubusercontent.com`) and merge new quotes into the local library. No user data is uploaded.
-- Optional Google search: a query leaves the app only after the user taps Search Google on the confirmation sheet; the system browser opens `https://www.google.com/search?q=…`. Nothing is sent during generation or save.
 - No analytics SDKs, no ATT, no account system.
+- Support email: `lbox@novs.uk`.
 - Support URL: `https://lilyok.github.io/easefocus/pomodoro-planner/support/`
 - Marketing URL: `https://lilyok.github.io/easefocus/pomodoro-planner/`
 - Privacy Policy URL (optional for Data Not Collected): `https://lilyok.github.io/easefocus/pomodoro-planner/privacy/`
@@ -56,8 +56,6 @@ Also in this update: Pomodoro task list with sticky active session, Statistics w
 **Data Not Collected.**
 
 Pomodoro Planner does not collect data linked to identity for analytics, advertising, or developer-operated backends. Goals, plans, and session history remain on device.
-
-Optional Google search is user-initiated: after Search Google, Safari (or the default browser) loads Google with the user-reviewed query. That handoff is not developer data collection for App Store privacy labels.
 
 The optional quote-list fetch is a public GET; the app does not send account or task content with that request.
 
