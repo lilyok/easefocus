@@ -4,6 +4,12 @@ Human-facing copy for filling App Store Connect. Do not treat this as runtime UI
 
 Bundle ID stays `lil.pomodoro`. New data lives in `easefocus.store`. The app does not import `pomodoro.sqlite`.
 
+## Connect URLs
+
+- Marketing: `https://lilyok.github.io/easefocus/`
+- Support: `https://lilyok.github.io/easefocus/support/`
+- Privacy Policy: `https://lilyok.github.io/easefocus/privacy/`
+
 ## Name
 
 Pomodoro Planner
@@ -39,7 +45,10 @@ Also in this update: Pomodoro task list with sticky active session, Statistics w
 - Apple Intelligence / Foundation Models are optional. Manual tasks and the timer work without them. When available, plan generation and quote selection run on device. Quote selection never invents text; it chooses an index from a curated attributed list.
 - On launch the app may fetch a public JSON quote list from a GitHub gist (`gist.githubusercontent.com`) and merge new quotes into the local library. No user data is uploaded.
 - Optional Google search: a query leaves the app only after the user taps Search Google on the confirmation sheet; the system browser opens `https://www.google.com/search?q=…`. Nothing is sent during generation or save.
-- No analytics SDKs, no ATT, no account system, no privacy-policy URL required for Data Not Collected.
+- No analytics SDKs, no ATT, no account system.
+- Support URL: `https://lilyok.github.io/easefocus/support/`
+- Marketing URL: `https://lilyok.github.io/easefocus/`
+- Privacy Policy URL (optional for Data Not Collected): `https://lilyok.github.io/easefocus/privacy/`
 - Suggested paths: add a task on Pomodoro → Start → confirm sticky timer card → Statistics → Quote of the day → Settings → Privacy.
 
 ## Privacy nutrition labels
