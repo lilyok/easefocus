@@ -12,7 +12,7 @@ struct SessionHistoryView: View {
     @Environment(\.calendar) private var calendar
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var sharePNG: Data?
+    @State private var shareFileURL: URL?
 
     private var sessionRecords: [ProgressSessionRecord] {
         sessions.map { session in
@@ -251,14 +251,23 @@ struct SessionHistoryView: View {
 
     @ViewBuilder
     private var shareControl: some View {
-        if let sharePNG, !sharePNG.isEmpty {
+        if let shareFileURL {
+            #if os(macOS)
+            MacFileShareButton(fileURL: shareFileURL) {
+                Text(ProgressCopy.share)
+                    .focusCapsuleFill()
+            }
+            .buttonStyle(FocusCapsuleButtonStyle())
+            .frame(minWidth: 108)
+            .accessibilityIdentifier("shareStatistics")
+            #else
             ShareLink(
-                item: StatisticsShareItem(pngData: sharePNG),
+                item: StatisticsShareItem(fileURL: shareFileURL),
                 subject: Text(AppCopy.appName),
                 message: Text(weekShareText),
                 preview: SharePreview(
                     Text(ProgressCopy.thisWeek),
-                    image: sharePreviewImage(sharePNG)
+                    image: sharePreviewImage(shareFileURL)
                 )
             ) {
                 Text(ProgressCopy.share)
@@ -267,6 +276,7 @@ struct SessionHistoryView: View {
             .buttonStyle(FocusCapsuleButtonStyle())
             .frame(minWidth: 108)
             .accessibilityIdentifier("shareStatistics")
+            #endif
         } else {
             ShareLink(item: weekShareText) {
                 Text(ProgressCopy.share)
@@ -275,14 +285,16 @@ struct SessionHistoryView: View {
             .buttonStyle(FocusCapsuleButtonStyle())
             .frame(minWidth: 108)
             .accessibilityIdentifier("shareStatistics")
+            .disabled(true)
+            .opacity(0.55)
         }
     }
 
-    private func sharePreviewImage(_ data: Data) -> Image {
+    private func sharePreviewImage(_ url: URL) -> Image {
         #if os(macOS)
-        Image(nsImage: NSImage(data: data) ?? NSImage())
+        Image(nsImage: NSImage(contentsOf: url) ?? NSImage())
         #else
-        Image(uiImage: UIImage(data: data) ?? UIImage())
+        Image(uiImage: UIImage(contentsOfFile: url.path) ?? UIImage())
         #endif
     }
 
@@ -321,7 +333,8 @@ struct SessionHistoryView: View {
 
     @MainActor
     private func renderShareImage() async {
-        let png = StatisticsShareRendering.pngData(
+        let previous = shareFileURL
+        shareFileURL = StatisticsShareRendering.writeShareFile(
             weekTitle: weekTitle,
             summary: weekSummary,
             weekdayBars: weekdayBars,
@@ -330,7 +343,9 @@ struct SessionHistoryView: View {
             peakTime: ProgressPresentation.peakUsageLabel(in: timeOfDayBars),
             locale: locale
         )
-        sharePNG = png
+        if let previous, previous != shareFileURL {
+            try? FileManager.default.removeItem(at: previous)
+        }
     }
 
     private func planRowView(_ row: ProgressPlanRow) -> some View {

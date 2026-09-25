@@ -241,6 +241,7 @@ struct PomodoroListView: View {
             onStart: { startFocus(on: task) },
             onComplete: { toggleCompletion(task) },
             onTitleCommit: { rename(task, to: $0) },
+            onPlanTitleCommit: { retag(task, to: $0) },
             isCelebrating: celebratingTaskID == task.id,
             isNewlyCreated: highlightedTaskID == task.id
         )
@@ -312,6 +313,20 @@ struct PomodoroListView: View {
                 task.title = title
                 task.updatedAt = .now
                 task.plan?.updatedAt = .now
+            }
+        )
+    }
+
+    private func retag(_ task: PlanTask, to title: String) {
+        commit(
+            apply: {
+                TaskInbox.retag(
+                    task,
+                    to: title,
+                    from: allPlans,
+                    in: modelContext,
+                    locale: locale
+                )
             }
         )
     }

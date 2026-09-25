@@ -9,6 +9,8 @@ enum EaseFocusSceneID {
 enum EaseFocusWindow {
     private static var primaryWindowNumber: Int?
     private static var isGuarding = false
+    /// While share sheets / Freeform / Journal UI is up, do not close or steal key windows.
+    private static var isGuardSuspended = false
 
     @MainActor
     static func handoffToRunningInstanceIfNeeded() {
@@ -49,6 +51,16 @@ enum EaseFocusWindow {
     }
 
     @MainActor
+    static func suspendDuplicateGuarding() {
+        isGuardSuspended = true
+    }
+
+    @MainActor
+    static func resumeDuplicateGuarding() {
+        isGuardSuspended = false
+    }
+
+    @MainActor
     static func focusExisting() {
         NSApp.activate(ignoringOtherApps: true)
         closeDuplicatesKeepingPrimary()
@@ -69,6 +81,9 @@ enum EaseFocusWindow {
 
     @MainActor
     private static func closeDuplicatesKeepingPrimary() {
+        guard !isGuardSuspended else {
+            return
+        }
         rememberPrimaryIfNeeded()
         let mains = NSApp.windows.filter(isMainDocumentWindow)
         guard let primary = mains.first(where: { $0.windowNumber == primaryWindowNumber })
@@ -77,13 +92,37 @@ enum EaseFocusWindow {
             return
         }
         primaryWindowNumber = primary.windowNumber
+
+        // Only close true duplicates of our primary window — never share-extension
+        // panels (Freeform board name, Journal, etc.).
+        for window in mains where window.windowNumber != primary.windowNumber {
+            let sameTitle = window.title == primary.title
+                || (window.title.isEmpty && primary.title.isEmpty)
+            guard sameTitle else {
+                continue
+            }
+            window.close()
+        }
+
+        // Share sheets become key so the user can type. Do not reclaim focus.
+        guard let key = NSApp.keyWindow else {
+            presentPrimary(primary)
+            return
+        }
+        if key.windowNumber == primary.windowNumber {
+            return
+        }
+        if isMainDocumentWindow(key), key.title == primary.title || key.title.isEmpty {
+            presentPrimary(primary)
+        }
+    }
+
+    @MainActor
+    private static func presentPrimary(_ primary: NSWindow) {
         if primary.isMiniaturized {
             primary.deminiaturize(nil)
         }
         primary.makeKeyAndOrderFront(nil)
-        for window in mains where window.windowNumber != primary.windowNumber {
-            window.close()
-        }
     }
 
     @MainActor
@@ -116,7 +155,10 @@ enum EaseFocusWindow {
         if className.contains("NSStatusBar")
             || className.contains("NSMenu")
             || className.contains("NSPanel")
-            || className.contains("Popover") {
+            || className.contains("Popover")
+            || className.contains("Share")
+            || className.contains("Extension")
+            || className.contains("Remote") {
             return false
         }
         return true

@@ -1,17 +1,21 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import ImageIO
 #if os(macOS)
 import AppKit
 #else
 import UIKit
 #endif
 
+/// Share payload for Statistics: a real PNG file on disk.
+/// `DataRepresentation` alone often freezes Notes / skips Photos on macOS;
+/// destinations expect a file URL.
 struct StatisticsShareItem: Transferable, Sendable {
-    var pngData: Data
+    var fileURL: URL
 
     static var transferRepresentation: some TransferRepresentation {
-        DataRepresentation(exportedContentType: .png) { item in
-            item.pngData
+        FileRepresentation(exportedContentType: .png) { item in
+            SentTransferredFile(item.fileURL)
         }
         .suggestedFileName("Pomodoro-Planner-week.png")
     }
@@ -51,14 +55,61 @@ enum StatisticsShareRendering {
         return pngData(from: cgImage)
     }
 
+    /// Writes a uniquely named temp PNG for ShareLink / share sheet destinations.
     @MainActor
-    private static func pngData(from cgImage: CGImage) -> Data? {
-        #if os(macOS)
-        let representation = NSBitmapImageRep(cgImage: cgImage)
-        return representation.representation(using: .png, properties: [:])
-        #else
-        UIImage(cgImage: cgImage).pngData()
-        #endif
+    static func writeShareFile(
+        weekTitle: String,
+        summary: ProgressCountSummary,
+        weekdayBars: [ProgressUsageBar],
+        timeOfDayBars: [ProgressUsageBar],
+        peakDay: String?,
+        peakTime: String?,
+        locale: Locale
+    ) -> URL? {
+        guard let data = pngData(
+            weekTitle: weekTitle,
+            summary: summary,
+            weekdayBars: weekdayBars,
+            timeOfDayBars: timeOfDayBars,
+            peakDay: peakDay,
+            peakTime: peakTime,
+            locale: locale
+        ) else {
+            return nil
+        }
+        return writeTemporaryPNG(data)
+    }
+
+    nonisolated static func writeTemporaryPNG(_ data: Data) -> URL? {
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("EaseFocusStatisticsShare", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let url = folder
+                .appendingPathComponent("Pomodoro-Planner-week-\(UUID().uuidString)")
+                .appendingPathExtension("png")
+            try data.write(to: url, options: .atomic)
+            return url
+        } catch {
+            return nil
+        }
+    }
+
+    nonisolated private static func pngData(from cgImage: CGImage) -> Data? {
+        let data = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(
+            data as CFMutableData,
+            UTType.png.identifier as CFString,
+            1,
+            nil
+        ) else {
+            return nil
+        }
+        CGImageDestinationAddImage(destination, cgImage, nil)
+        guard CGImageDestinationFinalize(destination) else {
+            return nil
+        }
+        return data as Data
     }
 }
 

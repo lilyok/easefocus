@@ -51,6 +51,39 @@ Also in this update: Pomodoro task list with sticky active session, Statistics w
 - Privacy Policy URL (optional for Data Not Collected): `https://lilyok.github.io/easefocus/pomodoro-planner/privacy/`
 - Suggested paths: add a task on Pomodoro → Start → confirm sticky timer card → Statistics → Quote of the day → Settings → Privacy.
 
+## Mac App Review reply (Guideline 2.1 — Information Needed)
+
+Paste into the App Store Connect reply **and** the Notes field of App Review Information. Attach a physical-Mac screen recording that starts at launch and shows onboarding → add task → run timer → Statistics → Task Adviser (manual is fine if Apple Intelligence is unavailable) → Quote of the day.
+
+**2. Purpose and audience**
+
+Pomodoro Planner is a focus timer and task planner for people who want timed Pomodoro-style work sessions without accounts or tracking. It helps turn a task list into focused sessions, optional on-device plans, and a light weekly Statistics view.
+
+**3. Setup and main features**
+
+No login credentials or sample files are required.
+
+1. Launch and complete first-run onboarding (notifications are optional).
+2. On Pomodoro, add a task, then Start, Pause, Cancel, or Complete the session.
+3. Open Statistics for weekly focus usage.
+4. Open Task Adviser: describe a goal, then Generate (when Apple Intelligence is available) or Create manually, review the draft, and Save.
+5. Open Quote of the day from the Pomodoro screen.
+6. Open Settings for timer lengths, sounds, and the privacy overview.
+
+**4. External services**
+
+- Optional on-device Apple Intelligence / Foundation Models for plan generation and choosing a quote index from a curated list.
+- Optional HTTPS GET of a public JSON quote list from `gist.githubusercontent.com` (no user data is uploaded).
+- No accounts, analytics SDKs, advertising, or payment processors.
+
+**5. Regional differences**
+
+Features and content are the same in all regions. UI chrome is localized where translations exist (for example English and Spanish). There are no region-locked features.
+
+**6. Regulated industry / protected material**
+
+Not applicable. The app does not operate in a highly regulated industry. Quotes are attributed famous lines from a curated list, not a licensed third-party catalog that requires credentials.
+
 ## Privacy nutrition labels
 
 **Data Not Collected.**

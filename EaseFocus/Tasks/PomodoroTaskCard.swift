@@ -13,15 +13,22 @@ struct PomodoroTaskCard: View {
     var onStart: () -> Void = {}
     var onComplete: () -> Void = {}
     var onTitleCommit: (String) -> Void = { _ in }
+    var onPlanTitleCommit: (String) -> Void = { _ in }
     var isCelebrating: Bool = false
     var isNewlyCreated: Bool = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.locale) private var locale
     @FocusState private var isTitleFocused: Bool
+    @FocusState private var isPlanTitleFocused: Bool
     @State private var draftTitle = ""
+    @State private var draftPlanTitle = ""
 
     private var isCompleted: Bool {
         task.status == .completed
+    }
+
+    private var showsPlanTag: Bool {
+        task.plan != nil
     }
 
     var body: some View {
@@ -29,8 +36,8 @@ struct PomodoroTaskCard: View {
             if isPinnedActive {
                 pinnedTimer
             }
-            if let planTitle = task.plan?.title, !planTitle.isEmpty {
-                PlanNameLabel(title: planTitle)
+            if showsPlanTag {
+                planTagField
             }
             HStack(alignment: .top, spacing: FocusSpacing.medium) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -133,16 +140,23 @@ struct PomodoroTaskCard: View {
         .accessibilityIdentifier(isPinnedActive ? "pinnedActiveTask" : "")
         .onAppear {
             draftTitle = task.title
+            draftPlanTitle = task.plan?.title ?? ""
             if isNewlyCreated {
                 isTitleFocused = true
             }
         }
         .onChange(of: task.id) { _, _ in
             draftTitle = task.title
+            draftPlanTitle = task.plan?.title ?? ""
         }
         .onChange(of: task.title) { _, newTitle in
             if !isTitleFocused {
                 draftTitle = newTitle
+            }
+        }
+        .onChange(of: task.plan?.title) { _, newTitle in
+            if !isPlanTitleFocused {
+                draftPlanTitle = newTitle ?? ""
             }
         }
         .onChange(of: isTitleFocused) { _, focused in
@@ -150,11 +164,36 @@ struct PomodoroTaskCard: View {
                 commitTitle()
             }
         }
+        .onChange(of: isPlanTitleFocused) { _, focused in
+            if !focused {
+                commitPlanTitle()
+            }
+        }
         .onChange(of: isNewlyCreated) { _, created in
             if created {
                 isTitleFocused = true
             }
         }
+    }
+
+    private var planTagField: some View {
+        let colorKey = draftPlanTitle.isEmpty
+            ? PomodoroCopy.inboxTitle.english
+            : draftPlanTitle
+        return TextField(PomodoroCopy.planTag, text: $draftPlanTitle)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(PlanLabelColor.color(for: colorKey), in: Capsule())
+            .focused($isPlanTitleFocused)
+            .textFieldStyle(.plain)
+            .accessibilityLabel(PomodoroCopy.planTag)
+            .accessibilityIdentifier("taskPlanTitleField")
+            .onSubmit {
+                commitPlanTitle()
+                isPlanTitleFocused = false
+            }
     }
 
     private func commitTitle() {
@@ -165,6 +204,18 @@ struct PomodoroTaskCard: View {
             return
         }
         onTitleCommit(next)
+    }
+
+    private func commitPlanTitle() {
+        let trimmed = draftPlanTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        let next = trimmed.isEmpty
+            ? PomodoroCopy.inboxTitle.localized(locale)
+            : trimmed
+        draftPlanTitle = next
+        guard next != (task.plan?.title ?? "") else {
+            return
+        }
+        onPlanTitleCommit(next)
     }
 
     private var cardFill: Color {

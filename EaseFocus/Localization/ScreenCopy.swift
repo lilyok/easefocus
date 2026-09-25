@@ -23,6 +23,7 @@ nonisolated enum PomodoroCopy {
     static let navigationTitle = AppCopy.pomodoro
     static let searchPlaceholder = LocalizedCopy("Search")
     static let inboxTitle = LocalizedCopy("My tasks")
+    static let planTag = LocalizedCopy("Plan")
     static let nowFocusing = LocalizedCopy("Now focusing")
     static let quoteOfTheDay = QuoteCopy.quoteOfTheDay
     static let taskName = LocalizedCopy("Task name")
